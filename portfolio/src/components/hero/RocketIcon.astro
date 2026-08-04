@@ -1,0 +1,28 @@
+---
+/**
+ * The little rocket. Left untinted by default because the artwork is
+ * multi-coloured — passing `color` would flatten it to a single fill.
+ */
+import ArtAsset from "./ArtAsset.astro";
+import type { CanvasBox } from "./canvas";
+
+import rocket from "../../assets/decor/rocket.svg";
+
+const NATURAL = { w: 62.804, h: 166.582 };
+
+interface Props extends CanvasBox {
+  size?: number;
+  class?: string;
+}
+
+const { size, class: className, ...box } = Astro.props;
+---
+
+<ArtAsset
+  svg={rocket}
+  natural={NATURAL}
+  size={size}
+  anim="rocket"
+  class={className}
+  {...box}
+/>

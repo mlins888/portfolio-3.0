@@ -1,0 +1,58 @@
+---
+/**
+ * Jagged callout bubble. Pass `text`, or use the slot for richer markup:
+ *   <SpeechBurst>bringing you <strong>BOLD</strong> designs</SpeechBurst>
+ */
+import ArtAsset from "./ArtAsset.astro";
+import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+
+import burstShape from "../../assets/decor/burst-shape.svg";
+import burstShadow from "../../assets/decor/burst-shadow.svg";
+
+interface Props extends CanvasBox {
+  text?: string;
+  /** Type size in canvas units. */
+  textSize?: number;
+  class?: string;
+}
+
+const { text, textSize = 32, class: className, ...box } = Astro.props;
+---
+
+<div
+  class:list={["origin-center", className]}
+  style={canvasStyle(box)}
+  data-anim="burst"
+>
+  <ArtAsset
+    svg={burstShadow}
+    natural={{ w: 295, h: 280 }}
+    x={25}
+    y={16}
+    color="var(--color-ink)"
+  />
+  <ArtAsset
+    svg={burstShape}
+    natural={{ w: 294, h: 280 }}
+    x={0}
+    y={0}
+    color="var(--color-cream)"
+  />
+
+  <div
+    class="absolute flex items-center justify-center"
+    style={css({ left: u(46), top: u(63), width: u(194.377), height: u(169.845) })}
+  >
+    <p
+      class="text-center font-script text-ink"
+      style={css({
+        width: u(174.339),
+        fontSize: u(textSize),
+        lineHeight: "0.91",
+        transform: "rotate(-8.75deg)",
+      })}
+    >
+      <slot>{text}</slot>
+    </p>
+  </div>
+</div>

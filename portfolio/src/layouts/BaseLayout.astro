@@ -1,0 +1,48 @@
+---
+import "../styles/global.css";
+
+import Nav from "../components/Nav.astro";
+import ScrollRocket from "../components/ScrollRocket.astro";
+import { site } from "../content/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = site.title, description = site.description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- 'Archivo Black' stands in for the licensed display face 'Louvre'; see
+         the font tokens in src/styles/global.css. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Lakki+Reddy&display=swap"
+    />
+
+    <!-- Marks the document as scripted before first paint, so entrance
+         animations start hidden only when GSAP can reveal them. -->
+    <script is:inline>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+
+  <body class="bg-paper font-script text-ink antialiased">
+    <Nav />
+    <ScrollRocket />
+    <slot />
+  </body>
+</html>

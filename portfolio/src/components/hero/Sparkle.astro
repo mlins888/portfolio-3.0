@@ -1,0 +1,53 @@
+---
+/**
+ * A single 4-point sparkle. Site-wide decoration — nothing here is hero
+ * specific, so drop it anywhere.
+ *
+ *   <Sparkle variant="c" size={104} rotation={12} color="var(--color-gold)" />
+ *
+ * The four variants are the four sparkles drawn in the Figma file; they differ
+ * in proportion, not just scale, so they are kept as separate artwork.
+ */
+import ArtAsset from "./ArtAsset.astro";
+import type { CanvasBox } from "./canvas";
+
+import sparkleA from "../../assets/decor/sparkle-a.svg";
+import sparkleB from "../../assets/decor/sparkle-b.svg";
+import sparkleC from "../../assets/decor/sparkle-c.svg";
+import sparkleD from "../../assets/decor/sparkle-d.svg";
+
+export type SparkleVariant = "a" | "b" | "c" | "d";
+
+const ARTWORK: Record<SparkleVariant, { svg: any; natural: { w: number; h: number } }> = {
+  a: { svg: sparkleA, natural: { w: 78, h: 82 } },
+  b: { svg: sparkleB, natural: { w: 63, h: 57 } },
+  c: { svg: sparkleC, natural: { w: 104, h: 94 } },
+  d: { svg: sparkleD, natural: { w: 57, h: 52 } },
+};
+
+interface Props extends CanvasBox {
+  variant?: SparkleVariant;
+  size?: number;
+  class?: string;
+}
+
+const {
+  variant = "a",
+  size,
+  color = "var(--color-cream)",
+  class: className,
+  ...box
+} = Astro.props;
+
+const { svg, natural } = ARTWORK[variant];
+---
+
+<ArtAsset
+  svg={svg}
+  natural={natural}
+  size={size}
+  color={color}
+  anim="sparkle"
+  class={className}
+  {...box}
+/>

@@ -1,0 +1,28 @@
+---
+/**
+ * The bottom-right mid-century shape cluster. This file only arranges the
+ * individual shape components — each one is its own file and can be reused or
+ * recombined independently. Coordinates are local to the cluster, so the whole
+ * group moves by changing x / y.
+ */
+import CrescentShape from "./CrescentShape.astro";
+import Starburst from "./Starburst.astro";
+import TrapezoidShape from "./TrapezoidShape.astro";
+import TriangleShape from "./TriangleShape.astro";
+import VaseShape from "./VaseShape.astro";
+import { canvasStyle, type CanvasBox } from "./canvas";
+
+interface Props extends CanvasBox {
+  class?: string;
+}
+
+const { class: className, ...box } = Astro.props;
+---
+
+<div class:list={[className]} style={canvasStyle(box)}>
+  <CrescentShape x={351} y={0} size={197} />
+  <VaseShape x={414.5} y={62} size={237} />
+  <TriangleShape x={0} y={77.5} size={307.5} />
+  <TrapezoidShape x={172} y={360} size={391.5} />
+  <Starburst variant="small" x={582.8} y={193.71} size={169.026} rotation={-43.66} />
+</div>

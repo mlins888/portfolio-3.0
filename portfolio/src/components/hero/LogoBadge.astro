@@ -1,0 +1,51 @@
+---
+/**
+ * Circular logo badge sitting on its own cream plate, tilted slightly like a
+ * pasted-on sticker. The mark itself is a swappable image reference.
+ */
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+
+interface Props extends CanvasBox {
+  logo: ImageMetadata;
+  alt: string;
+  /** Tilt of the mark, in degrees. */
+  tilt?: number;
+  class?: string;
+}
+
+const { logo, alt, tilt = 4.76, class: className, ...box } = Astro.props;
+---
+
+<div class:list={[className]} style={canvasStyle(box)}>
+  <div
+    class="absolute bg-cream"
+    style={css({ left: u(23), top: u(15), width: u(126), height: u(149) })}
+  >
+  </div>
+
+  <div
+    class="absolute overflow-hidden"
+    style={css({
+      left: u(6.772),
+      top: u(6.02),
+      width: u(152.044),
+      height: u(169.432),
+      transform: `rotate(${tilt}deg)`,
+    })}
+  >
+    <Image
+      src={logo}
+      alt={alt}
+      class="absolute max-w-none"
+      style={css({
+        left: "-28.84%",
+        top: "-51.88%",
+        width: "208.39%",
+        height: "269.1%",
+      })}
+    />
+  </div>
+</div>

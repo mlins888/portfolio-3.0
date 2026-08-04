@@ -1,0 +1,114 @@
+---
+/**
+ * The rocket and its striped trail — the page's scroll progress bar.
+ * Fixed flush under the nav: trail grows and the ship flies right as you scroll.
+ * Geometry stays in hero-canvas units so it scales with the page.
+ */
+import RocketIcon from "./hero/RocketIcon.astro";
+import StripedRibbon from "./hero/StripedRibbon.astro";
+import { ROCKET_TRACK } from "./hero/canvas";
+
+/** Ship SVG is tall; after the 90° rotation its visual height ≈ shipWidth.
+ *  Offset so the ship's visual top sits flush with the ribbon / nav base. */
+const shipNaturalH = 166.582;
+const ribbonH = 40;
+const shipTop = ROCKET_TRACK.shipWidth / 2 - shipNaturalH / 2;
+---
+
+<div class="rocket-progress" data-rocket-progress aria-hidden="true">
+  <div class="rocket-progress__track">
+    <div class="rocket-progress__trail">
+      <StripedRibbon />
+    </div>
+
+    <div class="rocket-progress__ship">
+      <RocketIcon size={ROCKET_TRACK.shipWidth} rotation={ROCKET_TRACK.shipRotation} />
+    </div>
+  </div>
+</div>
+
+<style
+  define:vars={{
+    trackX: ROCKET_TRACK.x,
+    trackW: ROCKET_TRACK.width,
+    trailMin: ROCKET_TRACK.trailMin,
+    trailMax: ROCKET_TRACK.trailMax,
+    shipLead: ROCKET_TRACK.shipLead,
+    shipTop,
+    ribbonH,
+  }}
+>
+  .rocket-progress {
+    position: fixed;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    height: 0;
+    z-index: 40;
+    container-type: inline-size;
+    pointer-events: none;
+  }
+
+  .rocket-progress__track {
+    --u: calc(100cqw / 1440);
+    --progress: 0;
+    --trail: calc(
+      var(--trailMin) + var(--progress) * (var(--trailMax) - var(--trailMin))
+    );
+
+    position: absolute;
+    top: 0;
+    left: calc(var(--trackX) * var(--u));
+    width: calc(var(--trackW) * var(--u));
+    height: calc(var(--ribbonH) * var(--u));
+  }
+
+  .rocket-progress__trail {
+    position: absolute;
+    inset: 0;
+    width: calc(var(--trail) * var(--u));
+  }
+
+  .rocket-progress__ship {
+    position: absolute;
+    top: calc(var(--shipTop) * var(--u));
+    left: calc((var(--trail) + var(--shipLead)) * var(--u));
+  }
+</style>
+
+<script>
+  import { gsap, EASE, prefersReducedMotion } from "../scripts/gsap-setup.js";
+
+  const bar = document.querySelector("[data-rocket-progress]");
+  const track = bar?.querySelector(".rocket-progress__track");
+
+  if (bar && track) {
+    const reduced = prefersReducedMotion();
+    const unit = () => bar.clientWidth / 1440;
+    const scrolled = { progress: 0 };
+
+    gsap.to(scrolled, {
+      progress: 1,
+      ease: "none",
+      onUpdate: () =>
+        track.style.setProperty("--progress", String(scrolled.progress)),
+      scrollTrigger: {
+        trigger: document.documentElement,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: reduced ? true : 0.5,
+        invalidateOnRefresh: true,
+      },
+    });
+
+    if (!reduced) {
+      const ship = bar.querySelector('[data-anim="rocket"]');
+
+      gsap.fromTo(
+        ship,
+        { opacity: 0, x: () => -160 * unit() },
+        { opacity: 1, x: 0, duration: 1.1, ease: EASE.glide, delay: 0.45 },
+      );
+    }
+  }
+</script>

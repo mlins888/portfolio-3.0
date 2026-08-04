@@ -1,0 +1,30 @@
+---
+/** Mid-century teal triangle with the zigzag antenna accent. */
+import ArtAsset from "./ArtAsset.astro";
+import type { CanvasBox } from "./canvas";
+
+import triangle from "../../assets/shapes/triangle.svg";
+
+const NATURAL = { w: 307.5, h: 499 };
+
+interface Props extends CanvasBox {
+  size?: number;
+  class?: string;
+}
+
+const {
+  size,
+  color = "var(--color-teal-deep)",
+  class: className,
+  ...box
+} = Astro.props;
+---
+
+<ArtAsset
+  svg={triangle}
+  natural={NATURAL}
+  size={size}
+  color={color}
+  class={className}
+  {...box}
+/>

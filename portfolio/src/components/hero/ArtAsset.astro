@@ -1,0 +1,42 @@
+---
+/**
+ * Renders one exported SVG asset as inline SVG, sized and placed on the hero
+ * canvas. Every decorative component wraps this so they all share the same
+ * size / position / rotation / tint contract.
+ */
+import { canvasStyle, fitWidth, type CanvasBox } from "./canvas";
+
+interface Props extends CanvasBox {
+  /** An SVG imported from src/assets — Astro renders it inline. */
+  svg: any;
+  /** The artwork's own dimensions, so aspect ratio survives resizing. */
+  natural: { w: number; h: number };
+  /** Requested width in canvas units. Height follows the artwork's ratio. */
+  size?: number;
+  /** Value for data-anim, which is how gsap-setup finds animatable elements. */
+  anim?: string;
+  class?: string;
+}
+
+const {
+  svg: Svg,
+  natural,
+  size,
+  x,
+  y,
+  rotation,
+  color,
+  anim,
+  class: className,
+} = Astro.props;
+
+const { width, height } = fitWidth(natural, size);
+---
+
+<span
+  class:list={["pointer-events-none block", className]}
+  style={canvasStyle({ x, y, width, height, rotation, color })}
+  data-anim={anim}
+>
+  <Svg class:list={["block h-full w-full", color && "svg-tint"]} />
+</span>

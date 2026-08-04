@@ -1,0 +1,151 @@
+---
+/**
+ * The hero: a vintage comic cover. Everything sits on a 1440x1025 canvas that
+ * mirrors the Figma frame, so the x / y / size numbers below are the same ones
+ * shown in Figma's inspector (see ./canvas.ts). Children appear in Figma's
+ * layer order — later siblings paint on top.
+ */
+import { hero } from "../../content/hero";
+import { CANVAS, canvasStyle, css, u } from "./canvas";
+
+import GeometricCluster from "./GeometricCluster.astro";
+import HeroPortrait from "./HeroPortrait.astro";
+import LogoBadge from "./LogoBadge.astro";
+import Sparkle from "./Sparkle.astro";
+import SpeechBurst from "./SpeechBurst.astro";
+import StampBadge from "./StampBadge.astro";
+import Starburst from "./Starburst.astro";
+---
+
+<section class="hero-frame relative w-full bg-paper" data-hero aria-label="Introduction">
+  <div class="hero-canvas absolute inset-0">
+    <div class="absolute bg-coral" style={canvasStyle({ x: 42, y: 43, width: 1355, height: 329 })}>
+    </div>
+    <div class="absolute bg-coral" style={canvasStyle({ x: 42, y: 394, width: 1355, height: 586 })}>
+    </div>
+
+    <!-- The striped ribbon and rocket are the site's scroll progress bar —
+         they live in components/ScrollRocket.astro, fixed under the nav. -->
+
+    <HeroPortrait
+      x={-21}
+      y={363}
+      illustration={hero.images.portrait}
+      alt={hero.images.portraitAlt}
+    />
+
+    <p
+      class="absolute text-center font-script text-white"
+      style={css({ left: u(260), top: u(83), width: u(400), fontSize: u(32), lineHeight: "0.91" })}
+      data-anim="greeting"
+    >
+      {hero.greeting}
+    </p>
+
+    <h1
+      class="hero-name absolute text-center font-display uppercase text-cream"
+      style={css({ left: u(352), top: u(111), width: u(713), fontSize: u(130), lineHeight: "0.91" })}
+    >
+      {hero.nameLines.map((line) => <span class="block" data-anim="headline-line">{line}</span>)}
+    </h1>
+
+    <StampBadge x={80} y={229} date={hero.stamp.date} price={hero.stamp.price} />
+
+    <SpeechBurst x={1059} y={60} text={hero.tagline} />
+
+    <Sparkle variant="a" x={401} y={430} size={78} />
+    <Sparkle variant="b" x={709} y={787} size={63} />
+    <Sparkle variant="c" x={741} y={709} size={104} />
+    <Sparkle variant="c" x={1177} y={447} size={104} />
+    <Sparkle variant="d" x={1262} y={405} size={57} />
+
+    <Starburst variant="large" x={415} y={364.66} size={268.107} />
+
+    <GeometricCluster x={704} y={479} />
+
+    <LogoBadge x={57} y={53} logo={hero.images.logo} alt={hero.images.logoAlt} />
+  </div>
+</section>
+
+<style define:vars={{ canvasW: CANVAS.width, canvasH: CANVAS.height }}>
+  .hero-frame {
+    container-type: inline-size;
+    aspect-ratio: var(--canvasW) / var(--canvasH);
+    /* Shapes deliberately run off the bottom of the cover. */
+    overflow: hidden;
+  }
+
+  .hero-canvas {
+    /* One canvas unit = one Figma pixel, expressed as a share of the frame's
+       width. This is what makes the fixed layout scale fluidly. */
+    --u: calc(100cqw / var(--canvasW));
+  }
+
+  .hero-name {
+    text-shadow:
+      calc(10 * var(--u)) calc(8 * var(--u)) 0 var(--color-ink),
+      calc(17 * var(--u)) calc(8 * var(--u)) 0 var(--color-ink);
+
+    /* Uncomment for the coral keyline around the lettering. Only needed while
+       standing in for 'Louvre', which carries its own inline detail. */
+    /* -webkit-text-stroke: calc(2 * var(--u)) var(--color-coral); */
+  }
+</style>
+
+<script>
+  import {
+    gsap,
+    EASE,
+    prefersReducedMotion,
+    revealUnclaimed,
+    showAll,
+    targets,
+  } from "../../scripts/gsap-setup.js";
+
+  const root = document.querySelector("[data-hero]");
+
+  if (root) {
+    if (prefersReducedMotion()) {
+      showAll(root);
+    } else {
+      const portrait = targets(root, "portrait");
+      const greeting = targets(root, "greeting");
+      const headline = targets(root, "headline-line");
+      const burst = targets(root, "burst");
+      const twinkles = [...targets(root, "starburst"), ...targets(root, "sparkle")];
+
+      const tl = gsap.timeline({ defaults: { ease: EASE.soft, duration: 0.7 } });
+
+      tl.fromTo(portrait, { opacity: 0, scale: 0.96 }, { opacity: 1, scale: 1, duration: 0.9 }, 0)
+        .fromTo(greeting, { opacity: 0, y: -18 }, { opacity: 1, y: 0 }, 0.15)
+        .fromTo(headline, { opacity: 0, y: 40 }, { opacity: 1, y: 0, stagger: 0.12 }, 0.25)
+        .fromTo(
+          burst,
+          { opacity: 0, scale: 0.8 },
+          { opacity: 1, scale: 1, duration: 0.6, ease: EASE.pop },
+          0.6,
+        )
+        .fromTo(
+          twinkles,
+          { opacity: 0, scale: 0.4 },
+          { opacity: 1, scale: 1, duration: 0.5, ease: EASE.pop, stagger: 0.07 },
+          0.75,
+        );
+
+      revealUnclaimed(root, [...portrait, ...greeting, ...headline, ...burst, ...twinkles]);
+    }
+  }
+
+  /* ── HOOK: hand-drawn "the line draws itself" pass ────────────────────────
+     Once the final line-art illustrations are ready, replace the portrait fade
+     above with a stroke-drawing reveal. That needs the artwork inline as SVG
+     (swap <Image> for an SVG import in HeroPortrait.astro) and DrawSVGPlugin,
+     which is part of a GSAP Club membership:
+
+       import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
+       gsap.registerPlugin(DrawSVGPlugin);
+       tl.from('[data-anim="portrait"] path', { drawSVG: "0%", stagger: 0.04, duration: 1.4 }, 0);
+
+     The same treatment suits the starburst rays and the speech burst outline.
+  ────────────────────────────────────────────────────────────────────────── */
+</script>

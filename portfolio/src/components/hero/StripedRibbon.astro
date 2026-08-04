@@ -1,0 +1,46 @@
+---
+/** The striped ribbon the rocket flies along. Stripe colours are data. */
+import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+
+interface Props extends CanvasBox {
+  /** Omit to fill the parent's width — that's how the progress trail drives it. */
+  width?: number;
+  /** Height of each individual stripe, in canvas units. */
+  stripeHeight?: number;
+  /** Top-to-bottom stripe colours. Add more entries for more stripes. */
+  colors?: string[];
+  class?: string;
+}
+
+const {
+  x,
+  y,
+  width,
+  stripeHeight = 20,
+  colors = ["var(--color-teal)", "var(--color-gold)"],
+  class: className,
+} = Astro.props;
+---
+
+<div
+  class:list={["pointer-events-none relative", className]}
+  style={canvasStyle({
+    x,
+    y,
+    width,
+    height: stripeHeight * colors.length,
+  })}
+>
+  {
+    colors.map((color, i) => (
+      <div
+        class="absolute inset-x-0"
+        style={css({
+          top: u(i * stripeHeight),
+          height: u(stripeHeight),
+          background: color,
+        })}
+      />
+    ))
+  }
+</div>

@@ -1,0 +1,30 @@
+---
+/** Mid-century orange trapezoid. */
+import ArtAsset from "./ArtAsset.astro";
+import type { CanvasBox } from "./canvas";
+
+import trapezoid from "../../assets/shapes/trapezoid.svg";
+
+const NATURAL = { w: 391.5, h: 218.5 };
+
+interface Props extends CanvasBox {
+  size?: number;
+  class?: string;
+}
+
+const {
+  size,
+  color = "var(--color-orange)",
+  class: className,
+  ...box
+} = Astro.props;
+---
+
+<ArtAsset
+  svg={trapezoid}
+  natural={NATURAL}
+  size={size}
+  color={color}
+  class={className}
+  {...box}
+/>

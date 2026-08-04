@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   DESIGN TOKENS — the one place to change the look of the whole site.
+
+   Every colour below becomes a Tailwind utility automatically:
+     --color-coral  ->  bg-coral / text-coral / border-coral ...
+   Change a hex here and every component follows, including the SVG artwork
+   (see .svg-tint below).
+--------------------------------------------------------------------------- */
+@theme {
+  --color-paper: #efd8b8; /* outer comic-cover mat / border frame */
+  --color-cream: #eff0e0; /* headline fill, stamp plates, sparkles, burst */
+  --color-coral: #f15e42; /* the two hero bands */
+  --color-teal: #00b6a1; /* ribbon stripe, chess-piece shape */
+  --color-teal-deep: #00767e; /* triangle shape + zigzag accent */
+  --color-gold: #e6a805; /* ribbon stripe */
+  --color-orange: #fa9f55; /* trapezoid shape */
+  --color-ink: #010101; /* outlines, drop shadows, stamp type */
+
+  /* 'Louvre' is the licensed display face from the Figma file. Drop the
+     webfont into src/assets/fonts/ and @font-face it below to activate it;
+     until then 'Archivo Black' stands in. */
+  --font-display: "Louvre", "Archivo Black", "Impact", sans-serif;
+  --font-script: "Lakki Reddy", "Comic Sans MS", cursive;
+}
+
+/* ---------------------------------------------------------------------------
+   LAYOUT CONSTANTS
+   --nav-h is shared by the nav itself and by the scroll progress bar that docks
+   beneath it, so the two can never drift apart.
+--------------------------------------------------------------------------- */
+:root {
+  --nav-h: 60px;
+}
+
+/* ---------------------------------------------------------------------------
+   SVG TINTING
+   The decorative SVGs are the real exported artwork, so their fills are baked
+   in. Adding .svg-tint makes any painted fill/stroke follow the CSS `color`
+   property instead, which is what lets <Sparkle color="..."> work off a single
+   asset. Paths explicitly set to fill="none" are left alone so outline-only
+   artwork (the starburst rays, the zigzag) keeps its shape.
+--------------------------------------------------------------------------- */
+.svg-tint [fill]:not([fill="none"]) {
+  fill: currentColor;
+}
+
+.svg-tint [stroke]:not([stroke="none"]) {
+  stroke: currentColor;
+}
+
+/* ---------------------------------------------------------------------------
+   ENTRANCE ANIMATION GATE
+   BaseLayout adds .js to <html> before first paint, so animated elements start
+   hidden only when GSAP is actually there to reveal them. With JS off the page
+   renders fully visible instead of blank.
+--------------------------------------------------------------------------- */
+.js [data-anim] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-anim] {
+    opacity: 1;
+  }
+}
