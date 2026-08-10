@@ -32,6 +32,9 @@
 --------------------------------------------------------------------------- */
 :root {
   --nav-h: 60px;
+  /* Homepage starts with no header; JS raises this to --nav-h as the
+     masthead collapses into the sticky bar. Other pages set it immediately. */
+  --nav-offset: 0px;
 }
 
 /* ---------------------------------------------------------------------------

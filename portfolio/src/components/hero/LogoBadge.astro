@@ -19,7 +19,7 @@ interface Props extends CanvasBox {
 const { logo, alt, tilt = 4.76, class: className, ...box } = Astro.props;
 ---
 
-<div class:list={[className]} style={canvasStyle(box)}>
+<div class:list={[className]} style={canvasStyle(box)} data-logo>
   <div
     class="absolute bg-cream"
     style={css({ left: u(23), top: u(15), width: u(126), height: u(149) })}

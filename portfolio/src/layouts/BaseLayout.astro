@@ -11,10 +11,11 @@ interface Props {
 }
 
 const { title = site.title, description = site.description } = Astro.props;
+const isHome = Astro.url.pathname === "/";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" style={isHome ? undefined : "--nav-offset: var(--nav-h)"}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
