@@ -1,5 +1,7 @@
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { Flip } from "gsap/Flip";
+import { ScrollToPlugin } from "gsap/ScrollToPlugin";
 
 /**
  * Shared GSAP setup for the site.
@@ -11,9 +13,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
  *
  * Plugins are registered once, here, so no component has to remember to do it.
  */
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, Flip, ScrollToPlugin);
 
-export { gsap, ScrollTrigger };
+export { gsap, ScrollTrigger, Flip, ScrollToPlugin };
 
 export const EASE = {
   soft: "power3.out",

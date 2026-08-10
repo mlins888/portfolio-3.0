@@ -1,7 +1,10 @@
 import type { ImageMetadata } from "astro";
 
-import heroPortrait from "../assets/illustrations/hero-portrait.png";
-import logoBadge from "../assets/illustrations/logo-badge.png";
+import heroScene from "../assets/illustrations/hero-scene.png";
+import heroCornerCat from "../assets/illustrations/hero-corner-cat.png";
+import buildingPulse from "../assets/illustrations/building-pulse.png";
+import buildingHackduke from "../assets/illustrations/building-hackduke.png";
+import buildingOther from "../assets/illustrations/building-other.png";
 
 /**
  * Everything the hero says and shows. Components read from here, so no copy or
@@ -16,14 +19,18 @@ export interface HeroContent {
   nameLines: string[];
   tagline: string;
   stamp: {
+    /** Fallback only — StampBadge computes the live date client-side. */
     date: string;
     price: string;
   };
   images: {
-    portrait: ImageMetadata;
-    portraitAlt: string;
-    logo: ImageMetadata;
-    logoAlt: string;
+    scene: ImageMetadata;
+    sceneAlt: string;
+    cornerCat: ImageMetadata;
+    cornerCatAlt: string;
+    buildingPulse: ImageMetadata;
+    buildingHackduke: ImageMetadata;
+    buildingOther: ImageMetadata;
   };
 }
 
@@ -36,9 +43,12 @@ export const hero: HeroContent = {
     price: "10¢",
   },
   images: {
-    portrait: heroPortrait,
-    portraitAlt: "Line drawing of Makenna seated inside a spotlight circle",
-    logo: logoBadge,
-    logoAlt: "Cat mascot logo",
+    scene: heroScene,
+    sceneAlt: "Line drawing of Makenna on a swing under a spotlight, city skyline behind her",
+    cornerCat: heroCornerCat,
+    cornerCatAlt: "Cat mascot illustration",
+    buildingPulse,
+    buildingHackduke,
+    buildingOther,
   },
 };

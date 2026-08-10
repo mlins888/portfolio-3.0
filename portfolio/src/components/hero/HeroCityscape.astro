@@ -1,0 +1,101 @@
+---
+/**
+ * The illustrated lower-band scene: two flat "night sky" panels, the three
+ * building illustrations, the character-on-swing artwork, and a small accent
+ * shape between the buildings — all placed at their exact Figma coordinates
+ * on the hero canvas. Paint order matches the Figma layer order exactly
+ * (the character scene is painted after the first two buildings because it's
+ * a transparent-background cutout that partially overlaps them).
+ *
+ * `buildingPulse` and `buildingOther` are crops of a shared oversized master
+ * canvas (see FillImage); `buildingHackduke` and the scene artwork are
+ * already framed to their own bounds, so they use a plain cover crop.
+ */
+import { Image } from "astro:assets";
+import FillImage from "../FillImage.astro";
+import ArtAsset from "./ArtAsset.astro";
+import { canvasStyle } from "./canvas";
+import { hero } from "../../content/hero";
+
+import panelA from "../../assets/decor/hero-scene-panel-a.svg";
+import panelB from "../../assets/decor/hero-scene-panel-b.svg";
+import accent from "../../assets/decor/hero-scene-accent.svg";
+---
+
+<ArtAsset svg={panelA} natural={{ w: 676.5, h: 586.5 }} x={721} y={394} />
+<ArtAsset svg={panelB} natural={{ w: 295, h: 587 }} x={1105} y={394} />
+
+<div
+  class="absolute overflow-hidden pointer-events-none building-glow"
+  data-building="other-projects"
+  style={canvasStyle({ x: 1185, y: 444.57, width: 258, height: 581 })}
+>
+  <FillImage
+    src={hero.images.buildingOther}
+    alt=""
+    cropTop={-21.09}
+    cropLeft={-227.72}
+    cropWidth={467.33}
+    cropHeight={144.11}
+  />
+</div>
+
+<div
+  class="absolute overflow-hidden pointer-events-none building-glow"
+  data-building="pulse"
+  style={canvasStyle({
+    x: 731.72,
+    y: 438.47,
+    width: 418.927,
+    height: 617.494,
+    rotation: -1.26,
+  })}
+>
+  <FillImage
+    src={hero.images.buildingPulse}
+    alt=""
+    cropTop={-13.65}
+    cropLeft={-15.49}
+    cropWidth={272.83}
+    cropHeight={128.63}
+  />
+</div>
+
+<div
+  class="absolute overflow-hidden pointer-events-none"
+  style={canvasStyle({ x: 31, y: 389, width: 962, height: 668 })}
+  data-anim="portrait"
+>
+  <Image
+    src={hero.images.scene}
+    alt={hero.images.sceneAlt}
+    class="h-full w-full object-cover"
+  />
+</div>
+
+<ArtAsset svg={accent} natural={{ w: 72.8821, h: 112 }} x={983} y={537.57} />
+
+<div
+  class="absolute overflow-hidden pointer-events-none building-glow"
+  data-building="hackduke"
+  style={canvasStyle({ x: 944, y: 747, width: 435, height: 298 })}
+>
+  <Image
+    src={hero.images.buildingHackduke}
+    alt=""
+    class="h-full w-full object-cover"
+  />
+</div>
+
+<style>
+  .building-glow {
+    transition: filter 0.4s ease;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  .building-glow.is-glowing {
+    filter: drop-shadow(0 0 18px var(--color-cream))
+      drop-shadow(0 0 36px var(--color-gold))
+      brightness(1.08);
+  }
+</style>

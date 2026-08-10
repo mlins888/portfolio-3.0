@@ -3,6 +3,7 @@ import "../styles/global.css";
 
 import Nav from "../components/Nav.astro";
 import ScrollRocket from "../components/ScrollRocket.astro";
+import SiteFooter from "../components/SiteFooter.astro";
 import { site } from "../content/site";
 
 interface Props {
@@ -31,7 +32,7 @@ const isHome = Astro.url.pathname === "/";
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Lakki+Reddy&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Lakki+Reddy&family=Signika+Negative:wght@300;400;600&display=swap"
     />
 
     <!-- Marks the document as scripted before first paint, so entrance
@@ -45,5 +46,6 @@ const isHome = Astro.url.pathname === "/";
     <Nav />
     <ScrollRocket />
     <slot />
+    <SiteFooter />
   </body>
 </html>

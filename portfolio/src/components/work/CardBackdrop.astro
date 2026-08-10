@@ -1,0 +1,77 @@
+---
+/**
+ * The two overlapping accent shapes behind a case-study card's photo frame,
+ * positioned as a percentage of the frame's own box (so they scale with the
+ * responsive frame). These are the real exported Figma vectors per card —
+ * the two cards' backdrops are genuinely different shapes, not a mirrored
+ * pair, so each gets its own explicit layer list rather than one generic
+ * cluster.
+ */
+import shapePulseA from "../../assets/decor/card-shape-pulse-a.svg";
+import shapePulseB from "../../assets/decor/card-shape-pulse-b.svg";
+import shapeHackdukeA from "../../assets/decor/card-shape-hackduke-a.svg";
+import shapeHackdukeB from "../../assets/decor/card-shape-hackduke-b.svg";
+
+export type CardBackdropVariant = "pulse" | "hackduke";
+
+interface Layer {
+  svg: any;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  transform?: string;
+}
+
+// Percentages are each layer's box relative to the card's photo-frame box,
+// matching the two exported Vector shapes' Figma coordinates exactly.
+const LAYERS: Record<CardBackdropVariant, Layer[]> = {
+  pulse: [
+    { svg: shapePulseB, left: -20.58, top: -20.97, width: 130.38, height: 137.94, transform: "rotate(-11.88deg)" },
+    { svg: shapePulseA, left: -16.72, top: -19.84, width: 133.86, height: 145.4 },
+  ],
+  // Figma/Tailwind compose a "-scale-y flex rotate-[X]" pair as
+  // `rotate(X) scaleY(-1)` (rotate applies before scale) — these were
+  // previously written scale-then-rotate, which is the wrong order and
+  // renders a differently-shaped result for a non-180°/0° angle.
+  hackduke: [
+    { svg: shapeHackdukeB, left: 15.25, top: -68.55, width: 73.36, height: 225, transform: "rotate(-93.43deg) scaleY(-1)" },
+    { svg: shapeHackdukeA, left: 4.71, top: -24.51, width: 110.27, height: 161.29, transform: "rotate(-172.8deg) scaleY(-1)" },
+  ],
+};
+
+interface Props {
+  variant: CardBackdropVariant;
+  class?: string;
+}
+
+const { variant, class: className } = Astro.props;
+const layers = LAYERS[variant];
+---
+
+<div class:list={["card-backdrop", className]} aria-hidden="true">
+  {
+    layers.map((layer) => {
+      const Svg = layer.svg;
+      return (
+        <Svg
+          class="card-backdrop__layer"
+          style={`left:${layer.left}%; top:${layer.top}%; width:${layer.width}%; height:${layer.height}%;${layer.transform ? ` transform:${layer.transform};` : ""}`}
+        />
+      );
+    })
+  }
+</div>
+
+<style>
+  .card-backdrop {
+    position: absolute;
+    inset: 0;
+  }
+
+  .card-backdrop :global(.card-backdrop__layer) {
+    position: absolute;
+    max-width: none;
+    pointer-events: none;
+  }
+</style>

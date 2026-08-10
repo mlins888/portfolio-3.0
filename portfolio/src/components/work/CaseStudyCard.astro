@@ -1,0 +1,212 @@
+---
+/**
+ * One case-study unit: eyebrow pills + text panel + image panel + shape cluster.
+ * The whole card (image + shapes) is one link. Optional `videoSrc` is a future
+ * hover-playback seam — not wired yet.
+ */
+import { Image } from "astro:assets";
+import type { CaseStudy } from "../../content/work";
+import PillBadge from "../PillBadge.astro";
+import CardBackdrop from "./CardBackdrop.astro";
+
+interface Props {
+  study: CaseStudy;
+}
+
+const { study } = Astro.props;
+const imageRight = study.layout === "image-right";
+---
+
+<article
+  class:list={[
+    "case-card",
+    imageRight ? "case-card--image-right" : "case-card--image-left",
+  ]}
+  id={study.id}
+  data-case-card
+  data-fold={study.fold}
+  data-anim="case-card"
+>
+  <div class="case-card__pills">
+    {study.pills.map((pill) => <PillBadge label={pill.label} tone={pill.tone} />)}
+  </div>
+
+  <div class="case-card__stage">
+    <div class="case-card__text" data-case-text>
+      <h3 class="case-card__title font-body font-semibold">{study.title}</h3>
+      <p class="case-card__role font-body font-light">{study.role}</p>
+      <p class="case-card__desc font-body font-light">{study.description}</p>
+    </div>
+
+    <a
+      class="case-card__media"
+      href={study.href}
+      data-case-media
+      aria-label={`${study.title} — view case study`}
+    >
+      <CardBackdrop
+        variant={study.id === "hackduke" ? "hackduke" : "pulse"}
+        class="case-card__shapes"
+      />
+
+      <div class="case-card__frame">
+        {
+          study.videoSrc ? (
+            <video
+              class="case-card__asset"
+              src={study.videoSrc}
+              muted
+              playsinline
+              loop
+              preload="metadata"
+              data-case-video
+              aria-hidden="true"
+            />
+          ) : null
+        }
+        <Image
+          class="case-card__asset"
+          src={study.image}
+          alt={study.imageAlt}
+          widths={[480, 720, 960]}
+          sizes="(min-width: 900px) 40vw, 90vw"
+        />
+      </div>
+    </a>
+  </div>
+</article>
+
+<style>
+  .case-card {
+    position: relative;
+    scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
+  }
+
+  .case-card__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .case-card--image-left .case-card__pills {
+    justify-content: flex-end;
+  }
+
+  .case-card__stage {
+    position: relative;
+    display: grid;
+    align-items: center;
+  }
+
+  @media (min-width: 900px) {
+    .case-card__stage {
+      grid-template-columns: 1fr 1fr;
+      min-height: 28rem;
+    }
+  }
+
+  .case-card__text {
+    position: relative;
+    z-index: 1;
+    background: var(--color-paper);
+    border: 12px solid var(--color-ink);
+    border-radius: 57px;
+    padding: clamp(1.5rem, 3vw, 2.75rem) clamp(1.5rem, 3.5vw, 3.5rem);
+    color: var(--color-ink);
+  }
+
+  .case-card__title {
+    font-size: clamp(1.75rem, 3.2vw, 3.125rem);
+    line-height: 0.95;
+    margin: 0 0 0.4rem;
+  }
+
+  .case-card__role {
+    font-size: clamp(1.25rem, 2.4vw, 2.5rem);
+    line-height: 0.95;
+    margin: 0 0 1.25rem;
+  }
+
+  .case-card__desc {
+    font-size: clamp(1.1rem, 2vw, 2.25rem);
+    line-height: 1.05;
+    margin: 0;
+    max-width: 22ch;
+  }
+
+  .case-card--image-left .case-card__text {
+    text-align: right;
+  }
+
+  .case-card--image-left .case-card__desc {
+    margin-left: auto;
+  }
+
+  .case-card__media {
+    position: relative;
+    z-index: 2;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .case-card__shapes {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .case-card__frame {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: 12px solid var(--color-ink);
+    border-radius: 43px;
+    background: #d9d9d9;
+    aspect-ratio: 4 / 3;
+  }
+
+  .case-card__asset {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .case-card__frame video.case-card__asset {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (min-width: 900px) {
+    .case-card--image-right .case-card__text {
+      grid-column: 1;
+      grid-row: 1;
+      width: 115%;
+      margin-right: -15%;
+    }
+
+    .case-card--image-right .case-card__media {
+      grid-column: 2;
+      grid-row: 1;
+      margin-left: -8%;
+    }
+
+    .case-card--image-left .case-card__media {
+      grid-column: 1;
+      grid-row: 1;
+      margin-right: -8%;
+    }
+
+    .case-card--image-left .case-card__text {
+      grid-column: 2;
+      grid-row: 1;
+      width: 115%;
+      margin-left: -15%;
+    }
+  }
+</style>

@@ -4,12 +4,16 @@
  * mirrors the Figma frame, so the x / y / size numbers below are the same ones
  * shown in Figma's inspector (see ./canvas.ts). Children appear in Figma's
  * layer order — later siblings paint on top.
+ *
+ * Building hotspots smooth-scroll to Work anchors; SpeechBubble only mounts
+ * while a building is hovered. The display name uses data-site-brand so Nav can
+ * Flip it into the header on scroll.
  */
 import { hero } from "../../content/hero";
+import { work } from "../../content/work";
 import { CANVAS, canvasStyle, css, u } from "./canvas";
 
-import GeometricCluster from "./GeometricCluster.astro";
-import HeroPortrait from "./HeroPortrait.astro";
+import HeroCityscape from "./HeroCityscape.astro";
 import LogoBadge from "./LogoBadge.astro";
 import Sparkle from "./Sparkle.astro";
 import SpeechBurst from "./SpeechBurst.astro";
@@ -27,13 +31,6 @@ import Starburst from "./Starburst.astro";
     <!-- The striped ribbon and rocket are the site's scroll progress bar —
          they live in components/ScrollRocket.astro, fixed under the nav. -->
 
-    <HeroPortrait
-      x={-21}
-      y={363}
-      illustration={hero.images.portrait}
-      alt={hero.images.portraitAlt}
-    />
-
     <p
       class="absolute text-center font-script text-white"
       style={css({ left: u(260), top: u(83), width: u(400), fontSize: u(32), lineHeight: "0.91" })}
@@ -42,28 +39,71 @@ import Starburst from "./Starburst.astro";
       {hero.greeting}
     </p>
 
-    <h1
-      class="hero-name absolute text-center font-display uppercase text-cream"
-      style={css({ left: u(352), top: u(111), width: u(713), fontSize: u(130), lineHeight: "0.91" })}
+    <!-- Brand slot: Flip moves this same node into the nav bar on scroll. -->
+    <div
+      class="hero-brand-slot absolute"
+      style={css({ left: u(352), top: u(111), width: u(713) })}
+      data-brand-home
     >
-      {hero.nameLines.map((line) => <span class="block" data-anim="headline-line">{line}</span>)}
-    </h1>
+      <h1
+        class="hero-name text-center font-display uppercase text-cream"
+        style={css({ fontSize: u(130), lineHeight: "0.91", width: "100%" })}
+        data-site-brand
+      >
+        {hero.nameLines.map((line) => (
+          <span class="block" data-anim="headline-line">
+            {line}
+          </span>
+        ))}
+      </h1>
+    </div>
 
     <StampBadge x={80} y={229} date={hero.stamp.date} price={hero.stamp.price} />
 
     <SpeechBurst x={1059} y={60} text={hero.tagline} />
 
+    <HeroCityscape />
+
+    <!-- Stars paint after the cityscape so they sit in front of the
+         character/scene artwork, matching Figma's real layer order (the
+         scene image is a transparent cutout, not an opaque background). -->
     <Sparkle variant="a" x={401} y={430} size={78} />
-    <Sparkle variant="b" x={709} y={787} size={63} />
-    <Sparkle variant="c" x={741} y={709} size={104} />
-    <Sparkle variant="c" x={1177} y={447} size={104} />
-    <Sparkle variant="d" x={1262} y={405} size={57} />
+    <Sparkle variant="b" x={781} y={520} size={63} idleDelay={0.45} />
+    <Sparkle variant="c" x={813} y={442} size={104} idleDelay={0.9} />
+    <Sparkle variant="a" x={1059} y={638} size={73} idleDelay={1.35} />
+    <Sparkle variant="d" x={1202} y={434} size={57} idleDelay={1.8} />
 
-    <Starburst variant="large" x={415} y={364.66} size={268.107} />
+    <Starburst variant="large" x={-92} y={745} size={268.107} />
 
-    <GeometricCluster x={704} y={479} />
+    <LogoBadge x={58} y={71} width={163} height={153} logo={hero.images.cornerCat} alt={hero.images.cornerCatAlt} />
 
-    <LogoBadge x={57} y={53} logo={hero.images.logo} alt={hero.images.logoAlt} />
+    <!-- Building hotspots — invisible hit targets over the comic buildings. -->
+    <div class="building-hotspots" data-building-hotspots>
+      {
+        work.buildingHotspots.map((spot) => (
+          <button
+            type="button"
+            class="building-hotspot"
+            style={canvasStyle({
+              x: spot.x,
+              y: spot.y,
+              width: spot.width,
+              height: spot.height,
+            })}
+            data-building-hotspot
+            data-id={spot.id}
+            data-target={spot.target}
+            data-prompt={spot.prompt}
+            data-x={spot.x}
+            data-y={spot.y}
+            data-width={spot.width}
+            data-height={spot.height}
+            aria-label={spot.prompt}
+          />
+        ))
+      }
+      <div class="building-bubble-host" data-bubble-host></div>
+    </div>
   </div>
 </section>
 
@@ -81,14 +121,55 @@ import Starburst from "./Starburst.astro";
     --u: calc(100cqw / var(--canvasW));
   }
 
+  .hero-brand-slot {
+    z-index: 5;
+  }
+
   .hero-name {
+    margin: 0;
     text-shadow:
       calc(10 * var(--u)) calc(8 * var(--u)) 0 var(--color-ink),
       calc(17 * var(--u)) calc(8 * var(--u)) 0 var(--color-ink);
+  }
 
-    /* Uncomment for the coral keyline around the lettering. Only needed while
-       standing in for 'Louvre', which carries its own inline detail. */
-    /* -webkit-text-stroke: calc(2 * var(--u)) var(--color-coral); */
+  .hero-name.is-in-nav {
+    text-shadow: 2px 2px 0 var(--color-ink);
+    text-align: left;
+    font-size: clamp(1.05rem, 2.2vw, 1.45rem);
+    letter-spacing: 0.02em;
+    line-height: 1;
+    width: auto;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .hero-name.is-in-nav span {
+    display: inline;
+  }
+
+  .hero-name.is-in-nav span + span::before {
+    content: " ";
+  }
+
+  .building-hotspot {
+    z-index: 8;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 1rem;
+  }
+
+  .building-hotspot:focus-visible {
+    outline: 3px solid var(--color-cream);
+    outline-offset: 4px;
+  }
+
+  .building-bubble-host {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9;
   }
 </style>
 
@@ -134,18 +215,92 @@ import Starburst from "./Starburst.astro";
 
       revealUnclaimed(root, [...portrait, ...greeting, ...headline, ...burst, ...twinkles]);
     }
+
+    // Building hotspot → smooth scroll + SpeechBubble on hover
+    const host = root.querySelector("[data-bubble-host]");
+    const hotspots = root.querySelectorAll("[data-building-hotspot]");
+
+    /** @type {HTMLElement | null} */
+    let activeBubble = null;
+    /** @type {HTMLElement | null} */
+    let activeHotspot = null;
+
+    function setGlow(hotspot, active) {
+      const id = hotspot?.getAttribute("data-id");
+      if (!id) return;
+      const building = root.querySelector(`[data-building="${id}"]`);
+      building?.classList.toggle("is-glowing", active);
+    }
+
+    function clearBubble() {
+      activeBubble?.remove();
+      activeBubble = null;
+      setGlow(activeHotspot, false);
+      activeHotspot = null;
+    }
+
+    function showBubble(hotspot) {
+      if (!host) return;
+      if (activeHotspot === hotspot) return;
+      clearBubble();
+      activeHotspot = hotspot;
+      setGlow(hotspot, true);
+
+      const prompt = hotspot.getAttribute("data-prompt") || "";
+      const spotX = Number(hotspot.getAttribute("data-x")) || 0;
+      const spotY = Number(hotspot.getAttribute("data-y")) || 0;
+      const spotWidth = Number(hotspot.getAttribute("data-width")) || 0;
+
+      const bubbleWidth = 220;
+      const bubbleHeight = 200;
+      // Center the bubble over the building and let its bottom tip overlap
+      // the building's top edge, instead of floating a fixed distance above it.
+      const overlap = 110;
+
+      const bubble = document.createElement("div");
+      bubble.className = "speech-bubble hover-waver pointer-events-none origin-center absolute";
+      bubble.setAttribute("data-speech-bubble", "");
+      bubble.setAttribute("role", "tooltip");
+      bubble.style.left = `calc(${spotX + spotWidth / 2 - bubbleWidth / 2} * var(--u, 1px))`;
+      bubble.style.top = `calc(${spotY - bubbleHeight + overlap} * var(--u, 1px))`;
+      bubble.style.width = `calc(${bubbleWidth} * var(--u, 1px))`;
+      bubble.style.height = `calc(${bubbleHeight} * var(--u, 1px))`;
+      bubble.style.setProperty("--waver-base", "-7.24deg");
+
+      bubble.innerHTML = `
+        <span class="block h-full w-full">
+          <svg class="block h-full w-full" viewBox="0 0 276.673 259.138" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M138.336 6C211.423 6 270.673 56.5625 270.673 118.935C270.673 150.014 255.96 178.161 232.155 198.581C234.354 218.359 242.755 246.34 265.062 253.414L179.139 226.398C166.287 229.95 152.574 231.869 138.336 231.869C65.2487 231.869 6 181.307 6 118.935C6.00005 56.5626 65.2488 6.00022 138.336 6Z" fill="var(--color-cream)"/>
+            <path d="M138.336 6V0H138.336L138.336 6ZM270.673 118.935H276.673V118.935L270.673 118.935ZM232.155 198.581L228.249 194.027L225.842 196.092L226.192 199.244L232.155 198.581ZM265.062 253.414L263.262 259.138L266.875 247.695L265.062 253.414ZM179.139 226.398L180.938 220.675L179.248 220.143L177.541 220.615L179.139 226.398ZM138.336 231.869L138.336 237.869H138.336V231.869ZM6 118.935L0 118.935V118.935H6ZM138.336 6V12C209.037 12 264.673 60.7332 264.673 118.935L270.673 118.935L276.673 118.935C276.673 52.3918 213.81 0 138.336 0V6ZM270.673 118.935H264.673C264.673 148.026 250.916 174.582 228.249 194.027L232.155 198.581L236.062 203.135C261.004 181.739 276.673 152.003 276.673 118.935H270.673ZM232.155 198.581L226.192 199.244C227.34 209.568 230.12 222.254 235.699 233.44C241.276 244.622 249.99 254.929 263.248 259.133L265.062 253.414L266.875 247.695C257.827 244.825 251.186 237.605 246.437 228.084C241.69 218.565 239.17 207.372 238.119 197.918L232.155 198.581ZM265.062 253.414L266.861 247.69L180.938 220.675L179.139 226.398L177.339 232.122L263.262 259.138L265.062 253.414ZM179.139 226.398L177.541 220.615C165.21 224.022 152.034 225.869 138.336 225.869V231.869V237.869C153.113 237.869 167.364 235.877 180.737 232.182L179.139 226.398ZM138.336 231.869L138.336 225.869C67.635 225.869 12 177.136 12 118.935H6H0C0 185.477 62.8624 237.869 138.336 237.869L138.336 231.869ZM6 118.935L12 118.935C12 60.7333 67.6351 12.0002 138.336 12L138.336 6L138.336 0C62.8624 0.000229359 5.53131e-05 52.392 0 118.935L6 118.935Z" fill="black"/>
+          </svg>
+        </span>
+        <div class="absolute inset-0 flex items-center justify-center px-[12%]" style="padding-bottom:calc(28 * var(--u, 1px))">
+          <p class="text-center font-script text-ink" style="font-size:calc(26 * var(--u, 1px));line-height:0.95">${prompt}</p>
+        </div>
+      `;
+
+      host.appendChild(bubble);
+      activeBubble = bubble;
+    }
+
+    hotspots.forEach((hotspot) => {
+      hotspot.addEventListener("pointerenter", () => showBubble(hotspot));
+      hotspot.addEventListener("pointerleave", clearBubble);
+      hotspot.addEventListener("focus", () => showBubble(hotspot));
+      hotspot.addEventListener("blur", clearBubble);
+      hotspot.addEventListener("click", () => {
+        const target = hotspot.getAttribute("data-target");
+        if (!target) return;
+        if (prefersReducedMotion()) {
+          document.querySelector(target)?.scrollIntoView();
+          return;
+        }
+        gsap.to(window, {
+          duration: 1.05,
+          ease: EASE.glide,
+          scrollTo: { y: target, offsetY: 72 },
+        });
+      });
+    });
   }
-
-  /* ── HOOK: hand-drawn "the line draws itself" pass ────────────────────────
-     Once the final line-art illustrations are ready, replace the portrait fade
-     above with a stroke-drawing reveal. That needs the artwork inline as SVG
-     (swap <Image> for an SVG import in HeroPortrait.astro) and DrawSVGPlugin,
-     which is part of a GSAP Club membership:
-
-       import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
-       gsap.registerPlugin(DrawSVGPlugin);
-       tl.from('[data-anim="portrait"] path', { drawSVG: "0%", stagger: 0.04, duration: 1.4 }, 0);
-
-     The same treatment suits the starburst rays and the speech burst outline.
-  ────────────────────────────────────────────────────────────────────────── */
 </script>

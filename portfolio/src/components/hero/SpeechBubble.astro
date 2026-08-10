@@ -1,0 +1,47 @@
+---
+/**
+ * Empty oval speech bubble used as a hover callout over hero building hotspots.
+ * Does not render unless `text` is provided (parent mounts/unmounts on hover).
+ *
+ * Hover-triggered waver animation is separate from SpeechBurst's idle wobble.
+ */
+import ArtAsset from "./ArtAsset.astro";
+import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+
+import speechBubble from "../../assets/decor/speech-bubble.svg";
+
+interface Props extends CanvasBox {
+  text: string;
+  textSize?: number;
+  class?: string;
+}
+
+const { text, textSize = 28, class: className, rotation = -7.24, ...box } = Astro.props;
+const width = box.width ?? 265;
+const height = box.height ?? 247;
+---
+
+<div
+  class:list={["speech-bubble hover-waver pointer-events-none origin-center", className]}
+  style={`${canvasStyle({ ...box, width, height })}; --waver-base: ${rotation}deg;`}
+  data-speech-bubble
+  role="tooltip"
+>
+  <ArtAsset
+    svg={speechBubble}
+    natural={{ w: 276.673, h: 259.138 }}
+    size={width}
+    color="var(--color-cream)"
+  />
+  <div
+    class="absolute inset-0 flex items-center justify-center px-[12%]"
+    style={css({ paddingBottom: u(28) })}
+  >
+    <p
+      class="text-center font-script text-ink"
+      style={css({ fontSize: u(textSize), lineHeight: "0.95" })}
+    >
+      {text}
+    </p>
+  </div>
+</div>

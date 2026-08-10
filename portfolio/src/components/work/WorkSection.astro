@@ -1,0 +1,151 @@
+---
+/**
+ * Homepage Work section — case studies, other-project panels, playground CTA.
+ */
+import { work } from "../../content/work";
+import CaseStudyCard from "./CaseStudyCard.astro";
+import OtherProjectsScene from "./OtherProjectsScene.astro";
+---
+
+<section
+  id="work"
+  class="work-section scroll-mt-[var(--nav-offset)]"
+  aria-label="Selected work"
+  data-work
+>
+  <div class="work-section__band">
+    <div class="work-section__inner">
+      {
+        work.caseStudies.map((study) => (
+          <CaseStudyCard study={study} />
+        ))
+      }
+
+      <div id="other-projects" class="other-projects" data-other-projects>
+        <OtherProjectsScene />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .work-section {
+    position: relative;
+    background: var(--color-paper);
+    padding-inline: clamp(0.75rem, 2.5vw, 2.5rem);
+    padding-bottom: 0;
+  }
+
+  .work-section__band {
+    background: var(--color-coral);
+    border-radius: 0;
+    padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 3vw, 2.5rem) 0;
+  }
+
+  .work-section__inner {
+    max-width: 72rem;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4rem, 10vw, 8rem);
+  }
+
+  .other-projects {
+    position: relative;
+    scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
+    margin-inline: calc(-1 * clamp(1rem, 3vw, 2.5rem));
+    background: var(--color-paper);
+    /* Coral wedges top + bottom to match the work-2 wireframe frame. Kept
+       shallow so the diagonal doesn't eat into the canvas content, which is
+       positioned all the way out to its real Figma edges. */
+    clip-path: polygon(
+      0 1.25rem,
+      100% 0,
+      100% calc(100% - 1.25rem),
+      0 100%
+    );
+    box-shadow:
+      0 -1.25rem 0 var(--color-coral),
+      0 1.25rem 0 var(--color-coral);
+  }
+
+</style>
+
+<script>
+  import {
+    gsap,
+    ScrollTrigger,
+    EASE,
+    prefersReducedMotion,
+    showAll,
+    targets,
+  } from "../../scripts/gsap-setup.js";
+
+  const root = document.querySelector("[data-work]");
+  if (!root) throw new Error("work section missing");
+
+  if (prefersReducedMotion()) {
+    showAll(root);
+  } else {
+    const cards = targets(root, "case-card");
+
+    cards.forEach((card, i) => {
+      gsap.fromTo(
+        card,
+        { opacity: 0, scale: 0.86, rotate: i % 2 === 0 ? -3.5 : 3.5 },
+        {
+          opacity: 1,
+          scale: 1,
+          rotate: 0,
+          duration: 0.85,
+          ease: EASE.pop,
+          scrollTrigger: {
+            trigger: card,
+            start: "top 82%",
+            toggleActions: "play none none reverse",
+          },
+        },
+      );
+
+      const text = card.querySelector("[data-case-text]");
+      const media = card.querySelector("[data-case-media]");
+      const fold = card.getAttribute("data-fold");
+      if (!text || !media) return;
+
+      const tuckX = fold === "left" ? "-42%" : "42%";
+
+      // Text starts tucked out of view; scrolling the card into the viewport
+      // slides it out so it's readable, and scrolling it fully past (either
+      // direction) tucks it back away.
+      gsap.set(text, { x: tuckX });
+
+      function reveal() {
+        gsap.to(text, { x: 0, duration: 0.55, ease: EASE.glide, overwrite: "auto" });
+        gsap.to(media, { scale: 1, rotate: 0, duration: 0.55, ease: EASE.glide, overwrite: "auto" });
+      }
+
+      function tuck() {
+        gsap.to(text, { x: tuckX, duration: 0.55, ease: EASE.glide, overwrite: "auto" });
+        gsap.to(media, {
+          scale: 1.04,
+          rotate: fold === "left" ? 2 : -2,
+          duration: 0.55,
+          ease: EASE.pop,
+          overwrite: "auto",
+        });
+      }
+
+      ScrollTrigger.create({
+        trigger: card,
+        start: "top bottom",
+        end: "bottom top",
+        onEnter: reveal,
+        onLeave: tuck,
+        onEnterBack: reveal,
+        onLeaveBack: tuck,
+      });
+    });
+
+    ScrollTrigger.refresh();
+  }
+</script>

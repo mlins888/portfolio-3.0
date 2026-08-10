@@ -1,51 +1,29 @@
 ---
 /**
- * Circular logo badge sitting on its own cream plate, tilted slightly like a
- * pasted-on sticker. The mark itself is a swappable image reference.
+ * Corner cat mark, cropped from the shared hand-drawn illustration canvas
+ * (see FillImage for why this is a crop rather than a standalone file).
  */
-import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
-
-import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+import FillImage from "../FillImage.astro";
+import { canvasStyle, type CanvasBox } from "./canvas";
 
 interface Props extends CanvasBox {
   logo: ImageMetadata;
   alt: string;
-  /** Tilt of the mark, in degrees. */
-  tilt?: number;
   class?: string;
 }
 
-const { logo, alt, tilt = 4.76, class: className, ...box } = Astro.props;
+const { logo, alt, class: className, ...box } = Astro.props;
 ---
 
 <div class:list={[className]} style={canvasStyle(box)} data-logo>
-  <div
-    class="absolute bg-cream"
-    style={css({ left: u(23), top: u(15), width: u(126), height: u(149) })}
-  >
-  </div>
-
-  <div
-    class="absolute overflow-hidden"
-    style={css({
-      left: u(6.772),
-      top: u(6.02),
-      width: u(152.044),
-      height: u(169.432),
-      transform: `rotate(${tilt}deg)`,
-    })}
-  >
-    <Image
-      src={logo}
-      alt={alt}
-      class="absolute max-w-none"
-      style={css({
-        left: "-28.84%",
-        top: "-51.88%",
-        width: "208.39%",
-        height: "269.1%",
-      })}
-    />
-  </div>
+  <div class="absolute inset-0 bg-cream" aria-hidden="true"></div>
+  <FillImage
+    src={logo}
+    alt={alt}
+    cropTop={-198.96}
+    cropLeft={-58.18}
+    cropWidth={229.37}
+    cropHeight={349.63}
+  />
 </div>

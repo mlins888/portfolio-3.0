@@ -1,14 +1,9 @@
 ---
 /**
  * The radiating-lines-with-dot-endpoints decoration. Site-wide, same as
- * <Sparkle>.
+ * <Sparkle>. Idle twinkle is baked in.
  *
  *   <Starburst variant="small" size={169} rotation={-43.66} />
- *
- * The ray count is part of the exported artwork rather than a prop: generating
- * rays procedurally would mean redrawing the illustration instead of using the
- * real one. Add a new variant here if you draw a starburst with a different
- * number of rays.
  */
 import ArtAsset from "./ArtAsset.astro";
 import type { CanvasBox } from "./canvas";
@@ -26,9 +21,15 @@ const ARTWORK: Record<
   small: { svg: starburstSmall, natural: { w: 169.026, h: 195.19 } },
 };
 
+const DEFAULT_DELAY: Record<StarburstVariant, number> = {
+  large: 0.3,
+  small: 0.85,
+};
+
 interface Props extends CanvasBox {
   variant?: StarburstVariant;
   size?: number;
+  idleDelay?: number;
   class?: string;
 }
 
@@ -36,6 +37,7 @@ const {
   variant = "large",
   size,
   color = "var(--color-cream)",
+  idleDelay,
   class: className,
   ...box
 } = Astro.props;
@@ -49,6 +51,9 @@ const { svg, natural } = ARTWORK[variant];
   size={size}
   color={color}
   anim="starburst"
+  idle="twinkle"
+  idleDelay={idleDelay ?? DEFAULT_DELAY[variant]}
+  idleDuration={variant === "large" ? 3.2 : 2.7}
   class={className}
   {...box}
 />

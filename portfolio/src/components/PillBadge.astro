@@ -1,0 +1,88 @@
+---
+/**
+ * Auto-sizing capsule badge, filled with the real halftone-dot pill texture
+ * from Figma. The source export was a giant shared master canvas (see
+ * FillImage), so the two pill tiles here are pre-cropped down to just the
+ * pill art itself (via scripts/ — see git history) and tiled horizontally.
+ * Tiling (rather than a percentage crop stretched to the box) is what makes
+ * this hold up at ANY label length: a crop calibrated for one aspect ratio
+ * drifts onto the wrong part of the source at another, but a repeating tile
+ * sized only by height always lines up.
+ */
+import type { PillTone } from "../content/work";
+
+import pillCoralTile from "../assets/decor/pill-coral-tile.png?url";
+import pillTealTile from "../assets/decor/pill-teal-tile.png?url";
+
+interface Props {
+  label: string;
+  tone?: PillTone;
+  href?: string;
+  class?: string;
+  size?: "md" | "lg";
+}
+
+const { label, tone = "teal", href, class: className, size = "md" } = Astro.props;
+
+const Tag = href ? "a" : "span";
+
+const TILE = {
+  coral: pillCoralTile,
+  teal: pillTealTile,
+} as const;
+---
+
+<Tag
+  class:list={["pill-badge font-script text-white", `pill-badge--${size}`, className]}
+  href={href}
+  data-pill-badge
+  style={`background-image: url(${TILE[tone]});`}
+>
+  <span class="pill-badge__label">{label}</span>
+</Tag>
+
+<style>
+  .pill-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: max-content;
+    /* Never let a flex parent (e.g. a canvas positioning slot sized to
+       Figma's original, narrower pill instance) shrink this below its own
+       content — the label would get clipped by overflow:hidden below. */
+    flex-shrink: 0;
+    border: 4px solid var(--color-ink);
+    border-radius: 999px;
+    overflow: hidden;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    background-repeat: repeat-x;
+    background-position: center;
+    background-size: auto 100%;
+  }
+
+  .pill-badge--md {
+    padding: 0.55rem 1.35rem;
+    font-size: clamp(1.25rem, 2.4vw, 2.5rem);
+  }
+
+  .pill-badge--lg {
+    padding: 0.7rem 1.75rem;
+    font-size: clamp(1.4rem, 2.6vw, 2.5rem);
+  }
+
+  .pill-badge__label {
+    position: relative;
+    z-index: 1;
+    display: block;
+    line-height: 1;
+    /* "Lakki Reddy" reports a much taller ascent than descent, so at
+       line-height:1 the browser's own vertical centering leaves the ink
+       sitting visibly high in the box. Nudge the rendered glyphs down by the
+       font's actual ascent/descent imbalance (measured empirically) rather
+       than the box itself, which is already centered correctly. */
+    transform: translateY(0.27em);
+  }
+</style>

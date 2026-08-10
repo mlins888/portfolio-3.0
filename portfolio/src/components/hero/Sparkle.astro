@@ -5,8 +5,7 @@
  *
  *   <Sparkle variant="c" size={104} rotation={12} color="var(--color-gold)" />
  *
- * The four variants are the four sparkles drawn in the Figma file; they differ
- * in proportion, not just scale, so they are kept as separate artwork.
+ * Idle twinkle is baked in (staggered via idleDelay) so every usage inherits it.
  */
 import ArtAsset from "./ArtAsset.astro";
 import type { CanvasBox } from "./canvas";
@@ -25,9 +24,19 @@ const ARTWORK: Record<SparkleVariant, { svg: any; natural: { w: number; h: numbe
   d: { svg: sparkleD, natural: { w: 57, h: 52 } },
 };
 
+/** Default stagger offsets so multiple sparkles don't pulse in sync. */
+const DEFAULT_DELAY: Record<SparkleVariant, number> = {
+  a: 0,
+  b: 0.45,
+  c: 0.9,
+  d: 1.35,
+};
+
 interface Props extends CanvasBox {
   variant?: SparkleVariant;
   size?: number;
+  /** Override idle stagger (seconds). */
+  idleDelay?: number;
   class?: string;
 }
 
@@ -35,6 +44,7 @@ const {
   variant = "a",
   size,
   color = "var(--color-cream)",
+  idleDelay,
   class: className,
   ...box
 } = Astro.props;
@@ -48,6 +58,9 @@ const { svg, natural } = ARTWORK[variant];
   size={size}
   color={color}
   anim="sparkle"
+  idle="twinkle"
+  idleDelay={idleDelay ?? DEFAULT_DELAY[variant]}
+  idleDuration={2.4 + DEFAULT_DELAY[variant] * 0.2}
   class={className}
   {...box}
 />

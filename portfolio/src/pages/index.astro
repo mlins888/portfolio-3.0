@@ -1,14 +1,10 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/hero/Hero.astro";
+import WorkSection from "../components/work/WorkSection.astro";
 ---
 
 <BaseLayout>
   <Hero />
-
-  <!-- WORK SECTION STARTS HERE -->
-  <!-- The placeholder height only exists to give the rocket something to fly
-       across; real content replaces it. -->
-  <section id="work" class="min-h-screen scroll-mt-[var(--nav-offset)]" aria-label="Selected work">
-  </section>
+  <WorkSection />
 </BaseLayout>

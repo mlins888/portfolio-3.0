@@ -3,6 +3,9 @@
  * Renders one exported SVG asset as inline SVG, sized and placed on the hero
  * canvas. Every decorative component wraps this so they all share the same
  * size / position / rotation / tint contract.
+ *
+ * When `idle` is set, the twinkle/wobble runs on an INNER wrapper so it never
+ * fights GSAP entrance animations on the outer [data-anim] node.
  */
 import { canvasStyle, fitWidth, type CanvasBox } from "./canvas";
 
@@ -15,6 +18,11 @@ interface Props extends CanvasBox {
   size?: number;
   /** Value for data-anim, which is how gsap-setup finds animatable elements. */
   anim?: string;
+  /** Built-in idle loop class (see global.css). */
+  idle?: "twinkle" | "wobble";
+  /** Stagger delay in seconds for the idle loop. */
+  idleDelay?: number;
+  idleDuration?: number;
   class?: string;
 }
 
@@ -27,10 +35,14 @@ const {
   rotation,
   color,
   anim,
+  idle,
+  idleDelay = 0,
+  idleDuration,
   class: className,
 } = Astro.props;
 
 const { width, height } = fitWidth(natural, size);
+const idleClass = idle === "twinkle" ? "idle-twinkle" : idle === "wobble" ? "idle-wobble" : undefined;
 ---
 
 <span
@@ -38,5 +50,16 @@ const { width, height } = fitWidth(natural, size);
   style={canvasStyle({ x, y, width, height, rotation, color })}
   data-anim={anim}
 >
-  <Svg class:list={["block h-full w-full", color && "svg-tint"]} />
+  {
+    idleClass ? (
+      <span
+        class={idleClass}
+        style={`--idle-delay: ${idleDelay}s;${idleDuration ? ` --idle-duration: ${idleDuration}s;` : ""}`}
+      >
+        <Svg class:list={["block h-full w-full", color && "svg-tint"]} />
+      </span>
+    ) : (
+      <Svg class:list={["block h-full w-full", color && "svg-tint"]} />
+    )
+  }
 </span>

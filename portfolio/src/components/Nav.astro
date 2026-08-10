@@ -1,8 +1,8 @@
 ---
 /**
- * Site header that starts hidden on the homepage and arrives as a shrunk
- * version of the hero masthead — coral bar, display-font name, nav links.
- * On other pages there's no hero to shrink from, so it shows immediately.
+ * Site header that starts hidden on the homepage and arrives as the hero
+ * masthead collapses. On home, the display name is a single Flip-shared
+ * instance that moves from the hero into this brand slot.
  */
 import { site } from "../content/site";
 import { hero } from "../content/hero";
@@ -23,9 +23,15 @@ function isCurrent(href: string) {
   data-home={isHome ? "true" : "false"}
 >
   <div class="site-header__bar">
-    <a href="/" class="site-header__brand font-display uppercase text-cream">
-      {brand}
-    </a>
+    <div class="site-header__brand-slot" data-brand-nav>
+      {
+        !isHome && (
+          <a href="/" class="site-header__brand font-display uppercase text-cream" data-site-brand>
+            {brand}
+          </a>
+        )
+      }
+    </div>
 
     <nav class="site-header__nav" aria-label="Main">
       <ul class="site-header__links">
@@ -79,13 +85,25 @@ function isCurrent(href: string) {
     box-shadow: 0 2px 0 var(--color-ink);
   }
 
-  .site-header__brand {
+  .site-header__brand-slot {
+    display: flex;
+    align-items: center;
+    min-height: 1.2em;
+    min-width: 8rem;
+  }
+
+  .site-header__brand,
+  .site-header__brand-slot :global([data-site-brand]) {
+    font-family: var(--font-display);
     font-size: clamp(1.05rem, 2.2vw, 1.45rem);
     letter-spacing: 0.02em;
     line-height: 1;
+    color: var(--color-cream);
     text-shadow: 2px 2px 0 var(--color-ink);
     white-space: nowrap;
     text-decoration: none;
+    text-transform: uppercase;
+    margin: 0;
   }
 
   .site-header__links {
@@ -113,13 +131,14 @@ function isCurrent(href: string) {
 </style>
 
 <script>
-  import { gsap, ScrollTrigger, prefersReducedMotion } from "../scripts/gsap-setup.js";
+  import { gsap, ScrollTrigger, Flip, prefersReducedMotion } from "../scripts/gsap-setup.js";
 
   const header = document.querySelector("[data-site-header]");
   if (!header) throw new Error("site header missing");
 
   const isHome = header.getAttribute("data-home") === "true";
   const root = document.documentElement;
+  const navSlot = header.querySelector("[data-brand-nav]");
 
   function setProgress(progress) {
     const p = Math.min(1, Math.max(0, progress));
@@ -135,7 +154,8 @@ function isCurrent(href: string) {
     setProgress(1);
   } else {
     const hero = document.querySelector("[data-hero]");
-    const name = hero?.querySelector(".hero-name");
+    const homeSlot = hero?.querySelector("[data-brand-home]");
+    const brand = document.querySelector("[data-site-brand]");
     const extras = [
       hero?.querySelector('[data-anim="greeting"]'),
       hero?.querySelector('[data-anim="burst"]'),
@@ -143,17 +163,86 @@ function isCurrent(href: string) {
       hero?.querySelector("[data-logo]"),
     ].filter(Boolean);
 
-    if (!hero) {
+    // Hero.astro writes the headline's canvas position/size as an INLINE
+    // style (fontSize/lineHeight/width in canvas units). That inline style
+    // beats any class-based CSS rule — including `.is-in-nav` — so without
+    // clearing it here the name renders at its full ~130px hero size no
+    // matter what class is on it, once it's sitting in the compact nav slot.
+    function moveBrandToNav() {
+      if (brand.dataset.heroStyle === undefined) {
+        brand.dataset.heroStyle = brand.getAttribute("style") || "";
+      }
+      brand.removeAttribute("style");
+      brand.classList.add("is-in-nav");
+      navSlot.appendChild(brand);
+    }
+
+    function moveBrandToHero() {
+      brand.classList.remove("is-in-nav");
+      if (brand.dataset.heroStyle) {
+        brand.setAttribute("style", brand.dataset.heroStyle);
+      }
+      homeSlot.appendChild(brand);
+    }
+
+    if (!hero || !homeSlot || !navSlot || !brand) {
       setProgress(1);
     } else if (prefersReducedMotion()) {
       const sync = () => {
         const rect = hero.getBoundingClientRect();
-        setProgress(rect.bottom < window.innerHeight * 0.4 ? 1 : 0);
+        const collapsed = rect.bottom < window.innerHeight * 0.4;
+        setProgress(collapsed ? 1 : 0);
+        if (collapsed && brand.parentElement !== navSlot) {
+          moveBrandToNav();
+        } else if (!collapsed && brand.parentElement !== homeSlot) {
+          moveBrandToHero();
+        }
       };
       sync();
       window.addEventListener("scroll", sync, { passive: true });
     } else {
       setProgress(0);
+
+      // Driven by a single desired state ("hero" | "nav") instead of one-shot
+      // onEnter/onLeaveBack callbacks: a quick scroll direction change during
+      // the 0.7s Flip animation used to get silently dropped (the `flipping`
+      // guard just returned early), permanently stranding the name in the
+      // wrong slot. Now a change mid-flight is queued and applied as soon as
+      // the current Flip finishes, so no scroll direction is ever lost.
+      let inNav = false;
+      let flipping = false;
+      let pendingState = null;
+
+      function applyState(target) {
+        if (flipping) {
+          pendingState = target;
+          return;
+        }
+        if ((target === "nav") === inNav) return;
+
+        flipping = true;
+        const state = Flip.getState(brand);
+        if (target === "nav") {
+          moveBrandToNav();
+        } else {
+          moveBrandToHero();
+        }
+        Flip.from(state, {
+          duration: 0.7,
+          ease: "power2.inOut",
+          absolute: true,
+          scale: true,
+          onComplete: () => {
+            inNav = target === "nav";
+            flipping = false;
+            if (pendingState !== null) {
+              const next = pendingState;
+              pendingState = null;
+              applyState(next);
+            }
+          },
+        });
+      }
 
       ScrollTrigger.create({
         trigger: hero,
@@ -163,38 +252,30 @@ function isCurrent(href: string) {
         onUpdate: (self) => setProgress(self.progress),
       });
 
-      if (name) {
+      ScrollTrigger.create({
+        trigger: hero,
+        start: "55% top",
+        end: "center top",
+        onEnter: () => applyState("nav"),
+        onLeaveBack: () => applyState("hero"),
+      });
+
+      if (extras.length) {
         gsap.fromTo(
-          name,
-          { scale: 1, yPercent: 0, opacity: 1 },
+          extras,
+          { opacity: 1, y: 0 },
           {
-            scale: 0.2,
-            yPercent: -35,
             opacity: 0,
-            transformOrigin: "50% 0%",
+            y: -24,
             ease: "none",
             scrollTrigger: {
               trigger: hero,
               start: "top top",
-              end: "center top",
-              scrub: 0.4,
+              end: "30% top",
+              scrub: true,
             },
           },
         );
-      }
-
-      if (extras.length) {
-        gsap.to(extras, {
-          opacity: 0,
-          y: -24,
-          ease: "none",
-          scrollTrigger: {
-            trigger: hero,
-            start: "top top",
-            end: "30% top",
-            scrub: true,
-          },
-        });
       }
 
       ScrollTrigger.refresh();

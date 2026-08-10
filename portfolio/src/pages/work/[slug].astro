@@ -1,0 +1,30 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { work } from "../../content/work";
+
+export function getStaticPaths() {
+  const slugs = [
+    ...work.caseStudies.map((s) => s.slug),
+    ...work.otherProjects.filter((p) => p.href).map((p) => p.href!.replace("/work/", "")),
+  ];
+  return [...new Set(slugs)].map((slug) => ({ params: { slug } }));
+}
+
+const { slug } = Astro.params;
+const study = work.caseStudies.find((s) => s.slug === slug);
+const other = work.otherProjects.find((p) => p.href === `/work/${slug}`);
+const title = study?.title ?? other?.title ?? slug;
+---
+
+<BaseLayout title={`${title} — Makenna Linsky`}>
+  <main class="mx-auto max-w-3xl px-6 py-24" style="padding-top: calc(var(--nav-offset) + 6rem)">
+    <p class="font-script text-coral mb-3">Case study</p>
+    <h1 class="font-display text-4xl uppercase">{title}</h1>
+    <p class="font-body mt-6 text-lg opacity-80">
+      Detail page stub — content coming in a future pass.
+    </p>
+    <p class="mt-8">
+      <a class="font-script text-coral underline" href="/#work">← Back to work</a>
+    </p>
+  </main>
+</BaseLayout>

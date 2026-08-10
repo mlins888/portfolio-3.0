@@ -1,0 +1,249 @@
+---
+/**
+ * The "see other projects" panel, reproduced at Figma's exact layout instead
+ * of a generic card grid: three tilted panels (Health Hound's phone mockup,
+ * two "Coming Soon" placeholders) each built from the real exported base +
+ * shading + ribbon shapes, positioned on a local 1440-wide canvas the same
+ * way Hero.astro lays out the comic cover (see hero/canvas.ts).
+ *
+ * Each project is a `.project-group` — a `display: contents` wrapper with no
+ * box of its own, so its children keep positioning directly against `.scene`
+ * (their real containing block) while still letting one `:hover`/
+ * `:focus-within` state drive both the shape's hover scale and the ribbon
+ * label's reveal.
+ */
+import { Image } from "astro:assets";
+import { canvasStyle, css, u } from "../hero/canvas";
+import Sparkle from "../hero/Sparkle.astro";
+import Starburst from "../hero/Starburst.astro";
+import PillBadge from "../PillBadge.astro";
+import { work } from "../../content/work";
+
+import HealthHoundBase from "../../assets/work/health-hound-panel-base.svg";
+import phoneMaskUrl from "../../assets/work/phone-mask.svg?url";
+import healthHoundPreview from "../../assets/work/health-hound-preview.png";
+import HealthHoundRibbon from "../../assets/work/health-hound-ribbon.svg";
+
+import ComingSoonABase from "../../assets/work/coming-soon-a-panel-base.svg";
+import ComingSoonAShading from "../../assets/work/coming-soon-a-shading.svg";
+import ComingSoonARibbon from "../../assets/work/coming-soon-a-ribbon.svg";
+
+import ComingSoonBBase from "../../assets/work/coming-soon-b-panel-base.svg";
+import ComingSoonBShading from "../../assets/work/coming-soon-b-shading.svg";
+import ComingSoonBRibbon from "../../assets/work/coming-soon-b-ribbon.svg";
+
+const CANVAS_W = 1440;
+const CANVAS_H = 1264;
+
+const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
+---
+
+<div class="scene" style={css({ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` })} data-other-projects-scene>
+  <p
+    class="absolute font-script text-cream"
+    style={css({ left: u(106), top: u(163), fontSize: u(40), lineHeight: "0.91" })}
+  >
+    {work.otherProjectsHeading}
+  </p>
+
+  <Starburst variant="large" x={1085} y={199} size={268.107} idleDelay={0.2} />
+  <Starburst variant="small" x={32} y={780.38} size={261.541} rotation={-38.47} idleDelay={0.5} />
+  <Sparkle variant="c" x={1131} y={543} size={104} idleDelay={0.8} />
+  <Sparkle variant="d" x={1216} y={501} size={57} idleDelay={1.1} />
+  <Sparkle variant="d" x={284} y={848} size={57} idleDelay={1.4} />
+
+  <!-- Health Hound panel -->
+  <div class="project-group" data-group="health-hound">
+    <a
+      class="panel-link"
+      href={healthHound?.href}
+      aria-label={healthHound?.title}
+      style={canvasStyle({ x: 195, y: 312, width: 402, height: 578 })}
+    >
+      <HealthHoundBase class="absolute block h-full w-full" />
+      <div
+        class="absolute overflow-hidden pointer-events-none"
+        style={canvasStyle({ x: 183 - 195, y: 311.6 - 312, width: 402.35, height: 578.43 })}
+      >
+        <div
+          class="h-full w-full"
+          style={`mask-image:url(${phoneMaskUrl}); -webkit-mask-image:url(${phoneMaskUrl}); mask-size:100% 100%; -webkit-mask-size:100% 100%; mask-repeat:no-repeat; -webkit-mask-repeat:no-repeat;`}
+        >
+          <Image src={healthHoundPreview} alt="" class="h-full w-full object-cover" />
+        </div>
+      </div>
+      <HealthHoundBase class="absolute block h-full w-full panel-outline" />
+    </a>
+    <div class="ribbon" style={canvasStyle({ x: 208, y: 675, width: 274, height: 121 })}>
+      <HealthHoundRibbon class="absolute block h-full w-full" />
+      <span class="ribbon__label font-script" style={css({ fontSize: u(30), transform: "rotate(4.78deg)" })}>
+        Health Hound
+      </span>
+    </div>
+  </div>
+
+  <!-- Coming Soon (orange) panel -->
+  <div class="project-group" data-group="coming-soon-a" tabindex="0" role="group" aria-label="Coming soon">
+    <div class="panel" style={canvasStyle({ x: 456, y: 221, width: 447, height: 679 })}>
+      <ComingSoonABase class="absolute block h-full w-full" />
+    </div>
+    <div class="panel" style={canvasStyle({ x: 475, y: 242.5, width: 399.5, height: 653 })}>
+      <ComingSoonAShading class="absolute block h-full w-full" />
+    </div>
+    <div class="ribbon" style={canvasStyle({ x: 621, y: 362.5, width: 274, height: 131.5, rotation: 180 })}>
+      <ComingSoonARibbon class="absolute block h-full w-full" style="transform: scaleY(-1);" />
+    </div>
+    <span
+      class="ribbon__label ribbon__label--floating font-script"
+      style={css({ left: u(728), top: u(410), width: u(230), fontSize: u(30), transform: "rotate(-10.55deg)" })}
+    >
+      Coming Soon
+    </span>
+  </div>
+
+  <!-- Coming Soon (teal) panel -->
+  <div class="project-group" data-group="coming-soon-b" tabindex="0" role="group" aria-label="Coming soon">
+    <div class="panel" style={canvasStyle({ x: 931, y: 181, width: 293, height: 751 })}>
+      <ComingSoonBBase class="absolute block h-full w-full" />
+    </div>
+    <div class="panel" style={canvasStyle({ x: 1018.5, y: 189, width: 200, height: 737 })}>
+      <ComingSoonBShading class="absolute block h-full w-full" />
+    </div>
+    <div class="ribbon" style={canvasStyle({ x: 946.5, y: 562.5, width: 203, height: 190 })}>
+      <ComingSoonBRibbon class="absolute block h-full w-full" />
+      <span class="ribbon__label font-script" style={css({ fontSize: u(30), transform: "rotate(14.57deg)" })}>
+        Coming Soon
+      </span>
+    </div>
+  </div>
+
+  <p
+    class="absolute font-script text-cream text-right"
+    style={css({ left: u(670), top: u(1080), width: u(230), fontSize: u(40), lineHeight: "0.91" })}
+  >
+    …or visit the
+  </p>
+  <div
+    class="absolute playground-pill-slot"
+    style={canvasStyle({ x: 959, y: 1038, width: 370, height: 95 })}
+  >
+    <PillBadge
+      label={work.playgroundCta.pill}
+      tone="teal"
+      href={work.playgroundCta.href}
+      size="lg"
+    />
+  </div>
+  <p
+    class="absolute font-script text-cream text-right"
+    style={css({ left: u(597), top: u(1178), width: u(724), fontSize: u(40), lineHeight: "0.91" })}
+  >
+    to see some of my other design pursuits
+  </p>
+</div>
+
+<style define:vars={{ canvasW: CANVAS_W, canvasH: CANVAS_H }}>
+  .scene {
+    position: relative;
+    container-type: inline-size;
+    width: 100%;
+    --u: calc(100cqw / var(--canvasW));
+  }
+
+  .project-group {
+    display: contents;
+  }
+
+  .panel-link,
+  .panel {
+    position: absolute;
+    display: block;
+    transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+    transform-origin: center;
+  }
+
+  .panel-link {
+    overflow: visible;
+  }
+
+  .project-group:hover .panel-link,
+  .project-group:focus-within .panel-link,
+  .project-group:hover .panel,
+  .project-group:focus-within .panel {
+    transform: scale(1.045) rotate(1.5deg);
+  }
+
+  /* Redraws just the panel's black outline on top of the masked photo, since
+     the photo layer otherwise sits exactly over the base shape's fill. */
+  .panel-link :global(.panel-outline path) {
+    fill: none !important;
+  }
+
+  .ribbon {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .ribbon__label {
+    position: relative;
+    z-index: 1;
+    color: var(--color-cream);
+    text-align: center;
+    line-height: 0.95;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .ribbon__label--floating {
+    position: absolute;
+  }
+
+  .project-group:hover .ribbon__label,
+  .project-group:focus-within .ribbon__label {
+    opacity: 1;
+  }
+
+  .project-group:focus-visible {
+    outline: none;
+  }
+
+  .playground-pill-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+
+<script>
+  import { gsap, prefersReducedMotion } from "../../scripts/gsap-setup.js";
+
+  const scene = document.querySelector("[data-other-projects-scene]");
+  if (scene) {
+    const decorated = scene.querySelectorAll("[data-anim]");
+    if (prefersReducedMotion()) {
+      gsap.set(decorated, { opacity: 1 });
+    } else {
+      gsap.set(decorated, { opacity: 0 });
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            gsap.to(entry.target.querySelectorAll("[data-anim]"), {
+              opacity: 1,
+              duration: 0.6,
+              stagger: 0.08,
+              ease: "power2.out",
+            });
+            io.disconnect();
+          });
+        },
+        { threshold: 0.15 },
+      );
+      io.observe(scene);
+    }
+  }
+</script>
