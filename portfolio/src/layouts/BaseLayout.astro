@@ -45,7 +45,27 @@ const isHome = Astro.url.pathname === "/";
   <body class="bg-paper font-script text-ink antialiased">
     <Nav />
     <ScrollRocket />
-    <slot />
+    <div class="page-content">
+      <slot />
+    </div>
     <SiteFooter />
   </body>
 </html>
+
+<style>
+  /* Sticky-footer pattern: on pages shorter than the viewport, this pushes
+     the footer down to the true bottom of the screen instead of leaving
+     bare page background beneath it. `min-height` (not `height`) so pages
+     taller than the viewport — like the homepage — still grow normally;
+     Nav/ScrollRocket are position:fixed, so they sit outside this flex
+     flow entirely and aren't affected. */
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  .page-content {
+    flex: 1 0 auto;
+  }
+</style>

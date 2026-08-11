@@ -8,8 +8,8 @@ export const footer = {
   catAlt: "Cat in an astronaut helmet",
   contacts: [
     { label: "LinkedIn", href: "https://www.linkedin.com/in/makenna-linsky/" },
-    { label: "GitHub", href: "https://github.com/makennalinsky" },
-    { label: "Email", href: "mailto:hello@makennalinsky.com" },
+    { label: "GitHub", href: "https://github.com/mlins888" },
+    { label: "Email", href: "mailto:Makenna@Linsky.net" },
     { label: "Resume", href: "/resume.pdf" },
   ],
   nav: [

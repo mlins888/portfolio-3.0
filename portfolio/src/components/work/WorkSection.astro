@@ -5,6 +5,7 @@
 import { work } from "../../content/work";
 import CaseStudyCard from "./CaseStudyCard.astro";
 import OtherProjectsScene from "./OtherProjectsScene.astro";
+import PillBadge from "../PillBadge.astro";
 ---
 
 <section
@@ -21,8 +22,28 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
         ))
       }
 
-      <div id="other-projects" class="other-projects" data-other-projects>
-        <OtherProjectsScene />
+      <!-- Heading + CTA sit on the surrounding coral background, not the
+           tan panel underneath — that panel is only for the three project
+           shapes, and cream-on-tan text was unreadable. -->
+      <div class="other-projects-group">
+        <p class="other-projects-heading font-script">
+          {work.otherProjectsHeading}
+        </p>
+
+        <div id="other-projects" class="other-projects" data-other-projects>
+          <OtherProjectsScene />
+        </div>
+
+        <p class="playground-cta font-script">
+          <span>{work.playgroundCta.before}</span>
+          <PillBadge
+            label={work.playgroundCta.pill}
+            tone="teal"
+            href={work.playgroundCta.href}
+            size="lg"
+          />
+          <span>{work.playgroundCta.after}</span>
+        </p>
       </div>
     </div>
   </div>
@@ -39,7 +60,7 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
   .work-section__band {
     background: var(--color-coral);
     border-radius: 0;
-    padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 3vw, 2.5rem) 0;
+    padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 3vw, 2.5rem) clamp(3rem, 8vw, 6rem);
   }
 
   .work-section__inner {
@@ -50,23 +71,91 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
     gap: clamp(4rem, 10vw, 8rem);
   }
 
+  .other-projects-group {
+    display: flex;
+    flex-direction: column;
+    margin-top: clamp(2rem, 5vw, 4rem);
+  }
+
+  .other-projects-heading {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+    line-height: 0.91;
+    margin: 0 0 -6rem;
+    padding-left: clamp(0rem, 1vw, 1rem);
+    padding-right: clamp(1rem, 3vw, 2.5rem);
+    color: var(--color-cream);
+  }
+
+  .playground-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem 0.85rem;
+    font-size: clamp(1.35rem, 2.6vw, 2.5rem);
+    line-height: 0.91;
+    margin: 1.75rem 0 0;
+    padding-inline: clamp(1rem, 3vw, 2.5rem);
+    text-align: right;
+    color: var(--color-cream);
+  }
+
+  /* Match the pill's vertical size to the surrounding line of text, and give
+     it the same "lifted card" hover treatment as the hero buildings (nudge
+     up-left, hard-edged gold silhouette shows through behind it). */
+  .playground-cta :global(.pill-badge) {
+    /* Lifts the badge above the text baseline it sits on, without moving
+       the surrounding text (the text's own box is untouched — this is a
+       visual-only offset via transform). */
+    --pill-lift: -0.52rem;
+    padding-block: 0.4rem;
+    line-height: 1.1;
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.35s ease;
+    transform: translateY(var(--pill-lift));
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  .playground-cta :global(.pill-badge):hover,
+  .playground-cta :global(.pill-badge):focus-visible {
+    transform: translate(-0.25rem, calc(var(--pill-lift) - 0.25rem));
+    filter: drop-shadow(0.25rem 0.25rem 0 var(--color-gold));
+  }
+
   .other-projects {
     position: relative;
     scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
     margin-inline: calc(-1 * clamp(1rem, 3vw, 2.5rem));
+  }
+
+  /* The tan panel + its diagonal cut live on a background pseudo-element
+     instead of directly on .other-projects — clip-path clips EVERY
+     descendant of the element it's set on, and the scene's sparkles/
+     starbursts are meant to poke out past the diagonal onto the coral
+     behind it. Moving the clipped shape here keeps the tan panel's edge
+     while leaving the real content (.scene and its decorations) unclipped. */
+  .other-projects::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     background: var(--color-paper);
-    /* Coral wedges top + bottom to match the work-2 wireframe frame. Kept
-       shallow so the diagonal doesn't eat into the canvas content, which is
-       positioned all the way out to its real Figma edges. */
+    /* Coral wedges top + bottom to match the work-2 wireframe frame — top
+       cut is inset on the left corner, bottom cut is inset on the LEFT
+       corner too (not the right), so the right edge runs full-height. */
     clip-path: polygon(
-      0 1.25rem,
+      0 12.25rem,
       100% 0,
-      100% calc(100% - 1.25rem),
-      0 100%
+      100% 100%,
+      0 calc(100% - 9.25rem)
     );
     box-shadow:
       0 -1.25rem 0 var(--color-coral),
       0 1.25rem 0 var(--color-coral);
+  }
+
+  .other-projects > :global(*) {
+    position: relative;
+    z-index: 1;
   }
 
 </style>
@@ -78,7 +167,6 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
     EASE,
     prefersReducedMotion,
     showAll,
-    targets,
   } from "../../scripts/gsap-setup.js";
 
   const root = document.querySelector("[data-work]");
@@ -87,11 +175,20 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
   if (prefersReducedMotion()) {
     showAll(root);
   } else {
-    const cards = targets(root, "case-card");
+    // Not targets(root, "case-card") — data-anim="case-card" now lives on
+    // the inner wrapper (see CaseStudyCard.astro), not this stable outer
+    // element that the tuck observer below needs to watch.
+    const cards = Array.from(root.querySelectorAll("[data-case-card]"));
 
     cards.forEach((card, i) => {
+      // Animated on the inner wrapper, not `card` itself — see the comment
+      // in CaseStudyCard.astro. `card` (the trigger, and what the tuck
+      // IntersectionObserver below watches) needs to stay geometrically
+      // stable the whole time.
+      const inner = card.querySelector("[data-case-inner]") || card;
+
       gsap.fromTo(
-        card,
+        inner,
         { opacity: 0, scale: 0.86, rotate: i % 2 === 0 ? -3.5 : 3.5 },
         {
           opacity: 1,
@@ -112,7 +209,7 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
       const fold = card.getAttribute("data-fold");
       if (!text || !media) return;
 
-      const tuckX = fold === "left" ? "-42%" : "42%";
+      const tuckX = fold === "left" ? "80%" : "-80%";
 
       // Text starts tucked out of view; scrolling the card into the viewport
       // slides it out so it's readable, and scrolling it fully past (either
@@ -135,15 +232,25 @@ import OtherProjectsScene from "./OtherProjectsScene.astro";
         });
       }
 
-      ScrollTrigger.create({
-        trigger: card,
-        start: "top bottom",
-        end: "bottom top",
-        onEnter: reveal,
-        onLeave: tuck,
-        onEnterBack: reveal,
-        onLeaveBack: tuck,
-      });
+      // ScrollTrigger's start/end ("top bottom" / "bottom top") are pixel
+      // offsets it measures ONCE and caches — if that measurement runs even
+      // slightly before layout has settled (web fonts swapping in, images
+      // finishing decode, anything above this card on the page shifting),
+      // the cached numbers go stale and the tuck fires at the wrong scroll
+      // position. An IntersectionObserver has no such cache: the browser
+      // tells it directly, on every layout change, whether the card
+      // currently has any pixels on screen — so "out of view" always means
+      // out of view, not "past some offset computed a moment ago."
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) reveal();
+            else tuck();
+          });
+        },
+        { threshold: 0 },
+      );
+      io.observe(card);
     });
 
     ScrollTrigger.refresh();

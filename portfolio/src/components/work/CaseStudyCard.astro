@@ -25,54 +25,61 @@ const imageRight = study.layout === "image-right";
   id={study.id}
   data-case-card
   data-fold={study.fold}
-  data-anim="case-card"
 >
-  <div class="case-card__pills">
-    {study.pills.map((pill) => <PillBadge label={pill.label} tone={pill.tone} />)}
-  </div>
-
-  <div class="case-card__stage">
-    <div class="case-card__text" data-case-text>
-      <h3 class="case-card__title font-body font-semibold">{study.title}</h3>
-      <p class="case-card__role font-body font-light">{study.role}</p>
-      <p class="case-card__desc font-body font-light">{study.description}</p>
+  <!-- The entrance animation's opacity/scale/rotate — and the data-anim tag
+       that gates initial opacity via CSS — lands on THIS wrapper, not the
+       <article> above. A CSS transform changes what getBoundingClientRect()
+       reports, and the article is what the tuck IntersectionObserver
+       watches; keeping it untransformed means "in view" always means the
+       real, untransformed position. -->
+  <div class="case-card__inner" data-case-inner data-anim="case-card">
+    <div class="case-card__pills">
+      {study.pills.map((pill) => <PillBadge label={pill.label} tone={pill.tone} />)}
     </div>
 
-    <a
-      class="case-card__media"
-      href={study.href}
-      data-case-media
-      aria-label={`${study.title} — view case study`}
-    >
-      <CardBackdrop
-        variant={study.id === "hackduke" ? "hackduke" : "pulse"}
-        class="case-card__shapes"
-      />
-
-      <div class="case-card__frame">
-        {
-          study.videoSrc ? (
-            <video
-              class="case-card__asset"
-              src={study.videoSrc}
-              muted
-              playsinline
-              loop
-              preload="metadata"
-              data-case-video
-              aria-hidden="true"
-            />
-          ) : null
-        }
-        <Image
-          class="case-card__asset"
-          src={study.image}
-          alt={study.imageAlt}
-          widths={[480, 720, 960]}
-          sizes="(min-width: 900px) 40vw, 90vw"
-        />
+    <div class="case-card__stage">
+      <div class="case-card__text" data-case-text>
+        <h3 class="case-card__title font-body font-semibold">{study.title}</h3>
+        <p class="case-card__role font-body font-light">{study.role}</p>
+        <p class="case-card__desc font-body font-light">{study.description}</p>
       </div>
-    </a>
+
+      <a
+        class="case-card__media"
+        href={study.href}
+        data-case-media
+        aria-label={`${study.title} — view case study`}
+      >
+        <CardBackdrop
+          variant={study.id === "hackduke" ? "hackduke" : "pulse"}
+          class="case-card__shapes"
+        />
+
+        <div class="case-card__frame">
+          {
+            study.videoSrc ? (
+              <video
+                class="case-card__asset"
+                src={study.videoSrc}
+                muted
+                playsinline
+                loop
+                preload="metadata"
+                data-case-video
+                aria-hidden="true"
+              />
+            ) : null
+          }
+          <Image
+            class="case-card__asset"
+            src={study.image}
+            alt={study.imageAlt}
+            widths={[480, 720, 960]}
+            sizes="(min-width: 900px) 40vw, 90vw"
+          />
+        </div>
+      </a>
+    </div>
   </div>
 </article>
 
@@ -86,7 +93,7 @@ const imageRight = study.layout === "image-right";
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0rem;
   }
 
   .case-card--image-left .case-card__pills {
@@ -187,6 +194,7 @@ const imageRight = study.layout === "image-right";
       grid-column: 1;
       grid-row: 1;
       width: 115%;
+      margin-left: -15%;
       margin-right: -15%;
     }
 
@@ -207,6 +215,13 @@ const imageRight = study.layout === "image-right";
       grid-row: 1;
       width: 115%;
       margin-left: -15%;
+    }
+
+    /* HackDuke's image-left layout reads a little left-heavy against the
+       Pulse card above it — nudge the whole text+media pair right so it
+       sits more centered in the section. */
+    #hackduke .case-card__stage {
+      transform: translateX(clamp(1rem, 3vw, 2.5rem));
     }
   }
 </style>

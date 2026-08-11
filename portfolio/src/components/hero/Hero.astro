@@ -58,7 +58,10 @@ import Starburst from "./Starburst.astro";
       </h1>
     </div>
 
-    <StampBadge x={80} y={229} date={hero.stamp.date} price={hero.stamp.price} />
+    <!-- y = LogoBadge's bottom edge (91 + 118.3 height) + 11, matching the
+         11-unit gap StampBadge itself uses between its date and price
+         plates (see PLATE_WIDTH/plates in StampBadge.astro). -->
+    <StampBadge x={80} y={220.3} date={hero.stamp.date} price={hero.stamp.price} />
 
     <SpeechBurst x={1059} y={60} text={hero.tagline} />
 
@@ -75,7 +78,13 @@ import Starburst from "./Starburst.astro";
 
     <Starburst variant="large" x={-92} y={745} size={268.107} />
 
-    <LogoBadge x={58} y={71} width={163} height={153} logo={hero.images.cornerCat} alt={hero.images.cornerCatAlt} />
+    <!-- Width matches StampBadge's PLATE_WIDTH (126) below it, so the two
+         stack as same-width, center-aligned boxes (x matches StampBadge's
+         own x for that reason). Height is scaled down by the same ratio as
+         width (153 * 126/163) to keep the box's aspect ratio — and so
+         FillImage's crop — unchanged; only cropping the shorter box changes
+         from before, not squishing the art itself. -->
+    <LogoBadge x={80} y={91} width={126} height={118.3} logo={hero.images.cornerCat} alt={hero.images.cornerCatAlt} />
 
     <!-- Building hotspots — invisible hit targets over the comic buildings. -->
     <div class="building-hotspots" data-building-hotspots>
@@ -225,6 +234,29 @@ import Starburst from "./Starburst.astro";
     /** @type {HTMLElement | null} */
     let activeHotspot = null;
 
+    // Per-building nudges for the hover bubble, layered on top of the
+    // default centered-over-hotspot position. `overlap` is how far the
+    // bubble's bottom tip sinks into the building's top edge (bigger =
+    // lower); `leftShift` is how far left of the building's center it sits
+    // (bigger = further left). Add/override an entry per building id to
+    // tune just that one — anything not listed here falls back to DEFAULT.
+    const DEFAULT_BUBBLE_OFFSET = { overlap: 206, leftShift: 108 };
+    /** @type {Record<string, { overlap?: number; leftShift?: number }>} */
+    const BUBBLE_OFFSETS = {
+      pulse: {},
+      // Middle building — pushed left of default, and 50 up (smaller
+      // overlap = bubble sits higher, further from the building's top).
+      hackduke: {
+        leftShift: DEFAULT_BUBBLE_OFFSET.leftShift + 150,
+        overlap: DEFAULT_BUBBLE_OFFSET.overlap - 50,
+      },
+      // Rightmost building — pushed left of default, and 50 up.
+      "other-projects": {
+        leftShift: DEFAULT_BUBBLE_OFFSET.leftShift + 70,
+        overlap: DEFAULT_BUBBLE_OFFSET.overlap - 50,
+      },
+    };
+
     function setGlow(hotspot, active) {
       const id = hotspot?.getAttribute("data-id");
       if (!id) return;
@@ -250,18 +282,18 @@ import Starburst from "./Starburst.astro";
       const spotX = Number(hotspot.getAttribute("data-x")) || 0;
       const spotY = Number(hotspot.getAttribute("data-y")) || 0;
       const spotWidth = Number(hotspot.getAttribute("data-width")) || 0;
+      const id = hotspot.getAttribute("data-id") || "";
+      const { overlap = DEFAULT_BUBBLE_OFFSET.overlap, leftShift = DEFAULT_BUBBLE_OFFSET.leftShift } =
+        BUBBLE_OFFSETS[id] || {};
 
       const bubbleWidth = 220;
       const bubbleHeight = 200;
-      // Center the bubble over the building and let its bottom tip overlap
-      // the building's top edge, instead of floating a fixed distance above it.
-      const overlap = 110;
 
       const bubble = document.createElement("div");
       bubble.className = "speech-bubble hover-waver pointer-events-none origin-center absolute";
       bubble.setAttribute("data-speech-bubble", "");
       bubble.setAttribute("role", "tooltip");
-      bubble.style.left = `calc(${spotX + spotWidth / 2 - bubbleWidth / 2} * var(--u, 1px))`;
+      bubble.style.left = `calc(${spotX + spotWidth / 2 - bubbleWidth / 2 - leftShift} * var(--u, 1px))`;
       bubble.style.top = `calc(${spotY - bubbleHeight + overlap} * var(--u, 1px))`;
       bubble.style.width = `calc(${bubbleWidth} * var(--u, 1px))`;
       bubble.style.height = `calc(${bubbleHeight} * var(--u, 1px))`;
@@ -274,8 +306,8 @@ import Starburst from "./Starburst.astro";
             <path d="M138.336 6V0H138.336L138.336 6ZM270.673 118.935H276.673V118.935L270.673 118.935ZM232.155 198.581L228.249 194.027L225.842 196.092L226.192 199.244L232.155 198.581ZM265.062 253.414L263.262 259.138L266.875 247.695L265.062 253.414ZM179.139 226.398L180.938 220.675L179.248 220.143L177.541 220.615L179.139 226.398ZM138.336 231.869L138.336 237.869H138.336V231.869ZM6 118.935L0 118.935V118.935H6ZM138.336 6V12C209.037 12 264.673 60.7332 264.673 118.935L270.673 118.935L276.673 118.935C276.673 52.3918 213.81 0 138.336 0V6ZM270.673 118.935H264.673C264.673 148.026 250.916 174.582 228.249 194.027L232.155 198.581L236.062 203.135C261.004 181.739 276.673 152.003 276.673 118.935H270.673ZM232.155 198.581L226.192 199.244C227.34 209.568 230.12 222.254 235.699 233.44C241.276 244.622 249.99 254.929 263.248 259.133L265.062 253.414L266.875 247.695C257.827 244.825 251.186 237.605 246.437 228.084C241.69 218.565 239.17 207.372 238.119 197.918L232.155 198.581ZM265.062 253.414L266.861 247.69L180.938 220.675L179.139 226.398L177.339 232.122L263.262 259.138L265.062 253.414ZM179.139 226.398L177.541 220.615C165.21 224.022 152.034 225.869 138.336 225.869V231.869V237.869C153.113 237.869 167.364 235.877 180.737 232.182L179.139 226.398ZM138.336 231.869L138.336 225.869C67.635 225.869 12 177.136 12 118.935H6H0C0 185.477 62.8624 237.869 138.336 237.869L138.336 231.869ZM6 118.935L12 118.935C12 60.7333 67.6351 12.0002 138.336 12L138.336 6L138.336 0C62.8624 0.000229359 5.53131e-05 52.392 0 118.935L6 118.935Z" fill="black"/>
           </svg>
         </span>
-        <div class="absolute inset-0 flex items-center justify-center px-[12%]" style="padding-bottom:calc(28 * var(--u, 1px))">
-          <p class="text-center font-script text-ink" style="font-size:calc(26 * var(--u, 1px));line-height:0.95">${prompt}</p>
+        <div class="absolute inset-0 flex items-center justify-center px-[12%]">
+          <p class="text-center font-script text-ink" style="font-size:calc(28 * var(--u, 1px));line-height:1.15;">${prompt}</p>
         </div>
       `;
 

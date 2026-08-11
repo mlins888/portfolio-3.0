@@ -3,11 +3,10 @@
  * Auto-sizing capsule badge, filled with the real halftone-dot pill texture
  * from Figma. The source export was a giant shared master canvas (see
  * FillImage), so the two pill tiles here are pre-cropped down to just the
- * pill art itself (via scripts/ — see git history) and tiled horizontally.
- * Tiling (rather than a percentage crop stretched to the box) is what makes
- * this hold up at ANY label length: a crop calibrated for one aspect ratio
- * drifts onto the wrong part of the source at another, but a repeating tile
- * sized only by height always lines up.
+ * pill art itself (a single complete pill shape, rounded caps included).
+ * That one tile is stretched (not repeated) to fill the badge exactly —
+ * repeating it showed extra rounded-cap edges bleeding in from neighboring
+ * tiles whenever a label made the pill wider than the source image.
  */
 import type { PillTone } from "../content/work";
 
@@ -52,19 +51,19 @@ const TILE = {
        Figma's original, narrower pill instance) shrink this below its own
        content — the label would get clipped by overflow:hidden below. */
     flex-shrink: 0;
-    border: 4px solid var(--color-ink);
+    
     border-radius: 999px;
     overflow: hidden;
     line-height: 1;
     text-decoration: none;
     white-space: nowrap;
-    background-repeat: repeat-x;
+    background-repeat: no-repeat;
     background-position: center;
-    background-size: auto 100%;
+    background-size: 100% 100%;
   }
 
   .pill-badge--md {
-    padding: 0.55rem 1.35rem;
+    padding: 1rem 2.8rem;
     font-size: clamp(1.25rem, 2.4vw, 2.5rem);
   }
 

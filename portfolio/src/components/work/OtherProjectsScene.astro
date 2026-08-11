@@ -16,7 +16,6 @@ import { Image } from "astro:assets";
 import { canvasStyle, css, u } from "../hero/canvas";
 import Sparkle from "../hero/Sparkle.astro";
 import Starburst from "../hero/Starburst.astro";
-import PillBadge from "../PillBadge.astro";
 import { work } from "../../content/work";
 
 import HealthHoundBase from "../../assets/work/health-hound-panel-base.svg";
@@ -32,20 +31,16 @@ import ComingSoonBBase from "../../assets/work/coming-soon-b-panel-base.svg";
 import ComingSoonBShading from "../../assets/work/coming-soon-b-shading.svg";
 import ComingSoonBRibbon from "../../assets/work/coming-soon-b-ribbon.svg";
 
+// Just tall enough for the panels + the lowest star (the small starburst
+// bottom-left, which is the tallest-reaching decoration) — the heading and
+// CTA copy live outside this canvas now, on the surrounding coral band.
 const CANVAS_W = 1440;
-const CANVAS_H = 1264;
+const CANVAS_H = 1080;
 
 const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
 ---
 
 <div class="scene" style={css({ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` })} data-other-projects-scene>
-  <p
-    class="absolute font-script text-cream"
-    style={css({ left: u(106), top: u(163), fontSize: u(40), lineHeight: "0.91" })}
-  >
-    {work.otherProjectsHeading}
-  </p>
-
   <Starburst variant="large" x={1085} y={199} size={268.107} idleDelay={0.2} />
   <Starburst variant="small" x={32} y={780.38} size={261.541} rotation={-38.47} idleDelay={0.5} />
   <Sparkle variant="c" x={1131} y={543} size={104} idleDelay={0.8} />
@@ -76,7 +71,10 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
     </a>
     <div class="ribbon" style={canvasStyle({ x: 208, y: 675, width: 274, height: 121 })}>
       <HealthHoundRibbon class="absolute block h-full w-full" />
-      <span class="ribbon__label font-script" style={css({ fontSize: u(30), transform: "rotate(4.78deg)" })}>
+      <span
+        class="ribbon__label font-script"
+        style={css({ left: u(-10), top: u(10), fontSize: u(30), transform: "rotate(4.78deg) translateY(0.27em)" })}
+      >
         Health Hound
       </span>
     </div>
@@ -87,18 +85,27 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
     <div class="panel" style={canvasStyle({ x: 456, y: 221, width: 447, height: 679 })}>
       <ComingSoonABase class="absolute block h-full w-full" />
     </div>
-    <div class="panel" style={canvasStyle({ x: 475, y: 242.5, width: 399.5, height: 653 })}>
+    <div class="panel" style={canvasStyle({ x: 473, y: 250, width: 390, height: 637 })}>
       <ComingSoonAShading class="absolute block h-full w-full" />
     </div>
-    <div class="ribbon" style={canvasStyle({ x: 621, y: 362.5, width: 274, height: 131.5, rotation: 180 })}>
-      <ComingSoonARibbon class="absolute block h-full w-full" style="transform: scaleY(-1);" />
+    <!-- Bundling the ribbon graphic and its label into one wrapper is what
+         lets them move together, as one card, on hover. The old markup
+         mirrored the ribbon art via rotate(180deg) + scaleY(-1) on two
+         nested inline transforms — equivalent to a single scaleX(-1), which
+         also sidesteps the fact that inline and CSS transforms on the same
+         element don't compose (an inline rotate would have blocked the CSS
+         hover transform below). -->
+    <div class="ribbon-group" style={canvasStyle({ x: 621, y: 362.5, width: 274, height: 131.5 })}>
+      <div class="ribbon-fill">
+        <ComingSoonARibbon class="absolute block h-full w-full" style="transform: scaleX(-1);" />
+      </div>
+      <span
+        class="ribbon__label ribbon__label--floating font-script"
+        style={css({ left: u(60), top: u(60.5), fontSize: u(30), transform: "rotate(-10.55deg) translateY(0.27em)" })}
+      >
+        Coming Soon
+      </span>
     </div>
-    <span
-      class="ribbon__label ribbon__label--floating font-script"
-      style={css({ left: u(728), top: u(410), width: u(230), fontSize: u(30), transform: "rotate(-10.55deg)" })}
-    >
-      Coming Soon
-    </span>
   </div>
 
   <!-- Coming Soon (teal) panel -->
@@ -106,40 +113,19 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
     <div class="panel" style={canvasStyle({ x: 931, y: 181, width: 293, height: 751 })}>
       <ComingSoonBBase class="absolute block h-full w-full" />
     </div>
-    <div class="panel" style={canvasStyle({ x: 1018.5, y: 189, width: 200, height: 737 })}>
+    <div class="panel" style={canvasStyle({ x: 1012.5, y: 197, width: 204, height: 723 })}>
       <ComingSoonBShading class="absolute block h-full w-full" />
     </div>
-    <div class="ribbon" style={canvasStyle({ x: 946.5, y: 562.5, width: 203, height: 190 })}>
+    <div class="ribbon" style={canvasStyle({ x: 949, y: 562.5, width: 203, height: 190 })}>
       <ComingSoonBRibbon class="absolute block h-full w-full" />
-      <span class="ribbon__label font-script" style={css({ fontSize: u(30), transform: "rotate(14.57deg)" })}>
+      <span
+        class="ribbon__label ribbon__label--left font-script"
+        style={css({ fontSize: u(30), transform: "rotate(14.57deg) translateY(0.27em)" })}
+      >
         Coming Soon
       </span>
     </div>
   </div>
-
-  <p
-    class="absolute font-script text-cream text-right"
-    style={css({ left: u(670), top: u(1080), width: u(230), fontSize: u(40), lineHeight: "0.91" })}
-  >
-    …or visit the
-  </p>
-  <div
-    class="absolute playground-pill-slot"
-    style={canvasStyle({ x: 959, y: 1038, width: 370, height: 95 })}
-  >
-    <PillBadge
-      label={work.playgroundCta.pill}
-      tone="teal"
-      href={work.playgroundCta.href}
-      size="lg"
-    />
-  </div>
-  <p
-    class="absolute font-script text-cream text-right"
-    style={css({ left: u(597), top: u(1178), width: u(724), fontSize: u(40), lineHeight: "0.91" })}
-  >
-    to see some of my other design pursuits
-  </p>
 </div>
 
 <style define:vars={{ canvasW: CANVAS_W, canvasH: CANVAS_H }}>
@@ -166,11 +152,38 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
     overflow: visible;
   }
 
+  /* The ribbon moves with the rest of the card on hover instead of sitting
+     still while the panel lifts off it — and, like the label, it's hidden
+     until then and fades into view rather than being on screen the whole
+     time. `.ribbon` covers this for Health Hound and the teal Coming Soon
+     panel; the orange one's ribbon graphic and label are bundled in
+     `.ribbon-group` instead (see the markup above), so that wrapper gets
+     the same hover motion + fade. */
+  .ribbon,
+  .ribbon-group {
+    position: absolute;
+    display: block;
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.3s ease;
+    transform-origin: center;
+  }
+
   .project-group:hover .panel-link,
   .project-group:focus-within .panel-link,
   .project-group:hover .panel,
-  .project-group:focus-within .panel {
+  .project-group:focus-within .panel,
+  .project-group:hover .ribbon,
+  .project-group:focus-within .ribbon,
+  .project-group:hover .ribbon-group,
+  .project-group:focus-within .ribbon-group {
     transform: scale(1.045) rotate(1.5deg);
+  }
+
+  .project-group:hover .ribbon,
+  .project-group:focus-within .ribbon,
+  .project-group:hover .ribbon-group,
+  .project-group:focus-within .ribbon-group {
+    opacity: 1;
   }
 
   /* Redraws just the panel's black outline on top of the masked photo, since
@@ -180,41 +193,48 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
   }
 
   .ribbon {
-    position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;
   }
 
+  .ribbon-group {
+    pointer-events: none;
+  }
+
+  /* Just fills `.ribbon-group` with the (mirrored) ribbon graphic — the
+     fade/hover-motion lives on `.ribbon-group` itself, one level up, so
+     this doesn't need its own opacity or transform. */
+  .ribbon-fill {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+
+  /* Constrained to a width narrower than the ribbon itself (not the full
+     box) so the text wraps to a second line instead of running past the
+     ribbon's painted edges once it's centered and rotated. */
   .ribbon__label {
     position: relative;
     z-index: 1;
+    width: 72%;
     color: var(--color-cream);
     text-align: center;
     line-height: 0.95;
     pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.25s ease;
   }
 
   .ribbon__label--floating {
     position: absolute;
   }
 
-  .project-group:hover .ribbon__label,
-  .project-group:focus-within .ribbon__label {
-    opacity: 1;
+  .ribbon__label--left {
+    text-align: left;
   }
 
   .project-group:focus-visible {
     outline: none;
-  }
-
-  .playground-pill-slot {
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 </style>
 
