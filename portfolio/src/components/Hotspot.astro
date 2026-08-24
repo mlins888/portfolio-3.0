@@ -1,0 +1,34 @@
+---
+/**
+ * Invisible hit target for the shared hover-highlight hotspot pattern — see
+ * src/scripts/hotspot.js for the interaction wiring and the
+ * .hotspot-button/.hotspot-glow rules in global.css for the visual side.
+ * Position it with the same x/y/width/height/rotation contract as any other
+ * canvas element (see hero/canvas.ts); `glowTarget` is a CSS selector
+ * (resolved against whatever root the page's script hands to initHotspots)
+ * naming what should receive the "lifted card" glow while this is
+ * hovered/focused. Any extra props (data-target, data-prompt, ...) pass
+ * straight through to the button for page-specific hooks.
+ */
+import { canvasStyle, type CanvasBox } from "./hero/canvas";
+
+interface Props extends CanvasBox {
+  id: string;
+  label: string;
+  glowTarget?: string;
+  [key: string]: unknown;
+}
+
+const { id, label, glowTarget, x, y, width, height, rotation, color, ...rest } = Astro.props;
+---
+
+<button
+  type="button"
+  class="hotspot-button"
+  style={canvasStyle({ x, y, width, height, rotation })}
+  data-hotspot
+  data-id={id}
+  data-glow-target={glowTarget}
+  aria-label={label}
+  {...rest}
+/>

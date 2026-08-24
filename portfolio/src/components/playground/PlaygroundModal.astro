@@ -1,0 +1,177 @@
+---
+/**
+ * The in-page card that opens when a playground hotspot is clicked — an
+ * architectural choice (over a routed detail page like /work/pulse) made to
+ * keep the "opening the closet" feel. All five pathway cards are pre-rendered
+ * here (see PlaygroundCard.astro) and this component just shows/hides the
+ * one that matches the clicked hotspot's id, listening for the
+ * `playground:open` event PlaygroundScene.astro's script dispatches.
+ *
+ * Kept as a separate island from PlaygroundScene so the two only ever talk
+ * through that DOM event — swapping this for routed `/playground/<id>`
+ * pages later would mean changing what onClick does in PlaygroundScene,
+ * not restructuring either component.
+ */
+import { playground } from "../../content/playground";
+import PlaygroundCard from "./PlaygroundCard.astro";
+
+const { pathways } = playground;
+---
+
+<div class="playground-modal" data-playground-modal aria-hidden="true">
+  <div class="playground-modal__backdrop" data-modal-backdrop></div>
+  <div class="playground-modal__dialog" role="dialog" aria-modal="true" data-modal-dialog tabindex="-1">
+    <button type="button" class="playground-modal__close" data-modal-close aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+    <div class="playground-modal__panels">
+      {pathways.map((pathway) => <PlaygroundCard pathway={pathway} />)}
+    </div>
+  </div>
+</div>
+
+<style>
+  .playground-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 4vw, 3rem);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .playground-modal.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .playground-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--color-ink) 65%, transparent);
+  }
+
+  .playground-modal__dialog {
+    position: relative;
+    z-index: 1;
+    width: min(34rem, 100%);
+    max-height: min(85vh, 42rem);
+    overflow-y: auto;
+    background: var(--color-paper);
+    border: 10px solid var(--color-ink);
+    border-radius: 40px;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .playground-modal__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    border: 4px solid var(--color-ink);
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .playground-modal__close:hover {
+    background: var(--color-coral);
+    color: white;
+  }
+
+  :global(body.playground-modal-open) {
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  import { gsap, prefersReducedMotion } from "../../scripts/gsap-setup.js";
+
+  const modal = document.querySelector("[data-playground-modal]");
+  if (modal) {
+    const backdrop = modal.querySelector("[data-modal-backdrop]");
+    const dialog = modal.querySelector("[data-modal-dialog]");
+    const closeBtn = modal.querySelector("[data-modal-close]");
+    const panels = Array.from(modal.querySelectorAll("[data-modal-panel]"));
+    const reduce = prefersReducedMotion();
+
+    /** @type {HTMLElement | null} */
+    let lastFocused = null;
+
+    function openModal(id) {
+      const panel = panels.find((p) => p.getAttribute("data-modal-panel") === id);
+      if (!panel) return;
+
+      panels.forEach((p) => {
+        p.hidden = p !== panel;
+      });
+
+      lastFocused = /** @type {HTMLElement} */ (document.activeElement);
+      modal.classList.add("is-open");
+      modal.setAttribute("aria-hidden", "false");
+      document.body.classList.add("playground-modal-open");
+
+      if (reduce) {
+        gsap.set([backdrop, dialog], { clearProps: "all" });
+      } else {
+        gsap.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: 0.25 });
+        gsap.fromTo(
+          dialog,
+          { opacity: 0, y: 24, scale: 0.96 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: "back.out(1.6)" },
+        );
+      }
+
+      closeBtn?.focus();
+    }
+
+    function closeModal() {
+      if (!modal.classList.contains("is-open")) return;
+      modal.classList.remove("is-open");
+      modal.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("playground-modal-open");
+      lastFocused?.focus?.();
+    }
+
+    window.addEventListener("playground:open", (event) => {
+      openModal(/** @type {CustomEvent} */ (event).detail?.id);
+    });
+
+    backdrop?.addEventListener("click", closeModal);
+    closeBtn?.addEventListener("click", closeModal);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      closeModal();
+    });
+
+    // Minimal focus trap while open.
+    modal.addEventListener("keydown", (event) => {
+      if (event.key !== "Tab" || !modal.classList.contains("is-open")) return;
+      const focusable = /** @type {NodeListOf<HTMLElement>} */ (
+        modal.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])')
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+  }
+</script>

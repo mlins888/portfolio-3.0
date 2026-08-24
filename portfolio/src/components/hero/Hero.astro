@@ -13,6 +13,7 @@ import { hero } from "../../content/hero";
 import { work } from "../../content/work";
 import { CANVAS, canvasStyle, css, u } from "./canvas";
 
+import Hotspot from "../Hotspot.astro";
 import HeroCityscape from "./HeroCityscape.astro";
 import LogoBadge from "./LogoBadge.astro";
 import Sparkle from "./Sparkle.astro";
@@ -90,24 +91,19 @@ import Starburst from "./Starburst.astro";
     <div class="building-hotspots" data-building-hotspots>
       {
         work.buildingHotspots.map((spot) => (
-          <button
-            type="button"
-            class="building-hotspot"
-            style={canvasStyle({
-              x: spot.x,
-              y: spot.y,
-              width: spot.width,
-              height: spot.height,
-            })}
-            data-building-hotspot
-            data-id={spot.id}
+          <Hotspot
+            id={spot.id}
+            label={spot.prompt}
+            glowTarget={`[data-glow-id="${spot.id}"]`}
+            x={spot.x}
+            y={spot.y}
+            width={spot.width}
+            height={spot.height}
             data-target={spot.target}
             data-prompt={spot.prompt}
             data-x={spot.x}
             data-y={spot.y}
             data-width={spot.width}
-            data-height={spot.height}
-            aria-label={spot.prompt}
           />
         ))
       }
@@ -160,20 +156,6 @@ import Starburst from "./Starburst.astro";
     content: " ";
   }
 
-  .building-hotspot {
-    z-index: 8;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 1rem;
-  }
-
-  .building-hotspot:focus-visible {
-    outline: 3px solid var(--color-cream);
-    outline-offset: 4px;
-  }
-
   .building-bubble-host {
     position: absolute;
     inset: 0;
@@ -191,6 +173,7 @@ import Starburst from "./Starburst.astro";
     showAll,
     targets,
   } from "../../scripts/gsap-setup.js";
+  import { initHotspots } from "../../scripts/hotspot.js";
 
   const root = document.querySelector("[data-hero]");
 
@@ -225,9 +208,11 @@ import Starburst from "./Starburst.astro";
       revealUnclaimed(root, [...portrait, ...greeting, ...headline, ...burst, ...twinkles]);
     }
 
-    // Building hotspot → smooth scroll + SpeechBubble on hover
+    // Building hotspot → smooth scroll + SpeechBubble on hover. The glow
+    // itself (toggling .is-glowing on the matching [data-glow-id] building)
+    // is handled generically by initHotspots below — this block only owns
+    // the hero-specific speech bubble.
     const host = root.querySelector("[data-bubble-host]");
-    const hotspots = root.querySelectorAll("[data-building-hotspot]");
 
     /** @type {HTMLElement | null} */
     let activeBubble = null;
@@ -257,17 +242,9 @@ import Starburst from "./Starburst.astro";
       },
     };
 
-    function setGlow(hotspot, active) {
-      const id = hotspot?.getAttribute("data-id");
-      if (!id) return;
-      const building = root.querySelector(`[data-building="${id}"]`);
-      building?.classList.toggle("is-glowing", active);
-    }
-
     function clearBubble() {
       activeBubble?.remove();
       activeBubble = null;
-      setGlow(activeHotspot, false);
       activeHotspot = null;
     }
 
@@ -276,7 +253,6 @@ import Starburst from "./Starburst.astro";
       if (activeHotspot === hotspot) return;
       clearBubble();
       activeHotspot = hotspot;
-      setGlow(hotspot, true);
 
       const prompt = hotspot.getAttribute("data-prompt") || "";
       const spotX = Number(hotspot.getAttribute("data-x")) || 0;
@@ -315,12 +291,10 @@ import Starburst from "./Starburst.astro";
       activeBubble = bubble;
     }
 
-    hotspots.forEach((hotspot) => {
-      hotspot.addEventListener("pointerenter", () => showBubble(hotspot));
-      hotspot.addEventListener("pointerleave", clearBubble);
-      hotspot.addEventListener("focus", () => showBubble(hotspot));
-      hotspot.addEventListener("blur", clearBubble);
-      hotspot.addEventListener("click", () => {
+    initHotspots(root, {
+      onEnter: showBubble,
+      onLeave: clearBubble,
+      onClick: (hotspot) => {
         const target = hotspot.getAttribute("data-target");
         if (!target) return;
         if (prefersReducedMotion()) {
@@ -332,7 +306,7 @@ import Starburst from "./Starburst.astro";
           ease: EASE.glide,
           scrollTo: { y: target, offsetY: 72 },
         });
-      });
+      },
     });
   }
 </script>

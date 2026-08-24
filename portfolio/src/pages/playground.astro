@@ -1,10 +1,19 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PlaygroundScene from "../components/playground/PlaygroundScene.astro";
 ---
 
-<BaseLayout title="Playground — Makenna Linsky">
-  <main class="mx-auto max-w-3xl px-6 py-24" style="padding-top: calc(var(--nav-offset) + 6rem)">
-    <h1 class="font-display text-4xl uppercase">Playground</h1>
-    <p class="font-body mt-6 text-lg opacity-80">Coming soon.</p>
+<BaseLayout title="Playground — Makenna Linsky" description="A closet of side projects — a game, a board game, tee designs, and social graphics.">
+  <main class="playground-page" style="padding-top: calc(var(--nav-offset) + 3rem)">
+    <PlaygroundScene />
   </main>
 </BaseLayout>
+
+<style>
+  .playground-page {
+    max-width: 90rem;
+    margin-inline: auto;
+    padding-inline: clamp(1rem, 4vw, 2.5rem);
+    padding-bottom: clamp(3rem, 8vw, 6rem);
+  }
+</style>

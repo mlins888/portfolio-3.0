@@ -1,0 +1,306 @@
+---
+/**
+ * The playground: an open closet on a local 1440x1024 canvas that mirrors
+ * the Figma frame (see hero/canvas.ts for the coordinate system — same
+ * technique Hero.astro and OtherProjectsScene.astro use). Every clickable
+ * pathway (TV, box stack, each shirt, picture frame) reads its geometry and
+ * copy from src/content/playground.ts; PlaygroundModal.astro renders the
+ * card that opens when a hotspot is clicked.
+ *
+ * The closet asset here is the empty-rod export — each shirt is its own
+ * real, individually-exported asset hung over it (see playground.ts), not a
+ * crop or redrawn art, which is what makes it independently
+ * animatable/hoverable while still showing the real artwork.
+ *
+ * Every falling/fading entrance element is a two-node stack — an outer node
+ * GSAP animates (and clears once settled) and an inner node that owns the
+ * permanent hover-glow transform — because inline and CSS-class transforms
+ * on the same element don't compose (see HeroCityscape.astro's building lift
+ * for the same pattern). Shirts keep that same split: the outer node is
+ * where the hover neighbor-shift (translateX) lands, the inner node owns the
+ * hover-glow lift, so the two transforms never fight on one element.
+ */
+import { playground } from "../../content/playground";
+import { canvasStyle, css, u } from "../hero/canvas";
+import Hotspot from "../Hotspot.astro";
+import PlaygroundModal from "./PlaygroundModal.astro";
+
+const { canvas, scene, pathways, heading } = playground;
+
+const shirts = pathways.filter((p) => p.type === "shirt");
+const game = pathways.find((p) => p.id === "game")!;
+const boardgame = pathways.find((p) => p.id === "boardgame")!;
+const social = pathways.find((p) => p.id === "social")!;
+
+const ClosetArt = scene.closet.image;
+const TvSceneArt = scene.tv.image;
+const FrameArt = scene.frame.image;
+const ComingSoonArt = scene.comingSoonBox.image;
+const BoxLayer1Art = scene.box.layer1.image;
+const BoxLayer2Art = scene.box.layer2.image;
+const BoxLayer3Art = scene.box.layer3.image;
+---
+
+<section class="playground-frame relative w-full bg-paper" data-playground aria-label="Playground">
+  <div class="playground-canvas absolute inset-0">
+    <div class="absolute bg-coral playground-band" style={canvasStyle({ x: 42, y: 43, width: 1355, height: 940 })}>
+    </div>
+
+    <p
+      class="absolute text-center font-script text-white"
+      style={css({ left: u(109), top: u(190), width: u(337), fontSize: u(64), lineHeight: "0.91" })}
+      data-anim="fade"
+    >
+      {heading}
+    </p>
+
+    <!-- Closet backdrop — empty rod; each shirt pathway below hangs its own
+         real asset over it. -->
+    <div class="absolute pointer-events-none" style={canvasStyle(scene.closet)}>
+      <ClosetArt class="block h-full w-full" />
+    </div>
+
+    <!-- "More Coming Soon" box — explicitly static, no hotspot. -->
+    <div class="absolute pointer-events-none" style={canvasStyle(scene.comingSoonBox)}>
+      <ComingSoonArt class="block h-full w-full" />
+    </div>
+    <div
+      class="absolute pointer-events-none flex items-center justify-center text-center font-script text-ink"
+      style={css({
+        left: u(scene.comingSoonBox.label.x),
+        top: u(scene.comingSoonBox.label.y),
+        width: u(scene.comingSoonBox.label.width),
+        height: u(scene.comingSoonBox.label.height),
+        fontSize: u(20),
+        lineHeight: "1.05",
+        transform: `rotate(${scene.comingSoonBox.label.rotation}deg)`,
+      })}
+    >
+      More Coming Soon...
+    </div>
+
+    <!-- Box stack → board game. Falls in bottom-to-top (layer 3, then 2,
+         then 1); treated as one clickable unit via a single hotspot spanning
+         all three layers. -->
+    <div class="absolute" style={canvasStyle(scene.box.layer3)} data-anim="fall">
+      <div class="hotspot-glow pointer-events-none h-full w-full" data-glow-id="boardgame">
+        <BoxLayer3Art class="block h-full w-full" />
+      </div>
+    </div>
+    <div class="absolute" style={canvasStyle(scene.box.layer2)} data-anim="fall">
+      <div class="hotspot-glow pointer-events-none h-full w-full" data-glow-id="boardgame">
+        <BoxLayer2Art class="block h-full w-full" />
+      </div>
+    </div>
+    <div class="absolute" style={canvasStyle(scene.box.layer1)} data-anim="fall">
+      <div class="hotspot-glow pointer-events-none h-full w-full" data-glow-id="boardgame">
+        <BoxLayer1Art class="block h-full w-full" />
+      </div>
+    </div>
+    <Hotspot
+      id={boardgame.id}
+      label={boardgame.label}
+      glowTarget={`[data-glow-id="${boardgame.id}"]`}
+      x={boardgame.hotspot.x}
+      y={boardgame.hotspot.y}
+      width={boardgame.hotspot.width}
+      height={boardgame.hotspot.height}
+    />
+
+    <!-- TV → video game. Falls in last, landing on top of the stack. -->
+    <div class="absolute" style={canvasStyle(scene.tv)} data-anim="fall">
+      <div class="hotspot-glow pointer-events-none h-full w-full" data-glow-id="game">
+        <TvSceneArt class="block h-full w-full" />
+      </div>
+    </div>
+    <Hotspot
+      id={game.id}
+      label={game.label}
+      glowTarget={`[data-glow-id="${game.id}"]`}
+      x={game.hotspot.x}
+      y={game.hotspot.y}
+      width={game.hotspot.width}
+      height={game.hotspot.height}
+    />
+
+    <!-- Picture frame → social board. -->
+    <div class="absolute" style={canvasStyle(scene.frame)} data-anim="fade">
+      <div class="hotspot-glow pointer-events-none h-full w-full" data-glow-id="social">
+        <FrameArt class="block h-full w-full" />
+      </div>
+    </div>
+    <Hotspot
+      id={social.id}
+      label={social.label}
+      glowTarget={`[data-glow-id="${social.id}"]`}
+      x={scene.frame.x}
+      y={scene.frame.y}
+      width={scene.frame.width}
+      height={scene.frame.height}
+    />
+
+    <!-- Shirt hangers → one card each. Data-driven: adding a shirt to
+         playground.ts's `pathways` is the only change needed here — layout
+         and the neighbor-shift math (in the script below) both derive from
+         array position, nothing is written per-shirt. -->
+    <div class="shirts-row" data-shirts-row>
+      {
+        shirts.map((shirt, i) => (
+          <div
+            class="shirt-shift absolute"
+            data-shirt-shift={shirt.id}
+            style={canvasStyle({
+              x: shirt.hotspot.x,
+              y: shirt.hotspot.y,
+              width: shirt.hotspot.width,
+              height: shirt.hotspot.height,
+            })}
+            data-anim="fade"
+          >
+            <div class="hotspot-glow pointer-events-none h-full w-full" data-glow-id={shirt.id}>
+              <shirt.image class="block h-full w-full" />
+            </div>
+          </div>
+        ))
+      }
+      {
+        shirts.map((shirt) => (
+          <Hotspot
+            id={shirt.id}
+            label={shirt.label}
+            glowTarget={`[data-glow-id="${shirt.id}"]`}
+            x={shirt.hotspot.x}
+            y={shirt.hotspot.y}
+            width={shirt.hotspot.width}
+            height={shirt.hotspot.height}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<PlaygroundModal />
+
+<style define:vars={{ canvasW: canvas.width, canvasH: canvas.height }}>
+  .playground-frame {
+    container-type: inline-size;
+    aspect-ratio: var(--canvasW) / var(--canvasH);
+    border-radius: 1.5rem;
+    /* The box stack (x:-98) and a few decorative bits deliberately run off
+       the canvas edge — left uncropped on purpose, so nothing gets clipped
+       just because it bleeds past the red band. The stack also bleeds a bit
+       past the frame's own bottom edge, hence the extra margin below. */
+    margin-bottom: clamp(3rem, 9vw, 8rem);
+  }
+
+  .playground-canvas {
+    --u: calc(100cqw / var(--canvasW));
+  }
+
+  .playground-band {
+    border-radius: calc(40 * var(--u, 1px));
+  }
+
+  .shirts-row {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .shirt-shift {
+    pointer-events: none;
+  }
+</style>
+
+<script>
+  import {
+    gsap,
+    EASE,
+    prefersReducedMotion,
+    revealUnclaimed,
+    showAll,
+    targets,
+  } from "../../scripts/gsap-setup.js";
+  import { initHotspots } from "../../scripts/hotspot.js";
+
+  // Matches playground.canvas.width in src/content/playground.ts.
+  const CANVAS_WIDTH = 1440;
+  const SHIFT_UNIT = 22;
+
+  const root = document.querySelector("[data-playground]");
+  if (root) {
+    const reduce = prefersReducedMotion();
+
+    if (reduce) {
+      showAll(root);
+    } else {
+      // Boxes fall in bottom-to-top (matches physical stacking order), TV
+      // lands last on top of the stack — a tight stagger so it reads as one
+      // connected sequence.
+      const fallers = targets(root, "fall");
+      const tl = gsap.timeline({ defaults: { ease: "back.out(1.6)" } });
+      fallers.forEach((el, i) => {
+        tl.fromTo(
+          el,
+          { y: 260, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.85, clearProps: "transform" },
+          i * 0.16,
+        );
+      });
+
+      const fadeEls = targets(root, "fade");
+      gsap.fromTo(
+        fadeEls,
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.06, ease: "power2.out" },
+        0.45,
+      );
+
+      revealUnclaimed(root, [...fallers, ...fadeEls]);
+    }
+
+    // Shirts: hovering one shifts its neighbors away — left of the hovered
+    // shirt shifts further left, right shifts further right — computed from
+    // index distance so a 6th/7th shirt needs no code changes.
+    const shiftEls = Array.from(root.querySelectorAll("[data-shirt-shift]"));
+    const shirtsRow = root.querySelector("[data-shirts-row]");
+
+    function shiftIndexFor(id) {
+      return shiftEls.findIndex((el) => el.getAttribute("data-shirt-shift") === id);
+    }
+
+    function applyShirtHover(hoveredId) {
+      if (reduce || !shirtsRow) return;
+      const hoveredIndex = hoveredId ? shiftIndexFor(hoveredId) : -1;
+      const unit = shirtsRow.getBoundingClientRect().width / CANVAS_WIDTH;
+
+      shiftEls.forEach((el, i) => {
+        const targetX = hoveredIndex === -1 ? 0 : (i - hoveredIndex) * SHIFT_UNIT * unit;
+        gsap.to(el, {
+          x: targetX,
+          duration: 0.35,
+          ease: EASE.glide,
+          overwrite: "auto",
+          clearProps: targetX === 0 ? "transform" : undefined,
+        });
+      });
+    }
+
+    initHotspots(root, {
+      onEnter: (hotspot) => {
+        const id = hotspot.getAttribute("data-id");
+        if (shiftIndexFor(id) !== -1) applyShirtHover(id);
+      },
+      onLeave: (hotspot) => {
+        const id = hotspot.getAttribute("data-id");
+        if (shiftIndexFor(id) !== -1) applyShirtHover(null);
+      },
+      onClick: (hotspot) => {
+        const id = hotspot.getAttribute("data-id");
+        if (!id) return;
+        window.dispatchEvent(new CustomEvent("playground:open", { detail: { id } }));
+      },
+    });
+  }
+</script>
