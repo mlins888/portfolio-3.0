@@ -1,0 +1,215 @@
+---
+/**
+ * The board game pathway's card content: a horizontally-scrolling carousel
+ * of every card in the deck (see src/content/boardgame.ts), each one a real
+ * flip card — click/tap it to see the back, click again to flip back — plus
+ * the game map underneath. Rendered by PlaygroundCard.astro in place of the
+ * generic single-image body when a pathway is type "boardgame".
+ *
+ * The flip is pure CSS (a 3D-rotated button with two backface-hidden faces);
+ * the carousel is native scroll-snap, so the prev/next buttons just nudge
+ * scrollLeft — no drag/swipe handling to maintain, touch scrolling works for
+ * free, and a click that ends a swipe never gets mistaken for a flip.
+ */
+import { Image } from "astro:assets";
+import { boardgame } from "../../content/boardgame";
+
+const { cards, map } = boardgame;
+
+const CATEGORY_LABEL: Record<string, string> = {
+  character: "Character",
+  resource: "Resource",
+  spell: "Spell",
+};
+---
+
+<div class="boardgame">
+  <div class="boardgame-carousel" data-carousel>
+    <button type="button" class="boardgame-carousel__nav boardgame-carousel__nav--prev" data-carousel-prev aria-label="Scroll to previous cards">
+      <span aria-hidden="true">‹</span>
+    </button>
+
+    <ul class="boardgame-carousel__track" data-carousel-track>
+      {
+        cards.map((card) => (
+          <li class="boardgame-card">
+            <span class="boardgame-card__category font-script">{CATEGORY_LABEL[card.category]}</span>
+            <button type="button" class="boardgame-card__inner" data-flip-card aria-label={`${card.name} card — tap to flip`}>
+              <span class="boardgame-card__face boardgame-card__face--front">
+                <Image src={card.front.image} alt={card.front.alt} widths={[240, 360]} sizes="10.5rem" />
+              </span>
+              <span class="boardgame-card__face boardgame-card__face--back">
+                <Image src={card.back.image} alt={card.back.alt} widths={[240, 360]} sizes="10.5rem" />
+              </span>
+            </button>
+            <span class="boardgame-card__name font-script">{card.name}</span>
+          </li>
+        ))
+      }
+    </ul>
+
+    <button type="button" class="boardgame-carousel__nav boardgame-carousel__nav--next" data-carousel-next aria-label="Scroll to next cards">
+      <span aria-hidden="true">›</span>
+    </button>
+  </div>
+
+  <figure class="boardgame-map">
+    <Image src={map.image} alt={map.alt} widths={[480, 720, 960]} sizes="(min-width: 900px) 40rem, 90vw" />
+    <figcaption class="boardgame-map__caption font-script">The map</figcaption>
+  </figure>
+</div>
+
+<style>
+  .boardgame {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .boardgame-carousel {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .boardgame-carousel__track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin: 0;
+    padding: 0.3rem 0.1rem 0.6rem;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+  }
+
+  .boardgame-carousel__nav {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    border: 3px solid var(--color-ink);
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .boardgame-carousel__nav:hover {
+    background: var(--color-coral);
+    color: white;
+  }
+
+  .boardgame-card {
+    flex: 0 0 auto;
+    width: 9rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    scroll-snap-align: start;
+  }
+
+  .boardgame-card__category {
+    font-size: 0.85rem;
+    line-height: 1;
+    color: var(--color-coral);
+  }
+
+  .boardgame-card__inner {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 408 / 608;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    perspective: 1200px;
+  }
+
+  .boardgame-card__face {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    border: 3px solid var(--color-ink);
+    border-radius: 10px;
+    backface-visibility: hidden;
+    transition: transform 0.5s cubic-bezier(0.34, 1.4, 0.64, 1);
+    transform: rotateY(0deg);
+  }
+
+  .boardgame-card__face :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .boardgame-card__face--back {
+    transform: rotateY(180deg);
+  }
+
+  .boardgame-card__inner.is-flipped .boardgame-card__face--front {
+    transform: rotateY(-180deg);
+  }
+
+  .boardgame-card__inner.is-flipped .boardgame-card__face--back {
+    transform: rotateY(0deg);
+  }
+
+  .boardgame-card__name {
+    font-size: 0.95rem;
+    line-height: 1;
+    color: var(--color-ink);
+  }
+
+  .boardgame-map {
+    margin: 0;
+  }
+
+  .boardgame-map :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 6px solid var(--color-ink);
+    border-radius: 18px;
+  }
+
+  .boardgame-map__caption {
+    margin: 0.5rem 0 0;
+    text-align: center;
+    color: var(--color-ink);
+    opacity: 0.75;
+  }
+</style>
+
+<script>
+  const carousels = document.querySelectorAll("[data-carousel]");
+
+  carousels.forEach((root) => {
+    const track = root.querySelector("[data-carousel-track]");
+    const prev = root.querySelector("[data-carousel-prev]");
+    const next = root.querySelector("[data-carousel-next]");
+    if (!track) return;
+
+    function nudge(direction) {
+      const firstCard = track.querySelector(".boardgame-card");
+      const step = firstCard ? firstCard.getBoundingClientRect().width + 14 : 200;
+      track.scrollBy({ left: direction * step * 2, behavior: "smooth" });
+    }
+
+    prev?.addEventListener("click", () => nudge(-1));
+    next?.addEventListener("click", () => nudge(1));
+
+    root.querySelectorAll("[data-flip-card]").forEach((card) => {
+      card.addEventListener("click", () => card.classList.toggle("is-flipped"));
+    });
+  });
+</script>

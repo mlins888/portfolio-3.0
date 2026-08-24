@@ -4,11 +4,14 @@
  * src/content/playground.ts and toggled visible by PlaygroundModal's script.
  * The `type` switch is the only branch here — everything else (title, copy,
  * media) comes straight from the config, so a new game/board-game/shirt
- * entry never needs a markup change. `social` is the one variant that swaps
- * the single-image layout for a grid — a variant of this same component,
- * not a separate one.
+ * entry never needs a markup change. `social` swaps the single-image layout
+ * for a grid, `shirt` swaps it for 1–2 real design views (front, or front +
+ * back), and `boardgame` swaps it for the card carousel + map in
+ * BoardGameCard.astro — variants of this same component, not separate ones.
  */
+import { Image } from "astro:assets";
 import type { PlaygroundPathway } from "../../content/playground";
+import BoardGameCard from "./BoardGameCard.astro";
 
 interface Props {
   pathway: PlaygroundPathway;
@@ -40,6 +43,17 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
           </div>
         ))}
       </div>
+    ) : pathway.type === "shirt" ? (
+      <div class="playground-card__designs" data-count={pathway.designs.length}>
+        {pathway.designs.map((view) => (
+          <figure class="playground-card__design">
+            <Image src={view.image} alt={view.alt} widths={[320, 480, 640]} sizes="(min-width: 900px) 16rem, 45vw" />
+            {view.label && <figcaption class="playground-card__design-label font-script">{view.label}</figcaption>}
+          </figure>
+        ))}
+      </div>
+    ) : pathway.type === "boardgame" ? (
+      <BoardGameCard />
     ) : (
       <div class="playground-card__media">
         <pathway.image class="block h-full w-full" />
@@ -105,6 +119,44 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
   .playground-card__media :global(svg) {
     max-width: 60%;
     max-height: 60%;
+  }
+
+  .playground-card__designs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Front + back: two views side by side instead of one full-width. */
+  .playground-card__designs[data-count="2"] {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .playground-card__design {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .playground-card__design :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 20rem;
+    object-fit: contain;
+    border: 6px solid var(--color-ink);
+    border-radius: 18px;
+    background: var(--color-cream);
+  }
+
+  .playground-card__design-label {
+    margin: 0;
+    text-align: center;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--color-ink);
+    opacity: 0.7;
   }
 
   .playground-card__grid {
