@@ -23,6 +23,14 @@ const shipTop = ROCKET_TRACK.shipWidth / 2 - shipNaturalH / 2;
 
     <div class="rocket-progress__ship">
       <RocketIcon size={ROCKET_TRACK.shipWidth} rotation={ROCKET_TRACK.shipRotation} />
+      <!-- Small exhaust puffs off the tail, in teal/coral —
+           a quiet detail, not a full particle system. -->
+      <div class="rocket-progress__particles" aria-hidden="true">
+        <span class="rocket-particle rocket-particle--teal" style="--particle-delay: 0s; --particle-y: -6px; --particle-drift: 5px;"></span>
+        <span class="rocket-particle rocket-particle--coral" style="--particle-delay: 0.4s; --particle-y: 3px; --particle-drift: -4px;"></span>
+        <span class="rocket-particle rocket-particle--teal" style="--particle-delay: 0.8s; --particle-y: 8px; --particle-drift: 3px;"></span>
+        <span class="rocket-particle rocket-particle--coral" style="--particle-delay: 1.2s; --particle-y: -2px; --particle-drift: -6px;"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -73,6 +81,55 @@ const shipTop = ROCKET_TRACK.shipWidth / 2 - shipNaturalH / 2;
     position: absolute;
     top: calc(var(--shipTop) * var(--u));
     left: calc((var(--trail) + var(--shipLead)) * var(--u));
+  }
+
+  .rocket-progress__particles {
+    position: absolute;
+    /* Reuses --shipTop's own magnitude: rotating the tall, narrow icon box
+       ~90° makes its visual tail reach that same distance past the box's
+       own edge — see the shipTop comment above for the underlying math. */
+    left: calc(var(--shipTop) * var(--u));
+    top: 50%;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .rocket-particle {
+    position: absolute;
+    left: 0;
+    top: var(--particle-y, 0);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    opacity: 0;
+    animation: rocket-particle 1.6s ease-out infinite;
+    animation-delay: var(--particle-delay, 0s);
+  }
+
+  .rocket-particle--teal {
+    background: var(--color-teal);
+  }
+
+  .rocket-particle--coral {
+    background: var(--color-coral);
+  }
+
+  @keyframes rocket-particle {
+    0% {
+      opacity: 0.8;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(-50% - 16px), calc(-50% + var(--particle-drift, 4px))) scale(0.35);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rocket-particle {
+      display: none;
+    }
   }
 </style>
 
