@@ -8,13 +8,19 @@
  * Building hotspots smooth-scroll to Work anchors; SpeechBubble only mounts
  * while a building is hovered. The display name uses data-site-brand so Nav can
  * Flip it into the header on scroll.
+ *
+ * HeroNavBadge is the site's real nav pre-scroll (see its own doc comment)
+ * — Nav.astro fades it out, alongside the rest of this cover's furniture,
+ * once the real nav bar solidifies.
  */
 import { hero } from "../../content/hero";
+import { site } from "../../content/site";
 import { work } from "../../content/work";
 import { CANVAS, canvasStyle, css, u } from "./canvas";
 
 import Hotspot from "../Hotspot.astro";
 import HeroCityscape from "./HeroCityscape.astro";
+import HeroNavBadge from "./HeroNavBadge.astro";
 import LogoBadge from "./LogoBadge.astro";
 import Sparkle from "./Sparkle.astro";
 import SpeechBurst from "./SpeechBurst.astro";
@@ -63,6 +69,14 @@ import Starburst from "./Starburst.astro";
          11-unit gap StampBadge itself uses between its date and price
          plates (see PLATE_WIDTH/plates in StampBadge.astro). -->
     <StampBadge x={80} y={220.3} date={hero.stamp.date} price={hero.stamp.price} />
+
+    <!-- Fills the gap between the stamp column (ends x=206) and the headline
+         (starts x=352) — x/height match that column's own span (91 to
+         220.3+111=331.3) so it reads as one continuous cluster. This is the
+         site's real primary nav until you scroll: Nav.astro's bar stays
+         hidden until the masthead collapses, so without this the four links
+         wouldn't exist on screen at all pre-scroll. -->
+    <HeroNavBadge x={222} y={91} width={120} height={240.3} links={site.nav} />
 
     <SpeechBurst x={1059} y={60} text={hero.tagline} />
 

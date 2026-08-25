@@ -139,6 +139,12 @@ function isCurrent(href: string) {
   const isHome = header.getAttribute("data-home") === "true";
   const root = document.documentElement;
   const navSlot = header.querySelector("[data-brand-nav]");
+  // HeroNavBadge is the real nav pre-scroll — its opacity is scrubbed along
+  // with the rest of the hero's "extras" below, but that tween alone would
+  // leave its links invisibly clickable/tabbable once faded. Tying `inert`
+  // to the exact same threshold that activates the real header bar keeps
+  // exactly one nav interactive at a time.
+  const heroNavBadge = document.querySelector("[data-hero-nav-badge]");
 
   function setProgress(progress) {
     const p = Math.min(1, Math.max(0, progress));
@@ -147,6 +153,7 @@ function isCurrent(href: string) {
     header.classList.toggle("is-active", active);
     header.toggleAttribute("inert", !active);
     header.setAttribute("aria-hidden", active ? "false" : "true");
+    heroNavBadge?.toggleAttribute("inert", active);
     root.style.setProperty("--nav-offset", `calc(${p} * var(--nav-h))`);
   }
 
@@ -161,6 +168,7 @@ function isCurrent(href: string) {
       hero?.querySelector('[data-anim="burst"]'),
       hero?.querySelector("[data-stamp]"),
       hero?.querySelector("[data-logo]"),
+      hero?.querySelector("[data-hero-nav-badge]"),
     ].filter(Boolean);
 
     // Hero.astro writes the headline's canvas position/size as an INLINE

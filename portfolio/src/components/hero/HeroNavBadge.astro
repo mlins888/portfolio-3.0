@@ -1,0 +1,80 @@
+---
+/**
+ * "Cover index" — a vertical stack of plates beside the corner-cat/stamp
+ * column, filling the gap that otherwise sits empty before the headline
+ * starts. This is real primary navigation, not decoration: it's what lets a
+ * visitor reach Work/About/Playground before ever scrolling, since the real
+ * nav bar (see Nav.astro) stays hidden until the hero masthead collapses.
+ * Matches StampBadge's cream-plate postal language — four equal segments
+ * instead of its uneven date/price pair — and fades out alongside the rest
+ * of the hero's cover furniture (logo, stamp, greeting, burst) once the
+ * real nav bar takes over (see the `extras` array in Nav.astro).
+ */
+import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+
+interface NavLink {
+  label: string;
+  href: string;
+}
+
+interface Props extends CanvasBox {
+  links: NavLink[];
+  class?: string;
+}
+
+const { links, class: className, ...box } = Astro.props;
+
+const GAP = 8;
+const width = box.width ?? 0;
+const height = box.height ?? 0;
+const segmentHeight = (height - GAP * (links.length - 1)) / links.length;
+---
+
+<nav class:list={[className]} style={canvasStyle(box)} aria-label="Quick links" data-hero-nav-badge>
+  {
+    links.map((link, i) => (
+      <a
+        href={link.href}
+        class="hero-nav-link absolute flex items-center justify-center bg-cream text-ink font-script"
+        style={css({
+          left: u(0),
+          top: u(i * (segmentHeight + GAP)),
+          width: u(width),
+          height: u(segmentHeight),
+        })}
+        aria-current={link.href === "/" ? "page" : undefined}
+      >
+        <span
+          class="leading-none"
+          style={css({ fontSize: u(link.label.length > 6 ? 17 : 21), transform: "translateY(0.27em)" })}
+        >
+          {link.label}
+        </span>
+      </a>
+    ))
+  }
+</nav>
+
+<style>
+  .hero-nav-link {
+    text-decoration: none;
+    transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.25s ease;
+    transform: translate(0, 0);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  .hero-nav-link:hover,
+  .hero-nav-link:focus-visible {
+    transform: translate(calc(-6 * var(--u, 1px)), calc(-6 * var(--u, 1px)));
+    filter: drop-shadow(calc(6 * var(--u, 1px)) calc(6 * var(--u, 1px)) 0 var(--color-gold));
+  }
+
+  .hero-nav-link:focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: -3px;
+  }
+
+  .hero-nav-link[aria-current="page"] {
+    color: var(--color-coral);
+  }
+</style>
