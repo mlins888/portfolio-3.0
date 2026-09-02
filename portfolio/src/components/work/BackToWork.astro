@@ -1,0 +1,52 @@
+---
+/**
+ * "← back to [work]" return link, shared by every /work/* detail page (the
+ * bespoke pulse.astro and the generic [slug].astro stub) so they read the
+ * same. Same shape as the homepage's playground CTA (see WorkSection.astro's
+ * .playground-cta) — plain script text plus one pill that's just the
+ * clickable word — centered, and in ink rather than cream since these pages
+ * sit on paper, not coral.
+ */
+import PillBadge from "../PillBadge.astro";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<p class:list={["back-to-work font-script", className]}>
+  <span>← back to</span>
+  <PillBadge label="work" tone="teal" href="/#work" size="lg" />
+</p>
+
+<style>
+  .back-to-work {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem 0.85rem;
+    font-size: clamp(1.35rem, 2.6vw, 2.5rem);
+    line-height: 0.91;
+    color: var(--color-ink);
+  }
+
+  /* Same "lifted card" hover the homepage's playground pill uses: nudge
+     up-left on hover/focus with a hard-edged gold shadow. */
+  .back-to-work :global(.pill-badge) {
+    --pill-lift: -0.52rem;
+    padding-block: 0.4rem;
+    line-height: 1.1;
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.35s ease;
+    transform: translateY(var(--pill-lift));
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  .back-to-work :global(.pill-badge):hover,
+  .back-to-work :global(.pill-badge):focus-visible {
+    transform: translate(-0.25rem, calc(var(--pill-lift) - 0.25rem));
+    filter: drop-shadow(0.25rem 0.25rem 0 var(--color-gold));
+  }
+</style>

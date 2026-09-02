@@ -1,5 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import WipStub from "../../components/WipStub.astro";
+import BackToWork from "../../components/work/BackToWork.astro";
 import { work } from "../../content/work";
 
 export function getStaticPaths() {
@@ -20,11 +22,7 @@ const title = study?.title ?? other?.title ?? slug;
   <main class="mx-auto max-w-3xl px-6 py-24" style="padding-top: calc(var(--nav-offset) + 6rem)">
     <p class="font-script text-coral mb-3">Case study</p>
     <h1 class="font-display text-4xl uppercase">{title}</h1>
-    <p class="font-body mt-6 text-lg opacity-80">
-      Detail page stub — content coming in a future pass.
-    </p>
-    <p class="mt-8">
-      <a class="font-script text-coral underline" href="/#work">← Back to work</a>
-    </p>
+    <WipStub class="mt-10" />
+    <BackToWork class="mt-16" />
   </main>
 </BaseLayout>

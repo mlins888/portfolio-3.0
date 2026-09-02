@@ -6,7 +6,7 @@
  */
 import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PillBadge from "../../components/PillBadge.astro";
+import BackToWork from "../../components/work/BackToWork.astro";
 import MetaRow from "../../components/work/pulse/MetaRow.astro";
 import PhoneFrame from "../../components/work/pulse/PhoneFrame.astro";
 import FeatureRow from "../../components/work/pulse/FeatureRow.astro";
@@ -59,10 +59,7 @@ const { goalSetting, trophyCase, adminPortal } = pulse.features;
       {adminPortal.description}
     </FeatureRow>
 
-    <p class="back-to-work font-script mt-16">
-      <span>← back to</span>
-      <PillBadge label="work" tone="teal" href="/#work" size="lg" />
-    </p>
+    <BackToWork class="mt-16" />
   </main>
 </BaseLayout>
 
@@ -85,37 +82,5 @@ const { goalSetting, trophyCase, adminPortal } = pulse.features;
     border: 6px solid var(--color-ink);
     border-radius: 20px;
     background: var(--color-cream);
-  }
-
-  /* Same shape as the homepage's playground CTA (see WorkSection.astro's
-     .playground-cta) — plain text plus one pill that's just the clickable
-     word — centered here instead of right-aligned, and in ink rather than
-     cream since this page's background is paper, not coral. */
-  .back-to-work {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.65rem 0.85rem;
-    font-size: clamp(1.35rem, 2.6vw, 2.5rem);
-    line-height: 0.91;
-    color: var(--color-ink);
-  }
-
-  /* Same "lifted card" hover the homepage's playground pill uses: nudge
-     up-left on hover/focus with a hard-edged gold shadow. */
-  .back-to-work :global(.pill-badge) {
-    --pill-lift: -0.52rem;
-    padding-block: 0.4rem;
-    line-height: 1.1;
-    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.35s ease;
-    transform: translateY(var(--pill-lift));
-    filter: drop-shadow(0 0 0 transparent);
-  }
-
-  .back-to-work :global(.pill-badge):hover,
-  .back-to-work :global(.pill-badge):focus-visible {
-    transform: translate(-0.25rem, calc(var(--pill-lift) - 0.25rem));
-    filter: drop-shadow(0.25rem 0.25rem 0 var(--color-gold));
   }
 </style>

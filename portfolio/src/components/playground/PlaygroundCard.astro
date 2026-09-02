@@ -4,14 +4,16 @@
  * src/content/playground.ts and toggled visible by PlaygroundModal's script.
  * The `type` switch is the only branch here — everything else (title, copy,
  * media) comes straight from the config, so a new game/board-game/shirt
- * entry never needs a markup change. `social` swaps the single-image layout
- * for a grid, `shirt` swaps it for 1–2 real design views (front, or front +
- * back), and `boardgame` swaps it for the card carousel + map in
- * BoardGameCard.astro — variants of this same component, not separate ones.
+ * entry never needs a markup change. `shirt` shows 1–2 real design views
+ * (front, or front + back), `boardgame` shows the card carousel + map in
+ * BoardGameCard.astro, and `game` / `social` have no finished art yet so
+ * they render the shared <WipStub> ("still workin on this one...") — swap
+ * those back to real media once the designs exist.
  */
 import { Image } from "astro:assets";
 import type { PlaygroundPathway } from "../../content/playground";
 import BoardGameCard from "./BoardGameCard.astro";
+import WipStub from "../WipStub.astro";
 
 interface Props {
   pathway: PlaygroundPathway;
@@ -36,18 +38,21 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
 
   {
     pathway.type === "social" ? (
-      <div class="playground-card__grid">
-        {pathway.images.map((img) => (
-          <div class="playground-card__grid-item" style={img.tint ? `color:${img.tint}` : undefined}>
-            <img.image class="block h-full w-full" />
-          </div>
-        ))}
-      </div>
+      <WipStub />
     ) : pathway.type === "shirt" ? (
       <div class="playground-card__designs" data-count={pathway.designs.length}>
         {pathway.designs.map((view) => (
           <figure class="playground-card__design">
-            <Image src={view.image} alt={view.alt} widths={[320, 480, 640]} sizes="(min-width: 900px) 16rem, 45vw" />
+            <Image
+              src={view.image}
+              alt={view.alt}
+              widths={pathway.designs.length === 2 ? [320, 480, 768] : [480, 768, 1088]}
+              sizes={
+                pathway.designs.length === 2
+                  ? "(min-width: 640px) 20rem, 45vw"
+                  : "(min-width: 640px) 34rem, 90vw"
+              }
+            />
             {view.label && <figcaption class="playground-card__design-label font-script">{view.label}</figcaption>}
           </figure>
         ))}
@@ -55,9 +60,7 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
     ) : pathway.type === "boardgame" ? (
       <BoardGameCard />
     ) : (
-      <div class="playground-card__media">
-        <pathway.image class="block h-full w-full" />
-      </div>
+      <WipStub />
     )
   }
 
@@ -122,32 +125,42 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
   }
 
   .playground-card__designs {
-    display: grid;
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
     gap: 0.75rem;
-  }
-
-  /* Front + back: two views side by side instead of one full-width. */
-  .playground-card__designs[data-count="2"] {
-    grid-template-columns: 1fr 1fr;
   }
 
   .playground-card__design {
     margin: 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 0.4rem;
+    min-width: 0;
+    /* Shrink to the image — the frame should hug the art, not the column. */
+    flex: 0 1 auto;
+  }
+
+  /* Front + back: cap each so the pair fits side by side. */
+  .playground-card__designs[data-count="2"] .playground-card__design {
+    max-width: calc(50% - 0.375rem);
   }
 
   .playground-card__design :global(img) {
     display: block;
-    width: 100%;
+    width: auto;
     height: auto;
-    max-height: 20rem;
-    object-fit: contain;
+    max-width: 100%;
+    max-height: min(68vh, 30rem);
     border: 6px solid var(--color-ink);
     border-radius: 18px;
     background: var(--color-cream);
+  }
+
+  .playground-card__designs[data-count="2"] .playground-card__design :global(img) {
+    max-height: min(55vh, 22rem);
   }
 
   .playground-card__design-label {
