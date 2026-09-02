@@ -1,0 +1,585 @@
+---
+/**
+ * The About page's panel cluster — a 2x2 arrangement of angular comic panels
+ * with the portrait floating between them, laid out on a fixed canvas that
+ * mirrors the Figma frame (1 unit == 1px in Figma, see ../hero/canvas.ts).
+ *
+ * Each panel is hoverable / focusable / tappable. Revealing a panel shows its
+ * "connection":
+ *   - top-right  (boombox)    -> Spotify: now playing / last played
+ *   - bottom-left (controller) -> Steam: recently played game
+ *   - top-left   (d20)        -> static D&D character card (no API)
+ *   - bottom-right            -> reserved, content TBD
+ *
+ * Data is fetched once on mount from the /api/*.json endpoints and written
+ * into the cards while they're still hidden, so a hover never waits on the
+ * network. If an endpoint has nothing (not configured, profile private,
+ * nothing playing) the card falls back to a muted message.
+ */
+import { Image } from "astro:assets";
+
+import { about } from "../../content/about";
+import FillImage from "../FillImage.astro";
+import { css, u } from "../hero/canvas";
+
+import illoD20 from "../../assets/about/illo-d20.png";
+import illoBoombox from "../../assets/about/illo-boombox.png";
+import illoController from "../../assets/about/illo-controller.png";
+import ticks from "../../assets/about/ticks.svg";
+
+const CANVAS = { width: 600, height: 802 };
+
+/** Place an element on the cluster canvas, Figma-pixel values straight in. */
+const box = (x: number, y: number, w: number, h: number, rotation?: number) =>
+  css({
+    position: "absolute",
+    left: u(x),
+    top: u(y),
+    width: u(w),
+    height: u(h),
+    transform: rotation ? `rotate(${rotation}deg)` : undefined,
+  });
+
+const { dnd } = about;
+---
+
+<div class="about-panels">
+  <div class="about-panels__canvas">
+    <!-- Portrait — painted first, so the panels overlap its edges. -->
+    <figure class="ap-photo" style={box(38, 249, 496, 306)}>
+      <FillImage
+        src={about.photo}
+        alt={about.photoAlt}
+        cropTop={-10.78}
+        cropLeft={-0.03}
+        cropWidth={100.05}
+        cropHeight={189.54}
+      />
+    </figure>
+
+    <!-- Decorative shards — above the photo, behind the panels. -->
+    <img class="ap-ticks" src={ticks.src} alt="" aria-hidden="true" style={box(388, 182, 207.554, 173.12)} />
+
+    <!-- Bottom-right: reserved -->
+    <div class="ap-panel ap-panel--tbd" style={box(250, 585, 284, 207)}>
+      <svg class="ap-panel__shape" viewBox="0 0 300.103 217" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M194.329 5L11.1031 212H295.103V5H194.329Z" fill="#00B781" stroke="#010101" stroke-width="10" />
+      </svg>
+      <button class="ap-panel__hit" type="button" aria-label="More coming soon" aria-expanded="false"></button>
+      <div class="ap-panel__card ap-panel__card--center">
+        <span class="ap-card__kicker">Next up</span>
+        <span class="ap-card__line">Something new is moving in here soon.</span>
+      </div>
+    </div>
+
+    <!-- Top-left: D&D character (static) -->
+    <div class="ap-panel ap-panel--dnd" style={box(38, 12, 218, 207)}>
+      <svg class="ap-panel__shape ap-panel__shape--flip" viewBox="0 0 229.874 217" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M73.8737 5L6.87374 212H224.874V5H73.8737Z" fill="#FB9F56" stroke="#010101" stroke-width="10" />
+      </svg>
+      <Image class="ap-panel__illo" src={illoD20} alt="" aria-hidden="true" widths={[240, 460]} style={box(-14, 44, 222, 182)} />
+      <button class="ap-panel__hit" type="button" aria-label="Show my current D&amp;D character" aria-expanded="false"></button>
+      <div class="ap-panel__card">
+        <span class="ap-card__kicker">Currently playing</span>
+        <span class="ap-card__title">{dnd.name}</span>
+        <span class="ap-card__sub">{dnd.title}</span>
+        <ul class="ap-card__stats">
+          {dnd.stats.map((s) => (
+            <li data-label={s.label}><b>{s.value}</b></li>
+          ))}
+        </ul>
+        <span class="ap-card__blurb">{dnd.blurb}</span>
+      </div>
+    </div>
+
+    <!-- Bottom-left: Steam -->
+    <div class="ap-panel ap-panel--game" data-game-panel style={box(38, 585, 351, 207)}>
+      <svg class="ap-panel__shape" viewBox="0 0 367.076 217" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M5 212V5H356L173.46 212H5Z" fill="#00777F" stroke="#010101" stroke-width="10" />
+      </svg>
+      <Image class="ap-panel__illo" src={illoController} alt="" aria-hidden="true" widths={[280, 540]} style={box(-18, 10, 268, 188)} />
+      <button class="ap-panel__hit" type="button" aria-label="Show the game I played most recently" aria-expanded="false"></button>
+      <div class="ap-panel__card ap-panel__card--media" data-game-card>
+        <img class="ap-card__art" alt="" data-game-art hidden />
+        <span class="ap-card__kicker" data-game-label>Recently played</span>
+        <span class="ap-card__title" data-game-name>—</span>
+        <span class="ap-card__meta" data-game-meta></span>
+        <a class="ap-card__link" data-game-link href="#" target="_blank" rel="noopener noreferrer" hidden>Open on Steam ↗</a>
+      </div>
+    </div>
+
+    <!-- Top-right: Spotify -->
+    <div class="ap-panel ap-panel--music" data-music-panel style={box(223, 12, 311, 207)}>
+      <svg class="ap-panel__shape" viewBox="0 0 322.822 217" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M317.822 5H6.82236L72.1918 212H193.521L221.749 137.441L317.822 189.927V5Z" fill="#00B781" stroke="#010101" stroke-width="10" />
+      </svg>
+      <Image class="ap-panel__illo ap-panel__illo--tilt" src={illoBoombox} alt="" aria-hidden="true" widths={[260, 500]} style={box(44, -18, 250, 198)} />
+      <button class="ap-panel__hit" type="button" aria-label="Show what I'm listening to" aria-expanded="false"></button>
+      <div class="ap-panel__card ap-panel__card--media" data-music-card>
+        <img class="ap-card__art" alt="" data-np-art hidden />
+        <span class="ap-card__kicker" data-np-label>Music last played</span>
+        <span class="ap-card__title" data-np-title>—</span>
+        <span class="ap-card__meta" data-np-artist></span>
+        <a class="ap-card__link" data-np-link href="#" target="_blank" rel="noopener noreferrer" hidden>Open in Spotify ↗</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  type Track = {
+    isPlaying: boolean;
+    title: string;
+    artist: string;
+    album: string;
+    albumImageUrl: string | null;
+    songUrl: string;
+  };
+  type Game = {
+    name: string;
+    playtimeRecentMin: number;
+    playtimeTotalMin: number;
+    storeUrl: string;
+    headerImageUrl: string;
+  };
+
+  const cluster = document.querySelector<HTMLElement>(".about-panels");
+  if (cluster) wire(cluster);
+
+  function wire(el: HTMLElement) {
+    const q = <T extends Element>(s: string) => el.querySelector<T>(s);
+
+    // --- reveal on tap (hover/focus are pure CSS) ---
+    const panels = Array.from(el.querySelectorAll<HTMLElement>(".ap-panel"));
+    panels.forEach((panel) => {
+      const hit = panel.querySelector<HTMLButtonElement>(".ap-panel__hit");
+      hit?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const open = panel.classList.toggle("is-open");
+        hit.setAttribute("aria-expanded", String(open));
+        panels.filter((p) => p !== panel).forEach((p) => {
+          p.classList.remove("is-open");
+          p.querySelector(".ap-panel__hit")?.setAttribute("aria-expanded", "false");
+        });
+      });
+    });
+    document.addEventListener("click", () => {
+      panels.forEach((p) => {
+        p.classList.remove("is-open");
+        p.querySelector(".ap-panel__hit")?.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    // --- Spotify ---
+    const musicPanel = q<HTMLElement>("[data-music-panel]");
+    fetch("/api/now-playing.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { track: Track | null }) => {
+        const t = data.track;
+        if (!t) {
+          setKicker(q("[data-np-label]"), "Music");
+          setText(q("[data-np-title]"), "Nothing playing right now");
+          return;
+        }
+        setKicker(q("[data-np-label]"), t.isPlaying ? "Music now playing" : "Music last played");
+        setText(q("[data-np-title]"), t.title);
+        setText(q("[data-np-artist]"), t.artist);
+        musicPanel?.classList.toggle("is-live", t.isPlaying);
+        const art = q<HTMLImageElement>("[data-np-art]");
+        if (art && t.albumImageUrl) {
+          art.src = t.albumImageUrl;
+          art.hidden = false;
+        }
+        const link = q<HTMLAnchorElement>("[data-np-link]");
+        if (link) {
+          link.href = t.songUrl;
+          link.hidden = false;
+        }
+      })
+      .catch(() => setText(q("[data-np-title]"), "Spotify unavailable"));
+
+    // --- Steam ---
+    fetch("/api/recent-game.json")
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data: { game: Game | null }) => {
+        const g = data.game;
+        if (!g) {
+          setKicker(q("[data-game-label]"), "Steam");
+          setText(q("[data-game-name]"), "Not connected yet");
+          return;
+        }
+        const recent = g.playtimeRecentMin > 0;
+        setKicker(q("[data-game-label]"), recent ? "Playing lately" : "Last played");
+        setText(q("[data-game-name]"), g.name);
+        setText(q("[data-game-meta]"), formatPlaytime(g));
+        const art = q<HTMLImageElement>("[data-game-art]");
+        if (art) {
+          art.src = g.headerImageUrl;
+          art.hidden = false;
+        }
+        const link = q<HTMLAnchorElement>("[data-game-link]");
+        if (link) {
+          link.href = g.storeUrl;
+          link.hidden = false;
+        }
+      })
+      .catch(() => setText(q("[data-game-name]"), "Steam unavailable"));
+  }
+
+  function setText(node: Element | null, value: string) {
+    if (node) node.textContent = value;
+  }
+  function setKicker(node: Element | null, value: string) {
+    if (node) node.textContent = value;
+  }
+  function formatPlaytime(g: Game) {
+    const hrs = (min: number) => (min / 60).toFixed(1).replace(/\.0$/, "");
+    if (g.playtimeRecentMin > 0) return `${hrs(g.playtimeRecentMin)}h in the last 2 weeks`;
+    if (g.playtimeTotalMin > 0) return `${hrs(g.playtimeTotalMin)}h all-time`;
+    return "";
+  }
+</script>
+
+<style define:vars={{ canvasW: CANVAS.width, canvasH: CANVAS.height }}>
+  .about-panels {
+    container-type: inline-size;
+    width: 100%;
+    max-width: calc(var(--canvasW) * 1px);
+    margin-inline: auto;
+  }
+
+  .about-panels__canvas {
+    position: relative;
+    /* One canvas unit === one Figma pixel, as a share of the cluster's width. */
+    --u: calc(100cqw / var(--canvasW));
+    aspect-ratio: var(--canvasW) / var(--canvasH);
+  }
+
+  /* --- portrait --- */
+  .ap-photo {
+    margin: 0;
+    border: calc(10 * var(--u)) solid var(--color-ink);
+    overflow: hidden;
+    background: var(--color-ink);
+  }
+
+  .ap-ticks {
+    display: block;
+    pointer-events: none;
+  }
+
+  /* --- panels --- */
+  .ap-panel {
+    /* positioned by inline style */
+  }
+
+  .ap-panel__shape {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.3s ease;
+  }
+
+  /* Flip the shape horizontally (art is untouched). `scale` is its own
+     property, so it composes with the hover-lift `transform`. */
+  .ap-panel__shape--flip {
+    scale: -1 1;
+  }
+
+  .ap-panel__illo {
+    position: absolute;
+    object-fit: contain;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
+  /* `rotate` is its own property, so it composes with the hover `transform`. */
+  .ap-panel__illo--tilt {
+    rotate: -7.27deg;
+  }
+
+  .ap-panel__hit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 3;
+  }
+
+  .ap-panel__hit:focus-visible {
+    outline: 3px solid var(--color-cream);
+    outline-offset: 4px;
+  }
+
+  /* lift the art on reveal */
+  .ap-panel:hover .ap-panel__shape,
+  .ap-panel:focus-within .ap-panel__shape,
+  .ap-panel.is-open .ap-panel__shape {
+    transform: translate(calc(-6 * var(--u)), calc(-6 * var(--u)));
+    filter: drop-shadow(calc(8 * var(--u)) calc(8 * var(--u)) 0 var(--color-ink));
+  }
+  /* the flipped shape's X axis is mirrored — negate the horizontal lift so it
+     still moves up-and-left visually */
+  .ap-panel:hover .ap-panel__shape--flip,
+  .ap-panel:focus-within .ap-panel__shape--flip,
+  .ap-panel.is-open .ap-panel__shape--flip {
+    transform: translate(calc(6 * var(--u)), calc(-6 * var(--u)));
+  }
+  .ap-panel:hover .ap-panel__illo,
+  .ap-panel:focus-within .ap-panel__illo,
+  .ap-panel.is-open .ap-panel__illo {
+    transform: translateY(calc(-6 * var(--u))) scale(1.04);
+  }
+
+  /* --- reveal card --- */
+  .ap-panel__card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 4;
+    width: calc(232 * var(--u));
+    /* nudged toward the panel's outer edge so the illustration stays visible */
+    --card-shift: 0px;
+    transform: translate(calc(-50% + var(--card-shift)), calc(-50% + 10px));
+    display: flex;
+    flex-direction: column;
+    gap: calc(3 * var(--u));
+    padding: calc(13 * var(--u)) calc(15 * var(--u));
+    overflow: hidden;
+    background: var(--color-cream);
+    border: calc(4 * var(--u)) solid var(--color-ink);
+    border-radius: calc(12 * var(--u));
+    box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--color-ink);
+    color: var(--color-ink);
+    text-align: left;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1), visibility 0.22s;
+  }
+
+  .ap-panel__card--center {
+    text-align: center;
+    align-items: center;
+  }
+
+  .ap-panel--dnd .ap-panel__card,
+  .ap-panel--game .ap-panel__card {
+    --card-shift: calc(-60 * var(--u));
+  }
+  .ap-panel--music .ap-panel__card,
+  .ap-panel--tbd .ap-panel__card {
+    --card-shift: calc(60 * var(--u));
+  }
+
+  .ap-panel:hover .ap-panel__card,
+  .ap-panel:focus-within .ap-panel__card,
+  .ap-panel.is-open .ap-panel__card {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(calc(-50% + var(--card-shift)), -50%);
+  }
+
+  /* full-bleed art strip at the top of media cards (Steam's landscape capsule) */
+  .ap-card__art {
+    width: calc(100% + 30 * var(--u));
+    height: calc(96 * var(--u));
+    margin: calc(-13 * var(--u)) calc(-15 * var(--u)) calc(8 * var(--u));
+    object-fit: cover;
+    border-bottom: calc(4 * var(--u)) solid var(--color-ink);
+  }
+
+  /* album covers are square — show the whole thing as a bordered thumbnail */
+  .ap-panel--music .ap-card__art {
+    width: calc(92 * var(--u));
+    height: calc(92 * var(--u));
+    margin: 0 0 calc(9 * var(--u));
+    align-self: flex-start;
+    object-fit: cover;
+    border: calc(3 * var(--u)) solid var(--color-ink);
+    border-radius: calc(6 * var(--u));
+  }
+
+  .ap-card__kicker,
+  .ap-card__meta,
+  .ap-card__sub,
+  .ap-card__blurb,
+  .ap-card__line,
+  .ap-card__link {
+    font-family: var(--font-body);
+  }
+
+  .ap-card__kicker {
+    font-size: calc(12 * var(--u));
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-coral);
+  }
+
+  .ap-card__title {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: calc(18 * var(--u));
+    line-height: 1.12;
+  }
+
+  .ap-card__sub,
+  .ap-card__meta {
+    font-size: calc(13 * var(--u));
+    opacity: 0.72;
+  }
+
+  .ap-card__blurb,
+  .ap-card__line {
+    font-size: calc(12.5 * var(--u));
+    line-height: 1.3;
+    margin-top: calc(5 * var(--u));
+    opacity: 0.85;
+  }
+
+  .ap-card__stats {
+    list-style: none;
+    margin: calc(9 * var(--u)) 0 calc(2 * var(--u));
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: calc(7 * var(--u)) calc(6 * var(--u));
+  }
+  .ap-card__stats li {
+    font-family: var(--font-body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+  }
+  .ap-card__stats li b {
+    font-size: calc(17 * var(--u));
+    font-weight: 700;
+  }
+  .ap-card__stats li::after {
+    content: attr(data-label);
+    font-size: calc(9 * var(--u));
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.6;
+    margin-top: calc(2 * var(--u));
+  }
+
+  .ap-card__link {
+    margin-top: calc(9 * var(--u));
+    font-size: calc(12.5 * var(--u));
+    font-weight: 700;
+    color: var(--color-teal-deep);
+    text-decoration: none;
+  }
+  .ap-card__link:hover {
+    text-decoration: underline;
+  }
+
+  /* a subtle "live" pulse on the music panel when a track is actually playing */
+  .ap-panel--music.is-live .ap-panel__illo {
+    animation: ap-bob 1.6s ease-in-out infinite;
+  }
+  @keyframes ap-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(calc(-4 * var(--u))); }
+  }
+
+  /* --- mobile: drop the canvas, stack the panels, cards always shown --- */
+  @media (max-width: 860px) {
+    .about-panels__canvas {
+      aspect-ratio: auto;
+      --u: 1px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .ap-photo,
+    .ap-ticks,
+    .ap-panel__shape,
+    .ap-panel__illo,
+    .ap-panel__hit {
+      position: static !important;
+      transform: none !important;
+      rotate: none !important;
+    }
+    .ap-photo {
+      order: 1;
+      width: 100% !important;
+      height: auto !important;
+      aspect-ratio: 496 / 306;
+      border-width: 4px;
+    }
+    .ap-ticks { display: none; }
+    .ap-panel {
+      position: static !important;
+      width: 100% !important;
+      height: auto !important;
+      display: grid;
+      grid-template-columns: 84px 1fr;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      border: 3px solid var(--color-ink);
+      border-radius: 14px;
+      background: var(--color-cream);
+    }
+    .ap-panel--dnd { order: 2; }
+    .ap-panel--music { order: 3; }
+    .ap-panel--game { order: 4; }
+    .ap-panel--tbd { order: 5; }
+    .ap-panel__shape { display: none; }
+    .ap-panel__illo {
+      width: 84px !important;
+      height: 84px !important;
+    }
+    .ap-panel__hit { display: none; }
+    .ap-panel__card {
+      position: static;
+      width: auto;
+      transform: none;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      box-shadow: none;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      overflow: visible;
+    }
+    /* media cards: put the art back inline, small and rounded */
+    .ap-card__art {
+      width: 100% !important;
+      max-width: 240px;
+      height: 120px !important;
+      margin: 0 0 0.5rem !important;
+      border: 3px solid var(--color-ink);
+      border-radius: 10px;
+    }
+    .ap-panel--music .ap-card__art {
+      width: 96px !important;
+      height: 96px !important;
+    }
+    .ap-panel--tbd { grid-template-columns: 1fr; }
+    .ap-panel--tbd .ap-panel__card--center { align-items: flex-start; text-align: left; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ap-panel__shape,
+    .ap-panel__illo,
+    .ap-panel__card {
+      transition: none;
+    }
+    .ap-panel--music.is-live .ap-panel__illo {
+      animation: none;
+    }
+  }
+</style>
