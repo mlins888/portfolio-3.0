@@ -15,12 +15,6 @@ import { Image } from "astro:assets";
 import { boardgame } from "../../content/boardgame";
 
 const { cards, map } = boardgame;
-
-const CATEGORY_LABEL: Record<string, string> = {
-  character: "Character",
-  resource: "Resource",
-  spell: "Spell",
-};
 ---
 
 <div class="boardgame">
@@ -33,7 +27,6 @@ const CATEGORY_LABEL: Record<string, string> = {
       {
         cards.map((card) => (
           <li class="boardgame-card">
-            <span class="boardgame-card__category font-script">{CATEGORY_LABEL[card.category]}</span>
             <button type="button" class="boardgame-card__inner" data-flip-card aria-label={`${card.name} card — tap to flip`}>
               <span class="boardgame-card__face boardgame-card__face--front">
                 <Image src={card.front.image} alt={card.front.alt} widths={[240, 360]} sizes="10.5rem" />
@@ -42,7 +35,6 @@ const CATEGORY_LABEL: Record<string, string> = {
                 <Image src={card.back.image} alt={card.back.alt} widths={[240, 360]} sizes="10.5rem" />
               </span>
             </button>
-            <span class="boardgame-card__name font-script">{card.name}</span>
           </li>
         ))
       }
@@ -55,7 +47,6 @@ const CATEGORY_LABEL: Record<string, string> = {
 
   <figure class="boardgame-map">
     <Image src={map.image} alt={map.alt} widths={[480, 720, 960]} sizes="(min-width: 900px) 40rem, 90vw" />
-    <figcaption class="boardgame-map__caption font-script">The map</figcaption>
   </figure>
 </div>
 
@@ -115,12 +106,6 @@ const CATEGORY_LABEL: Record<string, string> = {
     scroll-snap-align: start;
   }
 
-  .boardgame-card__category {
-    font-size: 0.85rem;
-    line-height: 1;
-    color: var(--color-coral);
-  }
-
   .boardgame-card__inner {
     position: relative;
     display: block;
@@ -164,12 +149,6 @@ const CATEGORY_LABEL: Record<string, string> = {
     transform: rotateY(0deg);
   }
 
-  .boardgame-card__name {
-    font-size: 0.95rem;
-    line-height: 1;
-    color: var(--color-ink);
-  }
-
   .boardgame-map {
     margin: 0;
   }
@@ -180,13 +159,6 @@ const CATEGORY_LABEL: Record<string, string> = {
     height: auto;
     border: 6px solid var(--color-ink);
     border-radius: 18px;
-  }
-
-  .boardgame-map__caption {
-    margin: 0.5rem 0 0;
-    text-align: center;
-    color: var(--color-ink);
-    opacity: 0.75;
   }
 </style>
 

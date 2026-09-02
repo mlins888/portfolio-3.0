@@ -160,8 +160,9 @@ export const playground = {
       label: "check out the board game?",
       hotspotTarget: "box stack (all 3 layers)",
       hotspot: { x: -98, y: 649.808, width: 963, height: 499.401 },
-      title: "The board game",
-      description: "Browse the deck below, and the map it's all played on.",
+      title: "Shattered Light",
+      description:
+        "In Shattered Light, two opposing teams battle for control in “The Witching Wood”. These teams each are made up of 1-4 players (total of 2-8 players) each of various types of spellcasting abilities equipped with different skillsets in order to outsmart their opponents. In order to win, players traverse a hexagonal map, collect resources needed to play spell cards, and claim point “crystals” for one’s team. The game ends when both sides have claimed all of the crystals and one team ends up with more than the other.",
     },
     {
       id: "social",
@@ -187,7 +188,7 @@ export const playground = {
       hotspotTarget: "shirt hanger — orange (back)",
       hotspot: { x: 790.103, y: 192.844, width: 237.844, height: 355.587 },
       title: "Code+Plus 2026",
-      description: "Event tee for Code+Plus 2026 — front chest logo, full back print.",
+      description: "Event tee concept for Code+Plus 2026 — front chest logo, full back print.",
       image: shirt1Art,
       imageAlt: "Orange t-shirt on a hanger",
       designs: [
@@ -226,7 +227,7 @@ export const playground = {
       hotspotTarget: "shirt hanger — green",
       hotspot: { x: 896, y: 198, width: 217, height: 346 },
       title: "DSO 100",
-      description: "Centennial tee for the DSO — front chest logo, full back print.",
+      description: "Centennial tee for the Duke Symphony Orchestra — front chest logo, full back print.",
       image: shirt4Art,
       imageAlt: "Green t-shirt on a hanger",
       designs: [
@@ -241,7 +242,7 @@ export const playground = {
       hotspotTarget: "shirt hanger — teal (front)",
       hotspot: { x: 941, y: 195, width: 217, height: 391 },
       title: "Rooted in Christ's Love",
-      description: "Ephesians 3:17.",
+      description: "Chapel Hill Bible Church shirt + branding design, 2026.",
       image: shirt5Art,
       imageAlt: "Teal t-shirt on a hanger",
       designs: [{ image: rooted, alt: "Rooted in Christ's Love tee design, tree emblem on green" }],
