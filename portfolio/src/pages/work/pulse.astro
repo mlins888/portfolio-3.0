@@ -7,7 +7,7 @@
 import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BackToWork from "../../components/work/BackToWork.astro";
-import MetaRow from "../../components/work/pulse/MetaRow.astro";
+import FilmStrip from "../../components/work/FilmStrip.astro";
 import PhoneFrame from "../../components/work/pulse/PhoneFrame.astro";
 import FeatureRow from "../../components/work/pulse/FeatureRow.astro";
 import HexBadgeGrid from "../../components/work/pulse/HexBadgeGrid.astro";
@@ -19,12 +19,11 @@ const { goalSetting, trophyCase, adminPortal } = pulse.features;
 <BaseLayout title={`${pulse.title} — Makenna Linsky`}>
   <main class="pulse-page mx-auto max-w-5xl px-6 py-24" style="padding-top: calc(var(--nav-offset) + 6rem)">
     <header class="mx-auto max-w-3xl">
-      <p class="font-script text-coral mb-3">{pulse.eyebrow}</p>
       <h1 class="font-display text-4xl uppercase">{pulse.title}</h1>
     </header>
 
-    <div class="mx-auto max-w-3xl mt-6">
-      <MetaRow tags={pulse.metaTags} />
+    <div class="mx-auto max-w-3xl mt-8">
+      <FilmStrip frames={pulse.meta} />
     </div>
 
     <FeatureRow mediaSide="right">

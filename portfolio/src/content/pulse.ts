@@ -81,21 +81,15 @@ export const badges: Badge[] = Object.entries(badgeModules)
 
 export const pulse = {
   title: "Pulse: For Research",
-  eyebrow: "Case study",
 
-  /** Short standalone tags, not label/value pairs — same model as the
-   *  homepage case-study pills (a year, an org), so they read as a row of
-   *  quick facts rather than a mini form. */
-  metaTags: [
-    "Developer",
-    "Design Lead",
-    "May–Jul 2026",
-    "Team of 4",
-    "SwiftUI",
-    "SwiftData",
-    "Figma",
-    "Preact",
-    "FastAPI",
+  /** Film-strip frames for the case-study header — one label over its
+   *  stacked values. Add or reorder frames freely; FilmStrip wraps past
+   *  its column count and grows to fit. */
+  meta: [
+    { label: "Role", values: ["Developer", "Design Lead"] },
+    { label: "Duration", values: ["May–Jul 2026"] },
+    { label: "Collaborators", values: ["Team of 4"] },
+    { label: "Tools", values: ["SwiftUI", "SwiftData", "Figma", "Preact", "FastAPI"] },
   ],
 
   overview:

@@ -1,11 +1,13 @@
 ---
 /**
  * The illustrated lower-band scene: two flat "night sky" panels, the three
- * building illustrations, the character-on-swing artwork, and a small accent
- * shape between the buildings — all placed at their exact Figma coordinates
- * on the hero canvas. Paint order matches the Figma layer order exactly
- * (the character scene is painted after the first two buildings because it's
- * a transparent-background cutout that partially overlaps them).
+ * building illustrations, the character-on-swing artwork (a colourful shape
+ * burst that slowly rotates + pulses, with the line-drawn character resting
+ * still on top — see the <style> block), and a small accent shape between
+ * the buildings — all placed at their exact Figma coordinates on the hero
+ * canvas. Paint order matches the Figma layer order exactly (the character
+ * scene is painted after the first two buildings because it's a
+ * transparent-background cutout that partially overlaps them).
  *
  * `buildingPulse` and `buildingOther` are crops of a shared oversized master
  * canvas (see FillImage); `buildingHackduke` and the scene artwork are
@@ -66,15 +68,26 @@ import accent from "../../assets/decor/hero-scene-accent.svg";
   </div>
 </div>
 
+<!-- Scene artwork, split into two layers: a colourful shape burst that
+     rotates + pulses on a slow perpetual loop, and the line-drawn
+     character sitting still on top of it. Same footprint the single
+     combined image used before. The splash keeps a base scale > 1 so the
+     rotation never pulls a corner off the (clipped) box. -->
 <div
-  class="absolute overflow-hidden pointer-events-none"
+  class="scene-art absolute overflow-hidden pointer-events-none"
   style={canvasStyle({ x: 31, y: 389, width: 962, height: 668 })}
   data-anim="portrait"
 >
   <Image
-    src={hero.images.scene}
+    src={hero.images.sceneSplash}
+    alt=""
+    aria-hidden="true"
+    class="scene-art__splash absolute inset-0 h-full w-full object-cover"
+  />
+  <Image
+    src={hero.images.sceneCharacter}
     alt={hero.images.sceneAlt}
-    class="h-full w-full object-cover"
+    class="scene-art__character absolute"
   />
 </div>
 
@@ -91,4 +104,40 @@ import accent from "../../assets/decor/hero-scene-accent.svg";
     class="h-full w-full object-cover"
   />
 </div>
+
+<style>
+  .scene-art__splash {
+    transform-origin: center;
+    /* Base scale > 1 so the box (which clips) stays fully covered through
+       the whole rotation. */
+    transform: rotate(-2deg) scale(1.04);
+    animation: scene-splash-idle 11s ease-in-out infinite;
+  }
+
+  @keyframes scene-splash-idle {
+    0%,
+    100% {
+      transform: rotate(-2deg) scale(1.04);
+    }
+    50% {
+      transform: rotate(2deg) scale(1.09);
+    }
+  }
+
+  /* Placement matched to where the character sat in the original combined
+     artwork (content centred at ~43%/48% of the box, ~50% of its width). */
+  .scene-art__character {
+    left: 41%;
+    top: 49.5%;
+    width: 54%;
+    height: auto;
+    transform: translate(-50%, -50%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scene-art__splash {
+      animation: none;
+    }
+  }
+</style>
 

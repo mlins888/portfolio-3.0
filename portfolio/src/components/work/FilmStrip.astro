@@ -1,0 +1,183 @@
+---
+/**
+ * Film-strip meta block for the top of a case study — replaces the old row
+ * of coral/teal pills. A black film base with paper-coloured sprocket
+ * holes punched along the top and bottom edges, and the middle divided
+ * into "frames" by vertical black lines. Each frame is one fact: a light
+ * label ("Role") over one or more semibold values ("Developer" /
+ * "Design Lead").
+ *
+ * Reusable across case studies — just pass a different `frames` array.
+ * `columns` sets how many frames sit on a row (default 4, matching the
+ * Figma); any frames past that wrap onto another row and the strip grows
+ * to fit, with divider lines between the new cells too. Narrow viewports
+ * drop to 2 columns, then 1, regardless of `columns`.
+ *
+ * Design: Figma "case study label" (node 209:68). The Figma cream band is
+ * the same colour as the page (`--color-paper`), so the band itself is
+ * left transparent here — the sprocket holes read as real holes punched
+ * through the black rails to the paper behind.
+ */
+export interface FilmFrame {
+  /** Short caption, e.g. "Role", "Duration". */
+  label: string;
+  /** One line per entry, stacked under the label. */
+  values: string[];
+}
+
+interface Props {
+  frames: FilmFrame[];
+  columns?: number;
+  class?: string;
+}
+
+const { frames, columns = 4, class: className } = Astro.props;
+
+/* A frame with more entries than this renders its values a notch smaller
+   and tighter, so one long list (e.g. a tools stack) doesn't stretch the
+   whole strip taller than the two-line frames around it. */
+const DENSE_THRESHOLD = 2;
+---
+
+<section class:list={["film-strip", className]} aria-label="Project details">
+  <div class="film-strip__rail" aria-hidden="true"></div>
+
+  <dl class="film-strip__frames" style={`--film-cols: ${columns}`}>
+    {
+      frames.map((frame) => (
+        <div
+          class:list={[
+            "film-strip__frame",
+            frame.values.length > DENSE_THRESHOLD && "film-strip__frame--dense",
+          ]}
+        >
+          <dt class="film-strip__label font-body">{frame.label}</dt>
+          <dd class="film-strip__values font-body">
+            {frame.values.map((value) => (
+              <span class="film-strip__value">{value}</span>
+            ))}
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  <div class="film-strip__rail" aria-hidden="true"></div>
+</section>
+
+<style>
+  .film-strip {
+    /* One knob scales the whole strip — hole size, rail height and the
+       spacing between holes all derive from it. */
+    --hole-w: clamp(0.7rem, 1.6vw, 0.95rem);
+    --hole-pitch: calc(var(--hole-w) * 3);
+    --rail-h: calc(var(--hole-w) * 1.7);
+    --divider: 3px;
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    /* Clips the grid's negative margin below, so the outermost frame
+       borders disappear and only the lines between frames survive. */
+    overflow: hidden;
+  }
+
+  /* Black rail with paper-coloured rectangular holes: a repeating paper
+     gradient (the holes) sitting on a solid ink bar, the gradient band
+     only ~55% tall so ink still shows above and below each hole. */
+  .film-strip__rail {
+    height: var(--rail-h);
+    background-color: var(--color-ink);
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--color-paper) 0 var(--hole-w),
+      transparent var(--hole-w) var(--hole-pitch)
+    );
+    background-position: center;
+    background-size: 100% 55%;
+    background-repeat: no-repeat;
+  }
+
+  .film-strip__frames {
+    display: grid;
+    grid-template-columns: repeat(var(--film-cols, 4), minmax(0, 1fr));
+    /* Pull the grid up/left by one divider width so `overflow: hidden`
+       clips the outermost top and left borders — leaving only the lines
+       *between* frames, in both directions, however the cells wrap. */
+    margin: calc(var(--divider) * -1) 0 0 calc(var(--divider) * -1);
+    padding: 0;
+  }
+
+  .film-strip__frame {
+    border-left: var(--divider) solid var(--color-ink);
+    border-top: var(--divider) solid var(--color-ink);
+    padding: clamp(0.85rem, 2vw, 1.4rem) clamp(0.9rem, 2vw, 1.5rem)
+      clamp(1rem, 2.4vw, 1.6rem);
+  }
+
+  .film-strip__label {
+    font-weight: 300;
+    font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+    line-height: 1;
+    color: var(--color-ink);
+    margin-bottom: 0.5rem;
+  }
+
+  .film-strip__values {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .film-strip__value {
+    font-weight: 600;
+    font-size: clamp(1.05rem, 1.9vw, 1.35rem);
+    line-height: 1.16;
+    color: var(--color-ink);
+  }
+
+  /* Long lists shrink and split into two columns, so they stay near the
+     height of the two-line frames instead of running down as one tall
+     stack. Tighter side padding buys the width for the second column;
+     narrow frames (the 2-column strip) fall back to a single column. */
+  .film-strip__frame--dense {
+    padding-left: clamp(0.8rem, 1.6vw, 1.1rem);
+    padding-right: clamp(0.8rem, 1.6vw, 1.1rem);
+  }
+
+  .film-strip__frame--dense .film-strip__values {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 clamp(0.5rem, 1.4vw, 0.9rem);
+  }
+
+  .film-strip__frame--dense .film-strip__value {
+    font-size: clamp(0.8rem, 1.3vw, 0.95rem);
+    line-height: 1.32;
+  }
+
+  @media (max-width: 700px) {
+    .film-strip__frame--dense .film-strip__values {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .film-strip__frame--dense .film-strip__values {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .film-strip__frames {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 400px) {
+    .film-strip__frames {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

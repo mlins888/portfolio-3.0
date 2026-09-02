@@ -1,6 +1,7 @@
 import type { ImageMetadata } from "astro";
 
-import heroScene from "../assets/illustrations/hero-scene.png";
+import heroSceneSplash from "../assets/illustrations/hero-scene-splash.png";
+import heroSceneCharacter from "../assets/illustrations/hero-scene-character.png";
 import heroCornerCat from "../assets/illustrations/hero-corner-cat.png";
 import buildingPulse from "../assets/illustrations/building-pulse.png";
 import buildingHackduke from "../assets/illustrations/building-hackduke.png";
@@ -24,7 +25,10 @@ export interface HeroContent {
     price: string;
   };
   images: {
-    scene: ImageMetadata;
+    /** Colourful shape burst behind the character; rotates + pulses. */
+    sceneSplash: ImageMetadata;
+    /** Line-drawn character that sits on top of the splash. */
+    sceneCharacter: ImageMetadata;
     sceneAlt: string;
     cornerCat: ImageMetadata;
     cornerCatAlt: string;
@@ -43,8 +47,9 @@ export const hero: HeroContent = {
     price: "10¢",
   },
   images: {
-    scene: heroScene,
-    sceneAlt: "Line drawing of Makenna on a swing under a spotlight, city skyline behind her",
+    sceneSplash: heroSceneSplash,
+    sceneCharacter: heroSceneCharacter,
+    sceneAlt: "Line drawing of Makenna grinning on a swing",
     cornerCat: heroCornerCat,
     cornerCatAlt: "Cat mascot illustration",
     buildingPulse,
