@@ -1,6 +1,7 @@
 ---
 import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import NowPlaying from "../components/NowPlaying.astro";
 import { about } from "../content/about";
 ---
 
@@ -12,6 +13,8 @@ import { about } from "../content/about";
         <div class="about-page__body font-body text-white">
           {about.paragraphs.map((p) => <p>{p}</p>)}
         </div>
+
+        <NowPlaying />
       </div>
 
       <figure class="about-page__photo">
