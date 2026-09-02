@@ -15,12 +15,22 @@ export const CANVAS = { width: 1440, height: 1025 } as const;
  * (components/ScrollRocket.astro), fixed flush under the nav.
  */
 export const ROCKET_TRACK = {
-  /** Horizontal inset, matching the width of the coral bands. */
-  x: 42,
+  /** Horizontal inset. Flush with the left edge of the screen — the ship's
+   *  terminal position (trailMax + shipLead, still measured from this same
+   *  left edge) shifts left along with it, which is fine since nothing else
+   *  anchors to it. */
+  x: 0,
   width: 1355,
-  /** Trail length at 0% and 100% scrolled. */
+  /** Trail length at 0% and 100% scrolled. trailMax is picked so the ship's
+   *  ROTATED bounding box — its layout box is shipWidth × the SVG's natural
+   *  height (166.582), rotated ~90° about its own centre, which swaps which
+   *  dimension reaches furthest horizontally — has its rightmost visible
+   *  pixel land exactly on the screen's right edge at 100% scrolled:
+   *  trailMax + shipLead + shipWidth/2 + 166.582/2 = 1440 (the canvas's
+   *  full-viewport-width unit count). Re-derive this if shipWidth,
+   *  shipLead, or the rocket artwork's aspect ratio ever change. */
   trailMin: 16.8,
-  trailMax: 1205,
+  trailMax: 1290.2,
   /** The ship's box starts this far ahead of the trail's end, so the trail
       tucks under its exhaust rather than butting against it. */
   shipLead: 35.1,

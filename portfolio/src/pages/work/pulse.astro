@@ -1,0 +1,121 @@
+---
+/**
+ * Bespoke Pulse case-study page. Static routes win over the generic
+ * [slug].astro stub in Astro's router, so this file — not the dynamic
+ * route — serves /work/pulse.
+ */
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PillBadge from "../../components/PillBadge.astro";
+import MetaRow from "../../components/work/pulse/MetaRow.astro";
+import PhoneFrame from "../../components/work/pulse/PhoneFrame.astro";
+import FeatureRow from "../../components/work/pulse/FeatureRow.astro";
+import HexBadgeGrid from "../../components/work/pulse/HexBadgeGrid.astro";
+import { pulse, badges } from "../../content/pulse";
+
+const { goalSetting, trophyCase, adminPortal } = pulse.features;
+---
+
+<BaseLayout title={`${pulse.title} — Makenna Linsky`}>
+  <main class="pulse-page mx-auto max-w-5xl px-6 py-24" style="padding-top: calc(var(--nav-offset) + 6rem)">
+    <header class="mx-auto max-w-3xl">
+      <p class="font-script text-coral mb-3">{pulse.eyebrow}</p>
+      <h1 class="font-display text-4xl uppercase">{pulse.title}</h1>
+    </header>
+
+    <div class="mx-auto max-w-3xl mt-6">
+      <MetaRow tags={pulse.metaTags} />
+    </div>
+
+    <FeatureRow mediaSide="right">
+      <PhoneFrame slot="media" variant="flip" before={pulse.landing.before} after={pulse.landing.after} />
+      {pulse.overview}
+    </FeatureRow>
+
+    <FeatureRow id={goalSetting.id} title={goalSetting.title} mediaSide="left">
+      <PhoneFrame slot="media" variant="video" video={goalSetting.video} />
+      {goalSetting.description}
+    </FeatureRow>
+
+    <FeatureRow id={trophyCase.id} title={trophyCase.title} stacked>
+      <HexBadgeGrid slot="media" badges={badges} />
+      {trophyCase.description}
+    </FeatureRow>
+
+    <FeatureRow id={adminPortal.id} title={adminPortal.title} stacked>
+      <div class="admin-shots" slot="media">
+        {
+          adminPortal.images.map((shot) => (
+            <Image
+              class="admin-shots__img"
+              src={shot.image}
+              alt={shot.alt}
+              widths={[480, 640, 960]}
+              sizes="(min-width: 700px) 45vw, 90vw"
+            />
+          ))
+        }
+      </div>
+      {adminPortal.description}
+    </FeatureRow>
+
+    <p class="back-to-work font-script mt-16">
+      <span>← back to</span>
+      <PillBadge label="work" tone="teal" href="/#work" size="lg" />
+    </p>
+  </main>
+</BaseLayout>
+
+<style>
+  /* Side by side on anything roomy enough for two ~320px+ frames; wraps to
+     stacked on narrow viewports since flex-wrap wins over flex-basis there. */
+  .admin-shots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.25rem;
+    width: 100%;
+  }
+
+  .admin-shots__img {
+    display: block;
+    flex: 1 1 320px;
+    max-width: 100%;
+    height: auto;
+    border: 6px solid var(--color-ink);
+    border-radius: 20px;
+    background: var(--color-cream);
+  }
+
+  /* Same shape as the homepage's playground CTA (see WorkSection.astro's
+     .playground-cta) — plain text plus one pill that's just the clickable
+     word — centered here instead of right-aligned, and in ink rather than
+     cream since this page's background is paper, not coral. */
+  .back-to-work {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem 0.85rem;
+    font-size: clamp(1.35rem, 2.6vw, 2.5rem);
+    line-height: 0.91;
+    color: var(--color-ink);
+  }
+
+  /* Same "lifted card" hover the homepage's playground pill uses: nudge
+     up-left on hover/focus with a hard-edged gold shadow. */
+  .back-to-work :global(.pill-badge) {
+    --pill-lift: -0.52rem;
+    padding-block: 0.4rem;
+    line-height: 1.1;
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.35s ease;
+    transform: translateY(var(--pill-lift));
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  .back-to-work :global(.pill-badge):hover,
+  .back-to-work :global(.pill-badge):focus-visible {
+    transform: translate(-0.25rem, calc(var(--pill-lift) - 0.25rem));
+    filter: drop-shadow(0.25rem 0.25rem 0 var(--color-gold));
+  }
+</style>

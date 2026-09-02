@@ -70,13 +70,16 @@ import Starburst from "./Starburst.astro";
          plates (see PLATE_WIDTH/plates in StampBadge.astro). -->
     <StampBadge x={80} y={220.3} date={hero.stamp.date} price={hero.stamp.price} />
 
-    <!-- Fills the gap between the stamp column (ends x=206) and the headline
-         (starts x=352) — x/height match that column's own span (91 to
-         220.3+111=331.3) so it reads as one continuous cluster. This is the
-         site's real primary nav until you scroll: Nav.astro's bar stays
-         hidden until the masthead collapses, so without this the four links
-         wouldn't exist on screen at all pre-scroll. -->
-    <HeroNavBadge x={222} y={91} width={120} height={240.3} links={site.nav} />
+    <!-- Sits in the gap between the stamp column (ends x=206) and the
+         headline (starts x=352) — x=221 keeps the extra breathing room
+         after the stamp column (up from flush-ish before). HeroNavBadge
+         went back to its original tight, overlapping banner spacing (the
+         evenly-gapped version didn't read right), which ties width and
+         height back to the artwork's own aspect ratio — so width=128 here
+         is what keeps the banners from squishing at this x, height=226.3
+         is just what that produces (close to, but no longer forced to
+         match, the cat/stamp column's own 240.3). -->
+    <HeroNavBadge x={221} y={91} width={128} height={226.3} links={site.nav} />
 
     <SpeechBurst x={1059} y={60} text={hero.tagline} />
 

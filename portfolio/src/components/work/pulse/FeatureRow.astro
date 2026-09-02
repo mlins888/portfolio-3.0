@@ -1,0 +1,129 @@
+---
+/**
+ * Two-column feature layout: media on one side, heading + copy on the
+ * other. `mediaSide` flips which side the media sits on; `stickyMedia`
+ * keeps the media pinned in the viewport while the text column scrolls
+ * past it. `title` is optional — the intro row (overview text +
+ * landing-screen image) has no heading of its own. `stacked` drops the
+ * two-column layout entirely for centered text above full-width media
+ * below (used for the trophy-case badge grid, which reads as a wide
+ * horizontal block rather than something that pairs with a side column).
+ */
+interface Props {
+  title?: string;
+  mediaSide?: "left" | "right";
+  stickyMedia?: boolean;
+  stacked?: boolean;
+  id?: string;
+}
+
+const { title, mediaSide = "left", stickyMedia = false, stacked = false, id } = Astro.props;
+---
+
+<section
+  id={id}
+  class:list={[
+    "feature-row",
+    stacked ? "feature-row--stacked" : `feature-row--media-${mediaSide}`,
+    stickyMedia && "feature-row--sticky",
+  ]}
+>
+  <div class="feature-row__media">
+    <slot name="media" />
+  </div>
+  <div class="feature-row__text">
+    {title && <h2 class="feature-row__title font-body font-semibold">{title}</h2>}
+    <p class="feature-row__desc font-body font-light">
+      <slot />
+    </p>
+  </div>
+</section>
+
+<style>
+  .feature-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    align-items: start;
+    padding-block: 2rem;
+  }
+
+  @media (min-width: 800px) {
+    .feature-row {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      align-items: center;
+      gap: clamp(2rem, 5vw, 4rem);
+    }
+
+    .feature-row--media-right .feature-row__media {
+      order: 2;
+    }
+
+    .feature-row--media-right .feature-row__text {
+      order: 1;
+    }
+
+    .feature-row--sticky .feature-row__media {
+      position: sticky;
+      top: calc(var(--nav-offset) + 2rem);
+      align-self: start;
+    }
+  }
+
+  /* Overrides the two-column grid above at every breakpoint (same
+     specificity, later in source): text centered on its own line, full-
+     width media below it — no side-by-side, no sticky. */
+  .feature-row--stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    /* Tighter than the base row's 2rem — the grid below brings its own top
+       padding (for hover-push room and tooltips), so the inherited gap on
+       top of that read as too much air under the caption. */
+    gap: 0.75rem;
+  }
+
+  /* Full section width (matching the media below), not the 42ch cap
+     `.feature-row__text` gets everywhere else — this text is meant to read
+     as a banner across the top of the grid, not a narrow paragraph. */
+  .feature-row--stacked .feature-row__text {
+    order: -1;
+    max-width: none;
+    width: 100%;
+    margin-inline: auto;
+  }
+
+  .feature-row--stacked .feature-row__media {
+    width: 100%;
+    position: static;
+  }
+
+  .feature-row__media {
+    display: flex;
+    justify-content: center;
+  }
+
+  .feature-row__text {
+    max-width: 42ch;
+  }
+
+  .feature-row--media-right .feature-row__text {
+    margin-left: auto;
+  }
+
+  .feature-row__title {
+    font-size: clamp(1.6rem, 3vw, 2.25rem);
+    line-height: 1;
+    margin: 0 0 0.75rem;
+    color: var(--color-ink);
+  }
+
+  .feature-row__desc {
+    font-size: clamp(1rem, 1.5vw, 1.15rem);
+    line-height: 1.5;
+    margin: 0;
+    color: var(--color-ink);
+    opacity: 0.85;
+  }
+</style>

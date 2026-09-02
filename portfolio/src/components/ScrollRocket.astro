@@ -134,7 +134,7 @@ const shipTop = ROCKET_TRACK.shipWidth / 2 - shipNaturalH / 2;
 </style>
 
 <script>
-  import { gsap, EASE, prefersReducedMotion } from "../scripts/gsap-setup.js";
+  import { gsap, ScrollTrigger, EASE, prefersReducedMotion } from "../scripts/gsap-setup.js";
 
   const bar = document.querySelector("[data-rocket-progress]");
   const track = bar?.querySelector(".rocket-progress__track");
@@ -152,11 +152,29 @@ const shipTop = ROCKET_TRACK.shipWidth / 2 - shipNaturalH / 2;
       scrollTrigger: {
         trigger: document.documentElement,
         start: "top top",
-        end: "bottom bottom",
+        // Not the "bottom bottom" shorthand: with `trigger:
+        // document.documentElement`, GSAP resolves that against the
+        // <html> element's own layout-box height (offsetHeight), which
+        // undercounts on every page here — the footer's absolutely
+        // positioned art (the cat illustration) extends the page's real
+        // scrollable area (scrollHeight) well past that box. The gap was
+        // 100+px, so the rocket maxed out — trail fully extended, ship
+        // parked at its rightmost spot — well before the actual bottom of
+        // the page. Computing end directly from the real scrollable
+        // distance keeps the two in sync regardless of what any given
+        // page's content does; the function form re-runs on every
+        // ScrollTrigger.refresh(), including the automatic one on resize.
+        end: () => document.documentElement.scrollHeight - window.innerHeight,
         scrub: reduced ? true : 0.5,
         invalidateOnRefresh: true,
       },
     });
+
+    // Recomputes `end` above once webfonts swap in (font-display: swap
+    // means the page can still reflow after ScrollTrigger's first
+    // measurement) — a smaller effect than the footer one above, but the
+    // same fix applies.
+    document.fonts?.ready.then(() => ScrollTrigger.refresh());
 
     if (!reduced) {
       const ship = bar.querySelector('[data-anim="rocket"]');

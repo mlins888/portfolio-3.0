@@ -5,12 +5,58 @@
  * starts. This is real primary navigation, not decoration: it's what lets a
  * visitor reach Work/About/Playground before ever scrolling, since the real
  * nav bar (see Nav.astro) stays hidden until the hero masthead collapses.
- * Matches StampBadge's cream-plate postal language — four equal segments
- * instead of its uneven date/price pair — and fades out alongside the rest
- * of the hero's cover furniture (logo, stamp, greeting, burst) once the
- * real nav bar takes over (see the `extras` array in Nav.astro).
+ * Fades out alongside the rest of the hero's cover furniture (logo, stamp,
+ * greeting, burst) once the real nav bar takes over (see the `extras` array
+ * in Nav.astro).
+ *
+ * Artwork is Figma node 198:2 ("Portfolio Design" file) — four hand-drawn
+ * pennant banners (Home/Work/About/Play), each its own colour and tilt.
+ * "Play" is the design's own shorter label for the badge; the link still
+ * points at whatever href the real "Playground" nav entry carries.
+ *
+ * ── Tuning the halftone dots by hand ──────────────────────────────────────
+ * Each banner's `dots` entry in FLAGS below is plain, self-contained numbers
+ * — no Figma-unit math to follow. `xPct`/`yPct`/`widthPct`/`heightPct` are
+ * percentages of THAT banner's own box (0,0 = its top-left corner, 100,100 =
+ * its bottom-right — negative or >100 just means the cluster bleeds past the
+ * banner's edge, which gets clipped off automatically). `rotate` is degrees;
+ * `flip` mirrors the cluster vertically before rotating. Change a number,
+ * save, and the dev server hot-reloads it — no rebuild needed. `image` can
+ * be swapped for any of the six pre-cropped clusters sitting in
+ * src/assets/decor/dot-cluster-*.png (three teals, two yellows, one green —
+ * open them directly to see which is which).
+ *
+ * ── Tuning vertical spacing / box height by hand ───────────────────────────
+ * Each banner's own height is `banner.box.h` in FLAGS below (Figma units —
+ * bigger number, taller banner). Its vertical position is `banner.box.y`;
+ * the visible GAP before it is `thisBox.y - (previousBox.y + previousBox.h)`
+ * — make that more positive to open up space between two banners, more
+ * negative to overlap them further (negative is the current pennant-overlap
+ * look, e.g. Work's y=144 starts before Home's y=52.5+h=127=179.5 ends).
+ * There's no separate "total height" knob: everything here — every box.y,
+ * every box.h, the gaps between them — scales together as one unit, driven
+ * entirely by the `width` prop passed to <HeroNavBadge> in Hero.astro (NOT
+ * its `height` prop, which only labels the outer box for CSS and doesn't
+ * feed into any of this layout math). Turn `width` up there to make the
+ * whole stack — banners, gaps, and all — proportionally bigger; there's no
+ * way to change height independently of width without distorting the
+ * banner artwork, short of the more involved even-gap-fill approach this
+ * file used briefly and backed out of.
  */
+import { Image } from "astro:assets";
 import { canvasStyle, css, u, type CanvasBox } from "./canvas";
+
+import HomeFlag from "../../assets/decor/nav-flag-home.svg";
+import WorkFlag from "../../assets/decor/nav-flag-work.svg";
+import AboutFlag from "../../assets/decor/nav-flag-about.svg";
+import PlayFlag from "../../assets/decor/nav-flag-play.svg";
+
+import dotGreen from "../../assets/decor/dot-cluster-green.png?url";
+import dotTeal1 from "../../assets/decor/dot-cluster-teal-1.png?url";
+import dotTeal2 from "../../assets/decor/dot-cluster-teal-2.png?url";
+import dotTeal3 from "../../assets/decor/dot-cluster-teal-3.png?url";
+import dotYellow1 from "../../assets/decor/dot-cluster-yellow-1.png?url";
+import dotYellow2 from "../../assets/decor/dot-cluster-yellow-2.png?url";
 
 interface NavLink {
   label: string;
@@ -22,59 +68,234 @@ interface Props extends CanvasBox {
   class?: string;
 }
 
-const { links, class: className, ...box } = Astro.props;
+interface Box {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
-const GAP = 8;
-const width = box.width ?? 0;
-const height = box.height ?? 0;
-const segmentHeight = (height - GAP * (links.length - 1)) / links.length;
+interface DotSpec {
+  /** URL of one of the pre-cropped dot-cluster-*.png files. */
+  image: string;
+  xPct: number;
+  yPct: number;
+  widthPct: number;
+  heightPct: number;
+  rotate: number;
+  flip?: boolean;
+}
+
+interface FlagSpec {
+  label: string;
+  flag: any;
+  /**
+   * `natural` is the banner SVG's own unrotated size; `box` is the (usually
+   * larger) box Figma centers the rotated banner inside, so a tilted corner
+   * doesn't get clipped. For Home/Work — no rotation — the two are
+   * identical.
+   */
+  banner: { natural: { w: number; h: number }; box: Box; rotate: number; bleed: [number, number, number, number] };
+  dots: DotSpec;
+  text: { x: number; y: number };
+}
+
+// Tight bounding box around the four banners, within the Figma frame.
+const CONTENT = { x0: 100.58, y0: 55, w: 315.602, h: 557.984 };
+
+const FLAGS: FlagSpec[] = [
+  {
+    label: "Home",
+    flag: HomeFlag,
+    banner: {
+      natural: { w: 296.5, h: 127 },
+      box: { x: 102.5, y: 52.5, w: 296.5, h: 135 },
+      rotate: 0,
+      bleed: [-2.41, -1.01, -3.07, -1.01],
+    },
+    dots: { image: dotGreen, xPct: 27, yPct:15, widthPct: 70, heightPct: 70, rotate: -152, flip: true },
+    text: { x: 144, y: 96 },
+  },
+  {
+    label: "Work",
+    flag: WorkFlag,
+    banner: {
+      natural: { w: 303, h: 131 },
+      box: { x: 103, y: 144, w: 303, h: 140 },
+      rotate: 0,
+      bleed: [-2.82, -1.19, -2.35, -0.99],
+    },
+    dots: { image: dotYellow1, xPct: 6, yPct: 45, widthPct: 55, heightPct: 40, rotate: 180 },
+    text: { x: 271, y: 205 },
+  },
+  {
+    label: "About",
+    flag: AboutFlag,
+    banner: {
+      // Same underlying shape as Work's (just recoloured), rotated almost
+      // 180° — hence the larger centering box below.
+      natural: { w: 303, h: 131 },
+      box: { x: 100.58, y: 292.19, w: 307.839, h: 148.619 },
+      rotate: -177.78,
+      bleed: [-2.82, -1.19, -2.35, -0.99],
+    },
+    dots: { image: dotTeal1, xPct: 25, yPct: 26, widthPct: 68, heightPct: 48, rotate: -158, flip: true },
+    text: { x: 144, y: 339 },
+  },
+  {
+    label: "Play",
+    flag: PlayFlag,
+    banner: {
+      // Exactly 180°, so the rotated bounding box happens to be the same
+      // size as the unrotated one — natural and box coincide here too.
+      natural: { w: 290, h: 96 },
+      box: { x: 110, y: 408, w: 290, h: 110 },
+      rotate: 180,
+      bleed: [-3.13, -1.03, -3.63, -1.03],
+    },
+    dots: { image: dotGreen, xPct: 8, yPct: 40, widthPct: 55, heightPct: 70, rotate: -160, flip: true },
+    text: { x: 284, y: 457 },
+  },
+];
+
+const { links, class: className, ...box } = Astro.props;
+const width = box.width ?? CONTENT.w;
+const scale = width / CONTENT.w;
+
+/** Figma-frame pixels → this component's own box, in hero canvas units. */
+function toX(fx: number) {
+  return (fx - CONTENT.x0) * scale;
+}
+function toY(fy: number) {
+  return (fy - CONTENT.y0) * scale;
+}
+function toLen(fl: number) {
+  return fl * scale;
+}
+function toBox(b: Box) {
+  return { x: toX(b.x), y: toY(b.y), width: toLen(b.w), height: toLen(b.h) };
+}
+function bleedInset([top, right, bottom, left]: [number, number, number, number]) {
+  return `${top}% ${right}% ${bottom}% ${left}%`;
+}
 ---
 
 <nav class:list={[className]} style={canvasStyle(box)} aria-label="Quick links" data-hero-nav-badge>
   {
-    links.map((link, i) => (
-      <a
-        href={link.href}
-        class="hero-nav-link absolute flex items-center justify-center bg-cream text-ink font-script"
-        style={css({
-          left: u(0),
-          top: u(i * (segmentHeight + GAP)),
-          width: u(width),
-          height: u(segmentHeight),
-        })}
-        aria-current={link.href === "/" ? "page" : undefined}
-      >
-        <span
-          class="leading-none"
-          style={css({ fontSize: u(link.label.length > 6 ? 17 : 21), transform: "translateY(0.27em)" })}
+    FLAGS.map((flag, i) => {
+      const link = links[i];
+      const bannerBox = toBox(flag.banner.box);
+      const bannerNatural = { width: toLen(flag.banner.natural.w), height: toLen(flag.banner.natural.h) };
+      const Flag = flag.flag;
+      const d = flag.dots;
+
+      return (
+        <a
+          href={link?.href ?? "#"}
+          class="hero-nav-flag absolute block"
+          style={css({ left: u(bannerBox.x), top: u(bannerBox.y), width: u(bannerBox.width), height: u(bannerBox.height) })}
+          aria-current={link?.href === "/" ? "page" : undefined}
         >
-          {link.label}
-        </span>
-      </a>
-    ))
+          {/* Centers the (usually smaller) unrotated banner artwork inside
+              this box, then rotates just that inner piece — the box itself
+              stays put so a tilted corner never gets clipped. */}
+          <span class="hero-nav-flag__art-outer absolute inset-0 flex items-center justify-center">
+            {/* `relative` here is load-bearing, not decorative: the child
+                below is `absolute` with a percentage `inset`, which resolves
+                against the nearest POSITIONED ancestor. Without this, that
+                skips straight past this natural-sized box to art-outer
+                above — invisible for Home/Work/Play, where the outer box
+                happens to be the same size as this one, but it's what
+                distorted About (whose outer box is genuinely bigger, to
+                clear its rotated corners). */}
+            <span
+              class="relative block"
+              style={css({
+                width: u(bannerNatural.width),
+                height: u(bannerNatural.height),
+                transform: `rotate(${flag.banner.rotate}deg)`,
+              })}
+            >
+              <span class="hero-nav-flag__art absolute block" style={`inset: ${bleedInset(flag.banner.bleed)};`}>
+                <Flag class="block h-full w-full" />
+              </span>
+            </span>
+          </span>
+
+          {/* Only the dots layer gets clipped to the banner's own box — a
+              cluster positioned/sized outside 0–100% is exactly what would
+              otherwise paint into the next banner down, which paints
+              later/on top since these are plain DOM siblings with no clip
+              between them by default. The banner art's own small bleed (a
+              percent or two, to cover the stroke) doesn't need this and
+              clipping it anyway is what cut the border look at one point. */}
+          <span class="hero-nav-flag__dots-clip absolute inset-0 overflow-hidden">
+            <img
+              src={d.image}
+              alt=""
+              class="hero-nav-flag__dots absolute"
+              style={`left:${d.xPct}%; top:${d.yPct}%; width:${d.widthPct}%; height:${d.heightPct}%; transform:${d.flip ? "scaleY(-1) " : ""}rotate(${d.rotate}deg);`}
+            />
+          </span>
+
+          <span
+            class="hero-nav-flag__label absolute font-script text-white leading-none whitespace-nowrap"
+            style={css({
+              left: u(toLen(flag.text.x - flag.banner.box.x)),
+              top: u(toLen(flag.text.y - flag.banner.box.y)),
+              fontSize: u(40 * scale),
+            })}
+          >
+            {flag.label}
+          </span>
+        </a>
+      );
+    })
   }
 </nav>
 
 <style>
-  .hero-nav-link {
+  .hero-nav-flag {
     text-decoration: none;
     transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.25s ease;
     transform: translate(0, 0);
     filter: drop-shadow(0 0 0 transparent);
   }
 
-  .hero-nav-link:hover,
-  .hero-nav-link:focus-visible {
+  .hero-nav-flag:hover,
+  .hero-nav-flag:focus-visible {
     transform: translate(calc(-6 * var(--u, 1px)), calc(-6 * var(--u, 1px)));
     filter: drop-shadow(calc(6 * var(--u, 1px)) calc(6 * var(--u, 1px)) 0 var(--color-gold));
   }
 
-  .hero-nav-link:focus-visible {
+  .hero-nav-flag:focus-visible {
     outline: 3px solid var(--color-ink);
     outline-offset: -3px;
   }
 
-  .hero-nav-link[aria-current="page"] {
-    color: var(--color-coral);
+  /* Current-page label stays the same white as the rest for now — the
+     coral this used to switch to was unreadable against these banners'
+     colours. */
+  .hero-nav-flag[aria-current="page"] .hero-nav-flag__label {
+    color: white;
+  }
+
+  .hero-nav-flag__art-outer {
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero-nav-flag__art :global(svg) {
+    display: block;
+  }
+
+  .hero-nav-flag__dots {
+    z-index: 1;
+    pointer-events: none;
+    transform-origin: center;
+  }
+
+  .hero-nav-flag__label {
+    z-index: 2;
   }
 </style>

@@ -1,0 +1,190 @@
+---
+/**
+ * Hex badge "trophy case". Badges are dealt round-robin into N columns so
+ * alternating columns can be offset by half a tile for a honeycomb stagger
+ * (see the CSS below) — plain CSS grid can't do that offset on its own.
+ * Defaulting to 8 columns (rather than a tall, narrow 4) gives the grid a
+ * landscape shape — wider than it is tall, ~5 rows deep for 33 badges.
+ * Tile size is a fluid `--hex-w` (clamp, not a fixed rem) so those 8
+ * columns still fit a phone-width viewport without horizontal scroll —
+ * every other size in here (gaps, the honeycomb offset) derives from it.
+ *
+ * Hover/focus interaction (see the inline script): the hovered tile scales
+ * up, and every other tile gets pushed away from it, more for close
+ * neighbors than far ones. Tooltip text comes straight from each badge's
+ * `alt`, so it's identical for pointer and screen-reader users.
+ */
+import { Image } from "astro:assets";
+import type { Badge } from "../../../content/pulse";
+
+interface Props {
+  badges: Badge[];
+  columns?: number;
+}
+
+const { badges, columns = 8 } = Astro.props;
+
+const cols: Badge[][] = Array.from({ length: columns }, () => []);
+badges.forEach((badge, i) => cols[i % columns].push(badge));
+---
+
+<div class="hex-grid" data-hex-grid style={`--hex-cols: ${columns}`}>
+  {
+    cols.map((col, colIndex) => (
+      <div class:list={["hex-col", colIndex % 2 === 1 && "hex-col--offset"]}>
+        {col.map((badge) => (
+          <div class="hex-item" data-hex-tile tabindex="0">
+            <Image
+              class="hex-item__img"
+              src={badge.image}
+              alt={badge.label}
+              widths={[96, 152, 176]}
+              sizes="(min-width: 640px) 88px, 8.5vw"
+            />
+            <span class="hex-item__tip" aria-hidden="true">
+              {badge.label}
+            </span>
+          </div>
+        ))}
+      </div>
+    ))
+  }
+</div>
+
+<style>
+  .hex-grid {
+    --hex-w: clamp(2.5rem, 8.5vw, 5.5rem);
+
+    display: flex;
+    justify-content: center;
+    gap: calc(var(--hex-w) * 0.11);
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+    /* Room for tiles to push outward and for tooltips to pop above without
+       being clipped by a parent's overflow. */
+    padding: 1.5rem 1rem 1rem;
+  }
+
+  .hex-col {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--hex-w) * 0.15);
+  }
+
+  .hex-col--offset {
+    margin-top: calc(var(--hex-w) * 0.5);
+  }
+
+  .hex-item {
+    position: relative;
+    width: var(--hex-w);
+    aspect-ratio: 1;
+    transform: translate(var(--hex-x, 0px), var(--hex-y, 0px)) scale(var(--hex-scale, 1));
+    transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    cursor: pointer;
+    outline: none;
+  }
+
+  .hex-item:hover,
+  .hex-item:focus-visible {
+    z-index: 5;
+  }
+
+  .hex-item__img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.25));
+  }
+
+  .hex-item__tip {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    z-index: 6;
+    white-space: nowrap;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 2px solid var(--color-ink);
+    background: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-script);
+    font-size: 0.95rem;
+    line-height: 1;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity 200ms ease,
+      transform 200ms ease;
+  }
+
+  .hex-item:hover .hex-item__tip,
+  .hex-item:focus-visible .hex-item__tip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hex-item {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import { prefersReducedMotion } from "../../../scripts/gsap-setup.js";
+
+  function initHexGrid(root: HTMLElement) {
+    const tiles = Array.from(root.querySelectorAll<HTMLElement>("[data-hex-tile]"));
+    const PUSH = 16;
+    const SCALE = 1.2;
+    const RADIUS = 130;
+
+    function reset() {
+      tiles.forEach((t) => {
+        t.style.removeProperty("--hex-x");
+        t.style.removeProperty("--hex-y");
+        t.style.removeProperty("--hex-scale");
+      });
+    }
+
+    function handleEnter(hovered: HTMLElement) {
+      if (prefersReducedMotion()) return;
+
+      const hRect = hovered.getBoundingClientRect();
+      const hCenter = { x: hRect.left + hRect.width / 2, y: hRect.top + hRect.height / 2 };
+
+      tiles.forEach((t) => {
+        if (t === hovered) {
+          t.style.setProperty("--hex-scale", String(SCALE));
+          return;
+        }
+
+        const r = t.getBoundingClientRect();
+        const c = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        const dx = c.x - hCenter.x;
+        const dy = c.y - hCenter.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const falloff = Math.max(0, 1 - dist / RADIUS);
+        const push = PUSH * falloff;
+
+        t.style.setProperty("--hex-x", `${(dx / dist) * push}px`);
+        t.style.setProperty("--hex-y", `${(dy / dist) * push}px`);
+      });
+    }
+
+    tiles.forEach((tile) => {
+      tile.addEventListener("mouseenter", () => handleEnter(tile));
+      tile.addEventListener("focus", () => handleEnter(tile));
+      tile.addEventListener("mouseleave", reset);
+      tile.addEventListener("blur", reset);
+    });
+  }
+
+  document
+    .querySelectorAll<HTMLElement>("[data-hex-grid]")
+    .forEach((grid) => initHexGrid(grid));
+</script>

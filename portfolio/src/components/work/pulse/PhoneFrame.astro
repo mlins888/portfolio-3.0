@@ -1,0 +1,252 @@
+---
+/**
+ * iPhone bezel mockup for Pulse's vertical screen-recording demos.
+ *
+ * `phone-frame-1.png` has a true transparent cutout where the screen goes —
+ * measured directly from the PNG's alpha channel, not eyeballed: the hole
+ * sits inset 4.40% / 1.88% / 4.56% / 1.92% (left/top/right/bottom) in the
+ * 1294×2656 canvas, which is why those exact percentages appear below. Media
+ * is layered *underneath* the frame image at that inset and the frame's own
+ * opaque bezel — including its rounded screen corners — masks the media's
+ * square edges for free, so nothing here needs its own border-radius.
+ *
+ * Two variants:
+ *  - "video": a single silent, autoplaying, looping <video> (goal-setting /
+ *    trophy-case demos).
+ *  - "flip": two stacked images that cross-fade forever via a pure-CSS
+ *    keyframe loop (landing-screen before/after), with a caption underneath
+ *    that fades/shifts in sync using the same timing — no JS needed, and
+ *    prefers-reduced-motion just freezes on the "after" image + caption.
+ */
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import phoneFrame from "../../../assets/work/phone-frame-1.png";
+
+interface FlipImage {
+  image: ImageMetadata;
+  alt: string;
+}
+
+interface Props {
+  variant: "video" | "flip";
+  video?: string;
+  before?: FlipImage;
+  after?: FlipImage;
+  beforeLabel?: string;
+  afterLabel?: string;
+  class?: string;
+}
+
+const {
+  variant,
+  video,
+  before,
+  after,
+  beforeLabel = "Old app",
+  afterLabel = "New redesign",
+  class: className,
+} = Astro.props;
+---
+
+<figure class:list={["phone-frame-figure", className]}>
+  <div class="phone-frame">
+    <div class="phone-frame__screen">
+      {
+        variant === "video" && video ? (
+          <video
+            class="phone-frame__media"
+            src={video}
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            aria-hidden="true"
+          />
+        ) : variant === "flip" && before && after ? (
+          <>
+            <Image
+              class="phone-frame__media phone-frame__media--before"
+              src={before.image}
+              alt={before.alt}
+              widths={[320, 480, 640]}
+              sizes="(min-width: 900px) 20rem, 60vw"
+            />
+            <Image
+              class="phone-frame__media phone-frame__media--after"
+              src={after.image}
+              alt={after.alt}
+              widths={[320, 480, 640]}
+              sizes="(min-width: 900px) 20rem, 60vw"
+            />
+          </>
+        ) : null
+      }
+    </div>
+    <Image class="phone-frame__bezel" src={phoneFrame} alt="" widths={[280, 420, 560]} sizes="min(320px, 80vw)" />
+  </div>
+
+  {
+    variant === "flip" && before && after && (
+      <figcaption class="phone-frame__caption" aria-hidden="true">
+        <span class="phone-frame__caption-text phone-frame__caption-text--before">{beforeLabel}</span>
+        <span class="phone-frame__caption-text phone-frame__caption-text--after">{afterLabel}</span>
+      </figcaption>
+    )
+  }
+</figure>
+
+<style>
+  .phone-frame-figure {
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .phone-frame {
+    position: relative;
+    width: min(320px, 80vw);
+    aspect-ratio: 1294 / 2656;
+    margin-inline: auto;
+  }
+
+  .phone-frame__bezel {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .phone-frame__screen {
+    position: absolute;
+    z-index: 1;
+    left: 4.4%;
+    top: 1.88%;
+    right: 4.56%;
+    bottom: 1.92%;
+    overflow: hidden;
+    background: #d9d9d9;
+  }
+
+  .phone-frame__media {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .phone-frame__media--before {
+    animation: phone-media-fade-before 7s ease-in-out infinite;
+  }
+
+  .phone-frame__media--after {
+    animation: phone-media-fade-after 7s ease-in-out infinite;
+  }
+
+  @keyframes phone-media-fade-before {
+    0%,
+    42% {
+      opacity: 1;
+    }
+    50%,
+    92% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes phone-media-fade-after {
+    0%,
+    42% {
+      opacity: 0;
+    }
+    50%,
+    92% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* Caption sits below the frame and cross-fades on the exact same timing
+     as the media above, with a small vertical shift for a bit more life —
+     safe to add here (unlike on the media itself) since it doesn't risk
+     revealing a gap at the screen's edge. */
+  .phone-frame__caption {
+    position: relative;
+    height: 1.5em;
+    margin: 0.6rem 0 0;
+    text-align: center;
+  }
+
+  .phone-frame__caption-text {
+    position: absolute;
+    inset: 0;
+    font-family: var(--font-script);
+    color: var(--color-coral);
+    font-size: 1.15rem;
+    line-height: 1.5em;
+  }
+
+  .phone-frame__caption-text--before {
+    animation: phone-caption-fade-before 7s ease-in-out infinite;
+  }
+
+  .phone-frame__caption-text--after {
+    animation: phone-caption-fade-after 7s ease-in-out infinite;
+  }
+
+  @keyframes phone-caption-fade-before {
+    0%,
+    42% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    50%,
+    92% {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes phone-caption-fade-after {
+    0%,
+    42% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    50%,
+    92% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .phone-frame__media--before,
+    .phone-frame__caption-text--before {
+      animation: none;
+      opacity: 0;
+    }
+    .phone-frame__media--after,
+    .phone-frame__caption-text--after {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>
