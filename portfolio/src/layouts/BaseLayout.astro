@@ -9,10 +9,17 @@ import { site } from "../content/site";
 interface Props {
   title?: string;
   description?: string;
+  /** Social share image, relative to the site root. Defaults to /og.png. */
+  image?: string;
 }
 
-const { title = site.title, description = site.description } = Astro.props;
+const { title = site.title, description = site.description, image = "/og.png" } = Astro.props;
 const isHome = Astro.url.pathname === "/";
+
+// Absolute URLs for canonical + Open Graph / Twitter tags. Astro.site comes
+// from `site` in astro.config.mjs.
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
 ---
 
 <!doctype html>
@@ -25,6 +32,24 @@ const isHome = Astro.url.pathname === "/";
 
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph / Facebook / LinkedIn / iMessage link previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Makenna Linsky" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Makenna Linsky — designer bringing you bold designs from Duke University" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
 
     <!-- 'Archivo Black' stands in for the licensed display face 'Louvre'; see
          the font tokens in src/styles/global.css. -->

@@ -47,6 +47,18 @@
 }
 
 /* ---------------------------------------------------------------------------
+   SCROLL BOUNDS
+   Kill the elastic rubber-band / overscroll bounce at the top and bottom of
+   the page. Without this, pulling past the footer on a trackpad drags the
+   whole document out of place and exposes bare background beneath the frame.
+   `none` also stops scroll chaining, so the page stops dead at the footer.
+--------------------------------------------------------------------------- */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
+/* ---------------------------------------------------------------------------
    SVG TINTING
    The decorative SVGs are the real exported artwork, so their fills are baked
    in. Adding .svg-tint makes any painted fill/stroke follow the CSS `color`
