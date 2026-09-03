@@ -9,7 +9,7 @@ panel shows an illustration; hovering / focusing / tapping it reveals a card:
 | top-left | d20 | Static D&D character card — edit `about.dnd` in `src/content/about.ts` |
 | top-right | boombox | Spotify: now playing / last played |
 | bottom-left | controller | Steam: most recently played game |
-| bottom-right | — | Reserved, placeholder copy |
+| bottom-right | flute | Static "currently practicing" card — edit `about.practicing`; optional Spotify embed of the reference recording |
 
 The cluster is laid out on a fixed canvas that mirrors the Figma frame (1 unit
 == 1px in Figma, same trick as the hero — see `src/components/hero/canvas.ts`).
@@ -67,6 +67,15 @@ Two options — the code tries the API first, then the keyless feed:
 - <http://localhost:4321/api/recent-game.json>
 
 Restart the dev server after editing `.env` — env vars load at boot.
+
+## "Currently practicing" panel
+
+Static config in `about.practicing` (`src/content/about.ts`): `instrument`,
+`piece`, `composer`, `ensemble`, `note`. The `spotifyEmbed` field embeds a
+reference recording as a Spotify player — paste the tail of a share link
+(`open.spotify.com/track/ABC` → `"track/ABC"`, also `album/…` / `playlist/…`);
+leave `""` for no player. The iframe is lazy — its `src` is only set the first
+time the panel is revealed.
 
 ## Assets
 

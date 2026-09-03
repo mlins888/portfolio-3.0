@@ -6,15 +6,16 @@
  *
  * Each panel is hoverable / focusable / tappable. Revealing a panel shows its
  * "connection":
- *   - top-right  (boombox)    -> Spotify: now playing / last played
+ *   - top-right   (boombox)    -> Spotify: now playing / last played
  *   - bottom-left (controller) -> Steam: recently played game
- *   - top-left   (d20)        -> static D&D character card (no API)
- *   - bottom-right            -> reserved, content TBD
+ *   - top-left    (d20)        -> static D&D character card (no API)
+ *   - bottom-right (flute)     -> static "currently practicing" card with a
+ *                                 Spotify embed of the reference recording
  *
- * Data is fetched once on mount from the /api/*.json endpoints and written
- * into the cards while they're still hidden, so a hover never waits on the
- * network. If an endpoint has nothing (not configured, profile private,
- * nothing playing) the card falls back to a muted message.
+ * The two API cards are fetched once on mount from the /api/*.json endpoints
+ * and written in while still hidden, so a hover never waits on the network.
+ * The practice-panel Spotify iframe is lazy — its src is only set the first
+ * time that panel is revealed.
  */
 import { Image } from "astro:assets";
 
@@ -25,6 +26,7 @@ import { css, u } from "../hero/canvas";
 import illoD20 from "../../assets/about/illo-d20.png";
 import illoBoombox from "../../assets/about/illo-boombox.png";
 import illoController from "../../assets/about/illo-controller.png";
+import illoFlute from "../../assets/about/illo-flute.png";
 import ticks from "../../assets/about/ticks.svg";
 
 const CANVAS = { width: 600, height: 802 };
@@ -40,7 +42,14 @@ const box = (x: number, y: number, w: number, h: number, rotation?: number) =>
     transform: rotation ? `rotate(${rotation}deg)` : undefined,
   });
 
-const { dnd } = about;
+const { dnd, practicing } = about;
+
+const practiceEmbedUrl = practicing.spotifyEmbed
+  ? `https://open.spotify.com/embed/${practicing.spotifyEmbed}?theme=0`
+  : "";
+const practiceMeta = [practicing.instrument, practicing.ensemble]
+  .filter(Boolean)
+  .join(" · ");
 ---
 
 <div class="about-panels">
@@ -60,15 +69,30 @@ const { dnd } = about;
     <!-- Decorative shards — above the photo, behind the panels. -->
     <img class="ap-ticks" src={ticks.src} alt="" aria-hidden="true" style={box(388, 182, 207.554, 173.12)} />
 
-    <!-- Bottom-right: reserved -->
-    <div class="ap-panel ap-panel--tbd" style={box(250, 585, 284, 207)}>
+    <!-- Bottom-right: currently practicing (static + Spotify embed) -->
+    <div class="ap-panel ap-panel--practice" data-practice-panel style={box(250, 585, 284, 207)}>
       <svg class="ap-panel__shape" viewBox="0 0 300.103 217" preserveAspectRatio="none" aria-hidden="true">
         <path d="M194.329 5L11.1031 212H295.103V5H194.329Z" fill="#00B781" stroke="#010101" stroke-width="10" />
       </svg>
-      <button class="ap-panel__hit" type="button" aria-label="More coming soon" aria-expanded="false"></button>
-      <div class="ap-panel__card ap-panel__card--center">
-        <span class="ap-card__kicker">Next up</span>
-        <span class="ap-card__line">Something new is moving in here soon.</span>
+      <Image class="ap-panel__illo ap-panel__illo--tilt" src={illoFlute} alt="" aria-hidden="true" widths={[300, 560]} style={box(34, 20, 300, 168)} />
+      <button class="ap-panel__hit" type="button" aria-label="Show what I'm practicing" aria-expanded="false"></button>
+      <div class="ap-panel__card">
+        <span class="ap-card__kicker">Currently practicing</span>
+        <span class="ap-card__title">
+          {practicing.piece}{practicing.composer ? <span class="ap-card__by"> — {practicing.composer}</span> : null}
+        </span>
+        {practiceMeta && <span class="ap-card__meta">{practiceMeta}</span>}
+        {practicing.note && <span class="ap-card__blurb">{practicing.note}</span>}
+        {practiceEmbedUrl && (
+          <iframe
+            class="ap-card__embed"
+            data-embed-src={practiceEmbedUrl}
+            title={`${practicing.piece} on Spotify`}
+            loading="lazy"
+            allow="encrypted-media"
+            style="border:0"
+          ></iframe>
+        )}
       </div>
     </div>
 
@@ -80,6 +104,14 @@ const { dnd } = about;
       <Image class="ap-panel__illo" src={illoD20} alt="" aria-hidden="true" widths={[240, 460]} style={box(-14, 44, 222, 182)} />
       <button class="ap-panel__hit" type="button" aria-label="Show my current D&amp;D character" aria-expanded="false"></button>
       <div class="ap-panel__card">
+        {dnd.portrait && (
+          <Image
+            class="ap-card__portrait"
+            src={dnd.portrait}
+            alt={dnd.portraitAlt ?? ""}
+            widths={[240, 460]}
+          />
+        )}
         <span class="ap-card__kicker">Currently playing</span>
         <span class="ap-card__title">{dnd.name}</span>
         <span class="ap-card__sub">{dnd.title}</span>
@@ -101,7 +133,7 @@ const { dnd } = about;
       <button class="ap-panel__hit" type="button" aria-label="Show the game I played most recently" aria-expanded="false"></button>
       <div class="ap-panel__card ap-panel__card--media" data-game-card>
         <img class="ap-card__art" alt="" data-game-art hidden />
-        <span class="ap-card__kicker" data-game-label>Recently played</span>
+        <span class="ap-card__kicker" data-game-label>Game last played</span>
         <span class="ap-card__title" data-game-name>—</span>
         <span class="ap-card__meta" data-game-meta></span>
         <a class="ap-card__link" data-game-link href="#" target="_blank" rel="noopener noreferrer" hidden>Open on Steam ↗</a>
@@ -140,6 +172,7 @@ const { dnd } = about;
     playtimeRecentMin: number;
     playtimeTotalMin: number;
     storeUrl: string;
+    heroImageUrl: string;
     headerImageUrl: string;
   };
 
@@ -169,6 +202,21 @@ const { dnd } = about;
         p.querySelector(".ap-panel__hit")?.setAttribute("aria-expanded", "false");
       });
     });
+
+    // --- practice panel: load the Spotify iframe on first reveal ---
+    const practicePanel = q<HTMLElement>("[data-practice-panel]");
+    const embed = q<HTMLIFrameElement>(".ap-card__embed");
+    if (practicePanel && embed?.dataset.embedSrc) {
+      const load = () => {
+        embed.src = embed.dataset.embedSrc as string;
+        practicePanel.removeEventListener("pointerenter", load);
+        practicePanel.removeEventListener("focusin", load);
+        practicePanel.removeEventListener("click", load);
+      };
+      practicePanel.addEventListener("pointerenter", load);
+      practicePanel.addEventListener("focusin", load);
+      practicePanel.addEventListener("click", load);
+    }
 
     // --- Spotify ---
     const musicPanel = q<HTMLElement>("[data-music-panel]");
@@ -204,17 +252,23 @@ const { dnd } = about;
       .then((data: { game: Game | null }) => {
         const g = data.game;
         if (!g) {
-          setKicker(q("[data-game-label]"), "Steam");
+          setKicker(q("[data-game-label]"), "Games");
           setText(q("[data-game-name]"), "Not connected yet");
           return;
         }
         const recent = g.playtimeRecentMin > 0;
-        setKicker(q("[data-game-label]"), recent ? "Playing lately" : "Last played");
+        setKicker(q("[data-game-label]"), recent ? "Game playing lately" : "Game last played");
         setText(q("[data-game-name]"), g.name);
         setText(q("[data-game-meta]"), formatPlaytime(g));
         const art = q<HTMLImageElement>("[data-game-art]");
         if (art) {
-          art.src = g.headerImageUrl;
+          // library_hero is a wide, high-res banner; not every game has one,
+          // so fall back to the always-present header capsule.
+          art.onerror = () => {
+            art.onerror = null;
+            art.src = g.headerImageUrl;
+          };
+          art.src = g.heroImageUrl;
           art.hidden = false;
         }
         const link = q<HTMLAnchorElement>("[data-game-link]");
@@ -293,6 +347,11 @@ const { dnd } = about;
     object-fit: contain;
     pointer-events: none;
     transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
+  /* `rotate` is its own property, so the hover-lift `transform` still applies */
+  .ap-panel__illo--tilt {
+    rotate: -10deg;
   }
 
   /* `rotate` is its own property, so it composes with the hover `transform`. */
@@ -374,7 +433,7 @@ const { dnd } = about;
     --card-shift: calc(-60 * var(--u));
   }
   .ap-panel--music .ap-panel__card,
-  .ap-panel--tbd .ap-panel__card {
+  .ap-panel--practice .ap-panel__card {
     --card-shift: calc(60 * var(--u));
   }
 
@@ -387,12 +446,28 @@ const { dnd } = about;
     transform: translate(calc(-50% + var(--card-shift)), -50%);
   }
 
-  /* full-bleed art strip at the top of media cards (Steam's landscape capsule) */
+  /* full-bleed art strip at the top of media cards (Steam's wide banner).
+     max-width:none overrides Tailwind preflight's `img { max-width: 100% }`,
+     which was clamping the bleed and leaving a gap on the right. */
   .ap-card__art {
     width: calc(100% + 30 * var(--u));
-    height: calc(96 * var(--u));
-    margin: calc(-13 * var(--u)) calc(-15 * var(--u)) calc(8 * var(--u));
+    max-width: none;
+    height: calc(118 * var(--u));
+    margin: calc(-13 * var(--u)) calc(-15 * var(--u)) calc(9 * var(--u));
     object-fit: cover;
+    object-position: center;
+    border-bottom: calc(4 * var(--u)) solid var(--color-ink);
+  }
+
+  /* D&D character art — taller than the media strip, cropped toward the top
+     so the face stays in frame even though the full figure is much longer. */
+  .ap-card__portrait {
+    width: calc(100% + 30 * var(--u));
+    max-width: none;
+    height: calc(170 * var(--u));
+    margin: calc(-13 * var(--u)) calc(-15 * var(--u)) calc(9 * var(--u));
+    object-fit: cover;
+    object-position: 50% 12%;
     border-bottom: calc(4 * var(--u)) solid var(--color-ink);
   }
 
@@ -429,6 +504,20 @@ const { dnd } = about;
     font-weight: 600;
     font-size: calc(18 * var(--u));
     line-height: 1.12;
+  }
+
+  .ap-card__by {
+    font-weight: 400;
+    opacity: 0.7;
+  }
+
+  .ap-card__embed {
+    width: 100%;
+    height: calc(80 * var(--u));
+    margin-top: calc(10 * var(--u));
+    border: 0;
+    border-radius: calc(10 * var(--u));
+    display: block;
   }
 
   .ap-card__sub,
@@ -535,7 +624,7 @@ const { dnd } = about;
     .ap-panel--dnd { order: 2; }
     .ap-panel--music { order: 3; }
     .ap-panel--game { order: 4; }
-    .ap-panel--tbd { order: 5; }
+    .ap-panel--practice { order: 5; }
     .ap-panel__shape { display: none; }
     .ap-panel__illo {
       width: 84px !important;
@@ -568,8 +657,19 @@ const { dnd } = about;
       width: 96px !important;
       height: 96px !important;
     }
-    .ap-panel--tbd { grid-template-columns: 1fr; }
-    .ap-panel--tbd .ap-panel__card--center { align-items: flex-start; text-align: left; }
+    .ap-card__portrait {
+      width: 100% !important;
+      max-width: 240px;
+      height: 160px !important;
+      margin: 0 0 0.5rem !important;
+      border: 3px solid var(--color-ink);
+      border-radius: 10px;
+      object-position: 50% 8%;
+    }
+    .ap-card__embed {
+      width: 100% !important;
+      height: 80px !important;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

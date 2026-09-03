@@ -26,7 +26,9 @@ export interface RecentGame {
   playtimeTotalMin: number;
   /** Steam store page for the game. */
   storeUrl: string;
-  /** Landscape capsule art (460x215). */
+  /** Wide cinematic banner (1920x620) — not present for every game. */
+  heroImageUrl: string;
+  /** Landscape capsule art (460x215) — always present; use as a fallback. */
   headerImageUrl: string;
 }
 
@@ -35,8 +37,9 @@ function env(key: string): string | undefined {
   return fromMeta ?? process.env[key];
 }
 
-const header = (appId: number) =>
-  `https://cdn.cloudflare.steamstatic.com/steam/apps/${appId}/header.jpg`;
+const cdn = "https://cdn.cloudflare.steamstatic.com/steam/apps";
+const hero = (appId: number) => `${cdn}/${appId}/library_hero.jpg`;
+const header = (appId: number) => `${cdn}/${appId}/header.jpg`;
 const store = (appId: number) => `https://store.steampowered.com/app/${appId}`;
 
 interface ApiGame {
@@ -82,6 +85,7 @@ function shapeApi(g: ApiGame): RecentGame {
     playtimeRecentMin: g.playtime_2weeks ?? 0,
     playtimeTotalMin: g.playtime_forever ?? 0,
     storeUrl: store(g.appid),
+    heroImageUrl: hero(g.appid),
     headerImageUrl: header(g.appid),
   };
 }
@@ -116,6 +120,7 @@ async function fromXmlFeed(idOrVanity: {
     playtimeRecentMin: hoursToMin(pick("hoursLast2Weeks")),
     playtimeTotalMin: hoursToMin(pick("hoursOnRecord")),
     storeUrl: store(appId),
+    heroImageUrl: hero(appId),
     headerImageUrl: header(appId),
   };
 }
