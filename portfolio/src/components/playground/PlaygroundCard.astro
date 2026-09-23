@@ -6,13 +6,15 @@
  * media) comes straight from the config, so a new game/board-game/shirt
  * entry never needs a markup change. `shirt` shows 1–2 real design views
  * (front, or front + back), `boardgame` shows the card carousel + map in
- * BoardGameCard.astro, and `game` / `social` have no finished art yet so
- * they render the shared <WipStub> ("still workin on this one...") — swap
- * those back to real media once the designs exist.
+ * BoardGameCard.astro, `social` shows one looping feed per Instagram
+ * account (SocialFeeds.astro), and `game` has no finished art yet so it
+ * renders the shared <WipStub> ("still workin on this one...") — swap that
+ * back to real media once the design exists.
  */
 import { Image } from "astro:assets";
 import type { PlaygroundPathway } from "../../content/playground";
 import BoardGameCard from "./BoardGameCard.astro";
+import SocialFeeds from "./SocialFeeds.astro";
 import WipStub from "../WipStub.astro";
 
 interface Props {
@@ -30,15 +32,16 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
 ---
 
 <div class="playground-card" data-modal-panel={pathway.id} hidden>
-  <p class="playground-card__eyebrow font-script text-coral">{EYEBROW[pathway.type]}</p>
+  {/* The social card's title already says what it is, so it skips the eyebrow. */}
+  {pathway.type !== "social" && <p class="playground-card__eyebrow font-script text-coral">{EYEBROW[pathway.type]}</p>}
   <h2 class="playground-card__title font-body font-semibold" id={`playground-card-title-${pathway.id}`}>
     {pathway.title}
   </h2>
-  <p class="playground-card__desc font-body font-light">{pathway.description}</p>
+  {pathway.description && <p class="playground-card__desc font-body font-light">{pathway.description}</p>}
 
   {
     pathway.type === "social" ? (
-      <WipStub />
+      <SocialFeeds feeds={pathway.feeds} />
     ) : pathway.type === "shirt" ? (
       <div class="playground-card__designs" data-count={pathway.designs.length}>
         {pathway.designs.map((view) => (

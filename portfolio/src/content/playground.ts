@@ -26,7 +26,23 @@ import type { ImageMetadata } from "astro";
  */
 
 import gamePlaceholder from "../assets/decor/game-placeholder.svg";
-import photoPlaceholder from "../assets/decor/photo-placeholder.svg";
+
+import cupholder1 from "../assets/playground/social/cupholder/01.webp";
+import cupholder2 from "../assets/playground/social/cupholder/02.webp";
+import cupholder3 from "../assets/playground/social/cupholder/03.webp";
+import cupholder4 from "../assets/playground/social/cupholder/04.webp";
+import dpad1 from "../assets/playground/social/dpad/01.webp";
+import dpad2 from "../assets/playground/social/dpad/02.webp";
+import dpad3 from "../assets/playground/social/dpad/03.webp";
+import dpad4 from "../assets/playground/social/dpad/04.webp";
+import duquantum1 from "../assets/playground/social/duquantum/01.webp";
+import duquantum2 from "../assets/playground/social/duquantum/02.webp";
+import duquantum3 from "../assets/playground/social/duquantum/03.webp";
+import duquantum4 from "../assets/playground/social/duquantum/04.webp";
+import eg1 from "../assets/playground/social/eg/01.webp";
+import eg2 from "../assets/playground/social/eg/02.webp";
+import eg3 from "../assets/playground/social/eg/03.webp";
+import eg4 from "../assets/playground/social/eg/04.webp";
 
 import closetArt from "../assets/playground/closet.svg";
 import tvArt from "../assets/playground/tv-graphic.svg";
@@ -68,7 +84,9 @@ interface PathwayBase {
   hotspotTarget: string;
   hotspot: HotspotBox;
   title: string;
-  description: string;
+  /** Intro line under the title. Optional — the social card goes straight
+   *  to its feeds, each of which carries its own caption. */
+  description?: string;
 }
 
 export interface MediaPathway extends PathwayBase {
@@ -99,15 +117,26 @@ export interface ShirtPathway extends PathwayBase {
   designs: ShirtDesignView[];
 }
 
-export interface SocialImage {
+export interface SocialPost {
   image: ImageMetadata | any;
   alt: string;
-  tint?: string;
+}
+
+/** One Instagram account's column on the social card — a slow, looping
+ *  vertical scroll of its posts, with the account name linking out. */
+export interface SocialFeed {
+  /** Display name shown above the feed. */
+  name: string;
+  /** Full Instagram profile URL. Leave empty to show the name unlinked. */
+  url: string;
+  /** One short line about what was made for this account. */
+  caption: string;
+  posts: SocialPost[];
 }
 
 export interface SocialBoardPathway extends PathwayBase {
   type: "social";
-  images: SocialImage[];
+  feeds: SocialFeed[];
 }
 
 export type PlaygroundPathway = MediaPathway | BoardgamePathway | ShirtPathway | SocialBoardPathway;
@@ -170,15 +199,52 @@ export const playground = {
       label: "browse the social designs?",
       hotspotTarget: "picture frame",
       hotspot: { x: 995, y: 682, width: 134.5, height: 128 },
-      title: "Social media designs",
-      description: "A small board of graphics made for Instagram, LinkedIn, and event promo.",
-      images: [
-        { image: photoPlaceholder, alt: "Placeholder social post", tint: "var(--color-coral)" },
-        { image: photoPlaceholder, alt: "Placeholder social post", tint: "var(--color-teal)" },
-        { image: photoPlaceholder, alt: "Placeholder social post", tint: "var(--color-gold)" },
-        { image: photoPlaceholder, alt: "Placeholder social post", tint: "var(--color-orange)" },
-        { image: photoPlaceholder, alt: "Placeholder social post", tint: "var(--color-teal-deep)" },
-        { image: photoPlaceholder, alt: "Placeholder social post", tint: "var(--color-salmon)" },
+      title: "Social Media Designs",
+      feeds: [
+        {
+          name: "My Creative Journal",
+          url: "https://www.instagram.com/cupholdercreative/",
+          caption: "Embracing the slow and messy process of learning to truly draw.",
+          posts: [
+            { image: cupholder1, alt: "Painting of a sunlit grassy hill with trees and pink-tinged clouds" },
+            { image: cupholder2, alt: "Portrait of a red-haired woman in a light blue blazer on a pink background" },
+            { image: cupholder3, alt: "Painting of a small white shed under leafy trees at the edge of a meadow" },
+            { image: cupholder4, alt: "Portrait of a dark-haired woman in blue against a glowing purple background" },
+          ],
+        },
+        {
+          name: "DPAD",
+          url: "https://www.instagram.com/dukedpad/",
+          caption: "Event promo for Duke’s premier game design club.",
+          posts: [
+            { image: dpad1, alt: "“Endless Jam Roadmap” poster — a winding road up a purple mountain to a flag" },
+            { image: dpad2, alt: "“Make a Game in 90 Minutes” poster with a pixel-art hero and a stopwatch" },
+            { image: dpad3, alt: "Game Pitch Contest poster — $250 in prizes, a figure presenting on stage" },
+            { image: dpad4, alt: "Triangle Game Jam poster with a QR code and the January 16–18, 2026 schedule" },
+          ],
+        },
+        {
+          name: "DuQuantum",
+          url: "https://www.instagram.com/duquantumofficial/",
+          caption: "Launch branding for Duke’s first quantum computing hackathon.",
+          posts: [
+            { image: duquantum1, alt: "DuQuantum logo drawn as a quantum circuit, with a Bloch sphere above" },
+            { image: duquantum2, alt: "“Oct 24–25” announcement post explaining the hackathon, at Wilkinson" },
+            { image: duquantum3, alt: "“Apply Today” post with an isometric orange chip on a circuit grid" },
+            { image: duquantum4, alt: "DuQuantum flyer with a gradient logo panel, QR code, and apply and contact links" },
+          ],
+        },
+        {
+          name: "EG Ministries",
+          url: "https://www.instagram.com/egministries.inc/",
+          caption: "Connecting girls in greater Philly with a caring community.",
+          posts: [
+            { image: eg1, alt: "“Back In Time!” EG Camp 2026 promo with layered desert, waves, and a rainbow" },
+            { image: eg2, alt: "Hebrews 12:11 verse graphic with purple grapes and olive vines" },
+            { image: eg3, alt: "“I can do all things” Philippians 4:13 graphic — a figure cheering on a mountaintop" },
+            { image: eg4, alt: "Hebrews 4:12 verse graphic with a large sword across the page" },
+          ],
+        },
       ],
     },
     {

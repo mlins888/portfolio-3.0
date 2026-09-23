@@ -1,0 +1,230 @@
+---
+/**
+ * The social card's body: one column per Instagram account, each a slow,
+ * endlessly looping vertical scroll of that account's posts. Neighbouring
+ * columns run in opposite directions at slightly different speeds so the
+ * board never moves in lockstep.
+ *
+ * The loop is pure CSS: every feed renders its posts twice, back to back,
+ * and slides the whole track by exactly half its height, so the second copy
+ * lands where the first began. Each post carries its own bottom margin
+ * (rather than the track using `gap`) so both halves are identical in
+ * height and the seam never jumps. Hovering or focusing a column pauses it;
+ * reduced-motion visitors get a still column they can scroll by hand, with
+ * the duplicate copy removed.
+ */
+import { Image } from "astro:assets";
+import type { SocialFeed } from "../../content/playground";
+import linkArrow from "../../assets/decor/link-arrow.png";
+
+interface Props {
+  feeds: SocialFeed[];
+}
+
+const { feeds } = Astro.props;
+
+/** Seconds per full loop; cycled across columns so speeds differ a little. */
+const DURATIONS = [34, 40, 37, 43];
+---
+
+<div class="social-feeds">
+  {
+    feeds.map((feed, i) => (
+      <section class="social-feed" aria-label={`${feed.name} posts`}>
+        <header class="social-feed__head">
+          {feed.url ? (
+            <a class="social-feed__name font-script" href={feed.url} target="_blank" rel="noopener noreferrer">
+              {feed.name}
+              <Image src={linkArrow} alt="" aria-hidden="true" class="social-feed__arrow" widths={[48, 96]} sizes="1.5rem" />
+              <span class="sr-only">(Instagram, opens in a new tab)</span>
+            </a>
+          ) : (
+            <p class="social-feed__name font-script">{feed.name}</p>
+          )}
+          <p class="social-feed__caption font-body font-light">{feed.caption}</p>
+        </header>
+
+        <div class="social-feed__window" tabindex="0">
+          <div class="social-feed__viewport">
+            <div
+              class="social-feed__track"
+              style={`--feed-duration: ${DURATIONS[i % DURATIONS.length]}s; --feed-direction: ${i % 2 ? "reverse" : "normal"};`}
+            >
+              {[0, 1].map((copy) =>
+                feed.posts.map((post) => (
+                  <div class="social-feed__post" data-copy={copy} aria-hidden={copy === 1 ? "true" : undefined}>
+                    <Image
+                      src={post.image}
+                      alt={copy === 0 ? post.alt : ""}
+                      widths={[240, 400]}
+                      sizes="(min-width: 640px) 11rem, 45vw"
+                    />
+                  </div>
+                )),
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    ))
+  }
+</div>
+
+<style>
+  .social-feeds {
+    /* Extra room between the card title and the account headings, on top
+       of the card's own 0.75rem gap. */
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 0.75rem;
+  }
+
+  /* Two-up on phones: breathing room above the second row of feeds. */
+  .social-feed:nth-child(n + 3) .social-feed__head {
+    padding-top: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .social-feeds {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .social-feed:nth-child(n + 3) .social-feed__head {
+      padding-top: 0;
+    }
+  }
+
+  /* Each feed spans two rows of the parent grid (header, window) and
+     shares them via subgrid, so every header in a row is as tall as the
+     tallest one and the feeds' tops line up however long the text runs. */
+  .social-feed {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    min-width: 0;
+  }
+
+  .social-feed__head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .social-feed__name {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--color-coral);
+    text-decoration: none;
+    width: fit-content;
+  }
+
+  .social-feed__arrow {
+    display: inline-block;
+    height: 1em;
+    width: auto;
+    margin-left: 0.25em;
+    vertical-align: -0.15em;
+    transition: transform 0.2s ease;
+  }
+
+  a.social-feed__name:hover .social-feed__arrow,
+  a.social-feed__name:focus-visible .social-feed__arrow {
+    transform: translateX(0.12em);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .social-feed__arrow {
+      transition: none;
+    }
+  }
+
+  a.social-feed__name:hover,
+  a.social-feed__name:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .social-feed__caption {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: var(--color-ink);
+    opacity: 0.8;
+  }
+
+  .social-feed__window {
+    position: relative;
+    height: clamp(18rem, 55vh, 26rem);
+    overflow: hidden;
+    border: 5px solid var(--color-ink);
+    border-radius: 18px;
+    background: var(--color-cream);
+  }
+
+  /* Soft fade at the top and bottom edges so posts slide in and out rather
+     than being sliced by the frame. Lives on this inner layer so the
+     window's border stays solid. */
+  .social-feed__viewport {
+    height: 100%;
+    /* Inset lives here, not on the track, so the track is exactly two
+       copies of the posts and -50% lands precisely on the seam. */
+    padding: 0.5rem 0.5rem 0;
+    overflow: hidden;
+    mask-image: linear-gradient(to bottom, transparent, black 8%, black 92%, transparent);
+  }
+
+  .social-feed__window:focus-visible {
+    outline: 3px solid var(--color-teal);
+    outline-offset: 3px;
+  }
+
+  .social-feed__track {
+    /* Keeps the last post's bottom margin inside the track (instead of
+       collapsing out of it), so the track really is two equal halves. */
+    display: flow-root;
+    animation: social-feed-scroll var(--feed-duration) linear infinite;
+    animation-direction: var(--feed-direction);
+  }
+
+  .social-feed__window:hover .social-feed__track,
+  .social-feed__window:focus-within .social-feed__track {
+    animation-play-state: paused;
+  }
+
+  .social-feed__post {
+    margin-bottom: 0.5rem;
+  }
+
+  .social-feed__post :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+
+  @keyframes social-feed-scroll {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-50%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .social-feed__viewport {
+      overflow-y: auto;
+      mask-image: none;
+    }
+
+    .social-feed__track {
+      animation: none;
+    }
+
+    .social-feed__post[data-copy="1"] {
+      display: none;
+    }
+  }
+</style>
