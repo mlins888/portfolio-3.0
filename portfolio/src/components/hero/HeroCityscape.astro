@@ -74,11 +74,12 @@ const sprite = hero.images.sceneCharacterSprite;
 
 <!-- Scene artwork, split into two layers: a colourful shape burst that
      rotates + pulses on a slow perpetual loop, and the line-drawn
-     character sitting still on top of it. Same footprint the single
-     combined image used before. The splash keeps a base scale > 1 so the
-     rotation never pulls a corner off the (clipped) box. -->
+     character on top of it. Same footprint the single combined image used
+     before. The box deliberately doesn't clip: as the splash rotates and
+     swells it's meant to spill over the coral panel's edge onto the cream
+     border, not get sliced off at it. -->
 <div
-  class="scene-art absolute overflow-hidden pointer-events-none"
+  class="scene-art absolute pointer-events-none"
   style={canvasStyle({ x: 31, y: 389, width: 962, height: 668 })}
   data-anim="portrait"
 >
@@ -130,8 +131,6 @@ const sprite = hero.images.sceneCharacterSprite;
 <style>
   .scene-art__splash {
     transform-origin: center;
-    /* Base scale > 1 so the box (which clips) stays fully covered through
-       the whole rotation. */
     transform: rotate(-2deg) scale(1.04);
     animation: scene-splash-idle 11s ease-in-out infinite;
   }

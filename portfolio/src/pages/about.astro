@@ -2,15 +2,26 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import AboutPanels from "../components/about/AboutPanels.astro";
 import { about } from "../content/about";
+// The two comic-panel boxes behind the copy, exported from Figma ("Wireframe
+// - about", Vector 123 + Rectangle 44). Inlined so CSS can keep their
+// outline a constant weight while the shapes stretch to fit the text.
+import titleBox from "../assets/decor/about-title-box.svg?raw";
+import bodyBox from "../assets/decor/about-body-box.svg?raw";
 ---
 
 <BaseLayout title="About — Makenna Linsky">
   <main class="about-page" aria-label="About">
     <div class="about-page__band">
       <div class="about-page__copy">
-        <h1 class="about-page__heading font-script text-white">{about.heading}</h1>
-        <div class="about-page__body font-body text-white">
-          {about.paragraphs.map((p) => <p>{p}</p>)}
+        <div class="about-page__title-box">
+          <div class="about-page__box-shape" aria-hidden="true" set:html={titleBox} />
+          <h1 class="about-page__heading font-script text-cream">{about.heading}</h1>
+        </div>
+        <div class="about-page__body-box">
+          <div class="about-page__box-shape" aria-hidden="true" set:html={bodyBox} />
+          <div class="about-page__body font-body text-ink">
+            {about.paragraphs.map((p) => <p>{p}</p>)}
+          </div>
         </div>
       </div>
 
@@ -42,22 +53,112 @@ import { about } from "../content/about";
     }
   }
 
+  /* Title panel (teal, slanted bottom) stacked over the body panel (paper,
+     slanted top) — the two slants run near-parallel, as in Figma. Both
+     panels are the same width, so the pair reads as one cut-apart card. */
+  .about-page__copy {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.4vw, 0.35rem);
+    /* The panel cluster stops growing at 600px wide; capping the copy at
+       the same ratio (≈0.955 of the cluster, as at 1440px) keeps the two
+       columns' heights locked together on wide screens too. */
+    max-width: 573px;
+    container-type: inline-size;
+  }
+
+  .about-page__title-box,
+  .about-page__body-box {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* The exported shape stretches to whatever size the text needs
+     (preserveAspectRatio="none" in the SVG); non-scaling-stroke keeps its
+     black outline an even weight instead of stretching along with it. */
+  .about-page__box-shape {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .about-page__box-shape :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .about-page__box-shape :global(path) {
+    vector-effect: non-scaling-stroke;
+    stroke-width: clamp(6px, 0.7vw, 10px);
+  }
+
+  /* Room below the text for the slanted bottom edge, which rises ~⅓ of
+     the box height toward the right. */
+  .about-page__title-box {
+    padding: 0.68em 0.5em 0.82em;
+    /* One line, as in Figma: the heading is ~8.2em wide, so cap the size at
+       what fits the column (container width ÷ ~9.3em incl. padding). */
+    font-size: min(4rem, 9.8cqi);
+  }
+
   .about-page__heading {
-    margin: -0.75rem 0 clamp(1.75rem, 4vw, 2.75rem);
-    font-size: clamp(2.25rem, 5vw, 4rem);
+    margin: 0;
+    font-size: 1em;
     line-height: 0.91;
+    text-align: center;
+    white-space: nowrap;
+    /* Tilted to follow the box's slanted bottom edge. */
+    transform: rotate(-4deg);
+  }
+
+  /* Text sits below the slanted top edge (which drops ~9% of the box
+     height on the left) with the same side inset all round. */
+  .about-page__body-box {
+    padding: clamp(3.5rem, 7vw, 6.75rem) clamp(1.5rem, 2.8vw, 2.5rem) clamp(1.5rem, 3vw, 2.75rem);
   }
 
   .about-page__body {
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    /* Figma separates paragraphs with two blank lines. */
+    gap: 1.78em;
     font-size: clamp(1.15rem, 2.1vw, 2rem);
-    line-height: 0.95;
-    max-width: 34ch;
+    line-height: 0.89;
   }
 
   .about-page__body p {
     margin: 0;
+  }
+
+  /* Side by side: the copy column stretches to the panel cluster's height
+     and the body box grows to fill it, so the title box's top and the body
+     box's bottom line up with the panels' outer edges. The small insets
+     match how far the drawn panels sit inside their canvas (~12 / ~10
+     Figma units at this size). */
+  @media (min-width: 861px) {
+    /* Size the row to its content (the panels) and centre it in the band,
+       rather than stretching it to the band's min-height — otherwise the
+       copy would stretch past the panels on short-content screens. */
+    .about-page__band {
+      align-content: center;
+    }
+
+    .about-page__copy {
+      align-self: stretch;
+      padding-block: 0.75rem 0.6rem;
+    }
+
+    /* Body type and insets scale with the column (not the viewport), so
+       the text box shrinks in step with the panel cluster beside it and
+       never outgrows it at narrower desktop widths. Values are the 1440px
+       sizes expressed as a share of the ~566px column. */
+    .about-page__body-box {
+      flex: 1;
+      padding: 17.5cqi 7cqi 7.5cqi;
+    }
+
+    .about-page__body {
+      font-size: min(2rem, 5.3cqi);
+    }
   }
 </style>
