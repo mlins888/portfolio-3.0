@@ -3,15 +3,18 @@
  * The illustrated lower-band scene: two flat "night sky" panels, the three
  * building illustrations, the character-on-swing artwork (a colourful shape
  * burst that slowly rotates + pulses, with the line-drawn character resting
- * still on top — see the <style> block), and a small accent shape between
- * the buildings — all placed at their exact Figma coordinates on the hero
+ * still on top — see the <style> block) — all placed at their exact Figma coordinates on the hero
  * canvas. Paint order matches the Figma layer order exactly (the character
  * scene is painted after the first two buildings because it's a
- * transparent-background cutout that partially overlaps them).
+ * transparent-background cutout that partially overlaps them). The character
+ * plays its swing loop once after the intro, then again on hover (desktop) or
+ * tap (touch).
  *
- * `buildingPulse` and `buildingOther` are crops of a shared oversized master
- * canvas (see FillImage); `buildingHackduke` and the scene artwork are
- * already framed to their own bounds, so they use a plain cover crop.
+ * `buildingOther` is a crop of a shared oversized master canvas (see
+ * FillImage); `buildingPulse` is its own tightly framed drawing (spire
+ * included), positioned with FillImage so its body lands exactly where the
+ * old crop's did; `buildingHackduke` and the scene artwork are already
+ * framed to their own bounds, so they use a plain cover crop.
  */
 import { Image } from "astro:assets";
 import FillImage from "../FillImage.astro";
@@ -21,7 +24,8 @@ import { hero } from "../../content/hero";
 
 import panelA from "../../assets/decor/hero-scene-panel-a.svg";
 import panelB from "../../assets/decor/hero-scene-panel-b.svg";
-import accent from "../../assets/decor/hero-scene-accent.svg";
+
+const sprite = hero.images.sceneCharacterSprite;
 ---
 
 <ArtAsset svg={panelA} natural={{ w: 676.5, h: 586.5 }} x={721} y={394} />
@@ -60,10 +64,10 @@ import accent from "../../assets/decor/hero-scene-accent.svg";
     <FillImage
       src={hero.images.buildingPulse}
       alt=""
-      cropTop={-13.65}
-      cropLeft={-15.49}
-      cropWidth={272.83}
-      cropHeight={128.63}
+      cropTop={-4.02}
+      cropLeft={1.46}
+      cropWidth={93.85}
+      cropHeight={102.59}
     />
   </div>
 </div>
@@ -84,14 +88,32 @@ import accent from "../../assets/decor/hero-scene-accent.svg";
     aria-hidden="true"
     class="scene-art__splash absolute inset-0 h-full w-full object-cover"
   />
-  <Image
-    src={hero.images.sceneCharacter}
-    alt={hero.images.sceneAlt}
+  <!-- The character is a 12fps hand-drawn swing loop. The still image is
+       its rest frame and is what no-JS / reduced-motion visitors see; the script
+       below swaps in the sprite sheet once it has loaded and decoded. -->
+  <div
     class="scene-art__character absolute"
-  />
+    data-swing
+    data-sprite={sprite.image.src}
+    data-columns={sprite.columns}
+    data-rows={sprite.rows}
+    data-frames={sprite.frames}
+    data-fps={sprite.fps}
+    data-rest-frame={sprite.restFrame}
+  >
+    <Image
+      src={hero.images.sceneCharacter}
+      alt={hero.images.sceneAlt}
+      class="scene-art__poster block h-full w-full"
+    />
+    <div
+      class="scene-art__sprite absolute inset-0"
+      aria-hidden="true"
+      style={`background-size: ${sprite.columns * 100}% ${sprite.rows * 100}%`}
+    >
+    </div>
+  </div>
 </div>
-
-<ArtAsset svg={accent} natural={{ w: 72.8821, h: 112 }} x={983} y={537.57} />
 
 <div
   class="absolute pointer-events-none hotspot-glow"
@@ -125,13 +147,31 @@ import accent from "../../assets/decor/hero-scene-accent.svg";
   }
 
   /* Placement matched to where the character sat in the original combined
-     artwork (content centred at ~43%/48% of the box, ~50% of its width). */
+     artwork. The frames are cropped (1309 × 1499) so frame 1 lands exactly
+     where the old single still did: same left edge, same scale, a little
+     extra width on the right for the frames where the swing kicks out. */
   .scene-art__character {
-    left: 41%;
+    left: 14%;
     top: 49.5%;
-    width: 54%;
-    height: auto;
-    transform: translate(-50%, -50%);
+    width: 58.61%;
+    aspect-ratio: 1309 / 1499;
+    transform: translateY(-50%);
+    /* The wrapper ignores pointers so the buildings behind stay hoverable;
+       the character opts back in to drive the animation. */
+    pointer-events: auto;
+  }
+
+  .scene-art__sprite {
+    background-repeat: no-repeat;
+    visibility: hidden;
+  }
+
+  .scene-art__character.is-ready .scene-art__sprite {
+    visibility: visible;
+  }
+
+  .scene-art__character.is-ready .scene-art__poster {
+    visibility: hidden;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -140,4 +180,94 @@ import accent from "../../assets/decor/hero-scene-accent.svg";
     }
   }
 </style>
+
+<script>
+  import { prefersReducedMotion } from "../../scripts/gsap-setup.js";
+
+  /** Lands just after the hero intro timeline settles (~1.3s). */
+  const AUTOPLAY_DELAY_MS = 1400;
+
+  document.querySelectorAll<HTMLElement>("[data-swing]").forEach((el) => {
+    if (prefersReducedMotion()) return;
+
+    const sheet = el.querySelector<HTMLElement>(".scene-art__sprite");
+    const src = el.dataset.sprite;
+    if (!sheet || !src) return;
+
+    const columns = Number(el.dataset.columns);
+    const rows = Number(el.dataset.rows);
+    const frames = Number(el.dataset.frames);
+    const frameMs = 1000 / Number(el.dataset.fps);
+    const rest = Number(el.dataset.restFrame) || 0;
+
+    let frame = rest;
+    let running = false;
+    let hovering = false;
+    /** Extra full loops still owed to a tap / the autoplay. */
+    let loopsOwed = 0;
+    let last = 0;
+
+    function show(n: number) {
+      const col = n % columns;
+      const row = Math.floor(n / columns);
+      sheet!.style.backgroundPosition = `${(col / (columns - 1)) * 100}% ${(row / (rows - 1)) * 100}%`;
+    }
+
+    function tick(now: number) {
+      if (now - last >= frameMs) {
+        // Advance by whole frames against the clock so a slow tab doesn't
+        // stretch the loop, without skipping more than a frame at a time.
+        last = now - ((now - last) % frameMs);
+        frame = (frame + 1) % frames;
+        if (frame === rest) {
+          // Only ever stop on the rest pose, never mid-swing.
+          if (loopsOwed > 0) loopsOwed--;
+          if (!hovering && loopsOwed === 0) {
+            show(rest);
+            running = false;
+            return;
+          }
+        }
+        show(frame);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    function play(loops = 0) {
+      loopsOwed = Math.max(loopsOwed, loops);
+      if (running || !el.classList.contains("is-ready")) return;
+      running = true;
+      last = performance.now();
+      requestAnimationFrame(tick);
+    }
+
+    const img = new Image();
+    img.src = src;
+    img
+      .decode()
+      .then(() => {
+        sheet.style.backgroundImage = `url("${src}")`;
+        show(rest);
+        el.classList.add("is-ready");
+        setTimeout(() => play(1), Math.max(0, AUTOPLAY_DELAY_MS - performance.now()));
+      })
+      .catch(() => {
+        // Sprite failed to load: the still poster just stays put.
+      });
+
+    el.addEventListener("pointerenter", (e) => {
+      if (e.pointerType !== "mouse") return;
+      hovering = true;
+      play();
+    });
+    el.addEventListener("pointerleave", (e) => {
+      if (e.pointerType !== "mouse") return;
+      hovering = false;
+    });
+    el.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse") return;
+      play(1);
+    });
+  });
+</script>
 

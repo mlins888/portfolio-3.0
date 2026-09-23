@@ -26,6 +26,31 @@ import Sparkle from "./Sparkle.astro";
 import SpeechBurst from "./SpeechBurst.astro";
 import StampBadge from "./StampBadge.astro";
 import Starburst from "./Starburst.astro";
+
+/**
+ * The corner cluster (cat logo + date stamp on the left, nav banners on the
+ * right), scaled up as one unit and centred vertically in the top coral band
+ * (y 43 → 372). Base sizes are the original Figma ones; CORNER_SCALE grows
+ * everything together, and the gap between the columns scales with it.
+ * CORNER_X keeps the nav banners' right edge (~363) clear of the "Hello!
+ * I'm..." greeting, which starts around x≈383.
+ */
+const CORNER_SCALE = 1.12;
+const CORNER_X = 62;
+const BAND = { top: 43, height: 329 };
+
+const logoSize = { width: 126 * CORNER_SCALE, height: 118.3 * CORNER_SCALE };
+const stampHeight = 58 * CORNER_SCALE;
+const columnGap = 11 * CORNER_SCALE;
+const navSize = { width: 128 * CORNER_SCALE, height: 226.3 * CORNER_SCALE };
+const navX = CORNER_X + logoSize.width + 15 * CORNER_SCALE;
+/** The banners' drawn stack is shorter than the nav box's nominal height
+ *  (HeroNavBadge lays out from width alone), so centre on what's drawn. */
+const navDrawnHeight = 188.8 * CORNER_SCALE;
+const navY = BAND.top + (BAND.height - navDrawnHeight) / 2;
+const leftColumnHeight = logoSize.height + columnGap + stampHeight;
+const logoY = BAND.top + (BAND.height - leftColumnHeight) / 2;
+const stampY = logoY + logoSize.height + columnGap;
 ---
 
 <section class="hero-frame relative w-full bg-paper" data-hero aria-label="Introduction">
@@ -65,21 +90,14 @@ import Starburst from "./Starburst.astro";
       </h1>
     </div>
 
-    <!-- y = LogoBadge's bottom edge (91 + 118.3 height) + 11, matching the
-         11-unit gap StampBadge itself uses between its date and price
-         plates (see PLATE_WIDTH/plates in StampBadge.astro). -->
-    <StampBadge x={80} y={220.3} date={hero.stamp.date} price={hero.stamp.price} />
+    <!-- Sits one column-gap below LogoBadge (see the corner cluster math up top). -->
+    <StampBadge x={CORNER_X} y={stampY} scale={CORNER_SCALE} date={hero.stamp.date} />
 
-    <!-- Sits in the gap between the stamp column (ends x=206) and the
-         headline (starts x=352) — x=221 keeps the extra breathing room
-         after the stamp column (up from flush-ish before). HeroNavBadge
-         went back to its original tight, overlapping banner spacing (the
-         evenly-gapped version didn't read right), which ties width and
-         height back to the artwork's own aspect ratio — so width=128 here
-         is what keeps the banners from squishing at this x, height=226.3
-         is just what that produces (close to, but no longer forced to
-         match, the cat/stamp column's own 240.3). -->
-    <HeroNavBadge x={221} y={91} width={128} height={226.3} links={site.nav} />
+    <!-- Sits between the cat/stamp column and the headline. HeroNavBadge
+         uses its original tight, overlapping banner spacing, which ties
+         width and height to the artwork's own aspect ratio — the base
+         128 × 226.3 is that ratio, scaled with the rest of the cluster. -->
+    <HeroNavBadge x={navX} y={navY} width={navSize.width} height={navSize.height} links={site.nav} />
 
     <SpeechBurst x={1059} y={60} text={hero.tagline} />
 
@@ -96,13 +114,17 @@ import Starburst from "./Starburst.astro";
 
     <Starburst variant="large" x={-92} y={745} size={268.107} />
 
-    <!-- Width matches StampBadge's PLATE_WIDTH (126) below it, so the two
-         stack as same-width, center-aligned boxes (x matches StampBadge's
-         own x for that reason). Height is scaled down by the same ratio as
-         width (153 * 126/163) to keep the box's aspect ratio — and so
-         FillImage's crop — unchanged; only cropping the shorter box changes
-         from before, not squishing the art itself. -->
-    <LogoBadge x={80} y={91} width={126} height={118.3} logo={hero.images.cornerCat} alt={hero.images.cornerCatAlt} />
+    <!-- Width matches StampBadge's plate width below it, so the two stack
+         as same-width, left-aligned boxes. The base 126 × 118.3 keeps the
+         box's aspect ratio — and so FillImage's crop — unchanged. -->
+    <LogoBadge
+      x={CORNER_X}
+      y={logoY}
+      width={logoSize.width}
+      height={logoSize.height}
+      logo={hero.images.cornerCat}
+      alt={hero.images.cornerCatAlt}
+    />
 
     <!-- Building hotspots — invisible hit targets over the comic buildings. -->
     <div class="building-hotspots" data-building-hotspots>

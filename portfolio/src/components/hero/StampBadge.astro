@@ -1,6 +1,6 @@
 ---
 /**
- * The vintage postmark block — two cream plates carrying a date and a price.
+ * The vintage postmark block — a cream plate carrying the date.
  * Date is filled client-side from the current day (e.g. AUG 10); `date` prop is
  * only a no-JS fallback.
  */
@@ -8,18 +8,19 @@ import { canvasStyle, css, u, type CanvasBox } from "./canvas";
 
 interface Props extends CanvasBox {
   date: string;
-  price: string;
+  /** Multiplies the plate and type size together, so the stamp can grow
+   *  with the rest of the corner cluster without changing its proportions. */
+  scale?: number;
   class?: string;
 }
 
-const { date, price, class: className, ...box } = Astro.props;
+const { date, scale = 1, class: className, ...box } = Astro.props;
 
-const PLATE_WIDTH = 126;
-const TYPE_SIZE = 32;
+const PLATE_WIDTH = 126 * scale;
+const TYPE_SIZE = 32 * scale;
 
 const plates = [
-  { key: "date", label: date, y: 0, height: 58 },
-  { key: "price", label: price, y: 69, height: 42 },
+  { key: "date", label: date, y: 0, height: 58 * scale },
 ];
 ---
 
