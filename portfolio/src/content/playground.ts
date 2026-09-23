@@ -252,7 +252,7 @@ export const playground = {
       type: "shirt",
       label: "look at the Code+Plus 2026 tee?",
       hotspotTarget: "shirt hanger — orange (back)",
-      hotspot: { x: 790.103, y: 192.844, width: 237.844, height: 355.587 },
+      hotspot: { x: 790.103, y: 198.844, width: 237.844, height: 355.587 },
       title: "Code+Plus 2026",
       description: "Event tee concept for Code+Plus 2026 — front chest logo, full back print.",
       image: shirt1Art,

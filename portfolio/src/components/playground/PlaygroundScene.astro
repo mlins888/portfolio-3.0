@@ -211,6 +211,14 @@ const BoxLayer3Art = scene.box.layer3.image;
   .shirt-shift {
     pointer-events: none;
   }
+
+  /* A gentler lift than the site-wide hotspot glow (14 units up-left): the
+     shirts hang from a rod, so the hovered one just rises a touch and keeps
+     its hanger on the bar instead of jumping off it. */
+  .shirt-shift .hotspot-glow.is-glowing {
+    transform: translate(calc(-3 * var(--u, 1px)), calc(-5 * var(--u, 1px)));
+    filter: drop-shadow(calc(8 * var(--u, 1px)) calc(8 * var(--u, 1px)) 0 var(--color-gold));
+  }
 </style>
 
 <script>
@@ -226,7 +234,13 @@ const BoxLayer3Art = scene.box.layer3.image;
 
   // Matches playground.canvas.width in src/content/playground.ts.
   const CANVAS_WIDTH = 1440;
-  const SHIFT_UNIT = 22;
+  // Neighbour shift, in canvas units: the shirt next to the hovered one
+  // moves SHIFT_UNIT, and each further one only half as much more again
+  // (16, 24, 28, 30…), so the far ends never slide far enough to leave the
+  // rod — the leftmost hook sits only ~50 units from the rod's left end.
+  const SHIFT_UNIT = 16;
+  const shiftFor = (distance) =>
+    Math.sign(distance) * SHIFT_UNIT * 2 * (1 - 0.5 ** Math.abs(distance));
 
   const root = document.querySelector("[data-playground]");
   if (root) {
@@ -276,7 +290,7 @@ const BoxLayer3Art = scene.box.layer3.image;
       const unit = shirtsRow.getBoundingClientRect().width / CANVAS_WIDTH;
 
       shiftEls.forEach((el, i) => {
-        const targetX = hoveredIndex === -1 ? 0 : (i - hoveredIndex) * SHIFT_UNIT * unit;
+        const targetX = hoveredIndex === -1 ? 0 : shiftFor(i - hoveredIndex) * unit;
         gsap.to(el, {
           x: targetX,
           duration: 0.35,

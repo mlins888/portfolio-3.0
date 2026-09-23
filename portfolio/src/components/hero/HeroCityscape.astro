@@ -254,10 +254,66 @@ const sprite = hero.images.sceneCharacterSprite;
         // Sprite failed to load: the still poster just stays put.
       });
 
-    el.addEventListener("pointerenter", (e) => {
+    // Hit-testing against the drawing, not the box. The frames share a crop
+    // with generous empty margins (room for the swing's kick-out), so the
+    // element's rectangle is much bigger than the character. A small alpha
+    // mask of the still frame — grown by a couple of cells so the edge isn't
+    // fiddly — decides whether the pointer is actually over her. Until the
+    // mask is ready, the whole box counts.
+    const MASK_W = 128;
+    const MASK_PAD = 2;
+    let mask: Uint8Array | null = null;
+    let maskH = 0;
+
+    const poster = el.querySelector<HTMLImageElement>(".scene-art__poster");
+    if (poster) {
+      const still = new Image();
+      still.src = poster.currentSrc || poster.src;
+      still
+        .decode()
+        .then(() => {
+          maskH = Math.round((MASK_W * still.naturalHeight) / still.naturalWidth);
+          const canvas = document.createElement("canvas");
+          canvas.width = MASK_W;
+          canvas.height = maskH;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          if (!ctx) return;
+          ctx.drawImage(still, 0, 0, MASK_W, maskH);
+          const alpha = ctx.getImageData(0, 0, MASK_W, maskH).data;
+          const grown = new Uint8Array(MASK_W * maskH);
+          for (let y = 0; y < maskH; y++) {
+            for (let x = 0; x < MASK_W; x++) {
+              if (alpha[(y * MASK_W + x) * 4 + 3] < 40) continue;
+              for (let dy = -MASK_PAD; dy <= MASK_PAD; dy++) {
+                for (let dx = -MASK_PAD; dx <= MASK_PAD; dx++) {
+                  const gx = x + dx;
+                  const gy = y + dy;
+                  if (gx >= 0 && gx < MASK_W && gy >= 0 && gy < maskH) grown[gy * MASK_W + gx] = 1;
+                }
+              }
+            }
+          }
+          mask = grown;
+        })
+        .catch(() => {
+          // No mask: fall back to the whole box.
+        });
+    }
+
+    function overArt(e: PointerEvent) {
+      if (!mask) return true;
+      const r = el.getBoundingClientRect();
+      const x = Math.floor(((e.clientX - r.left) / r.width) * MASK_W);
+      const y = Math.floor(((e.clientY - r.top) / r.height) * maskH);
+      return x >= 0 && x < MASK_W && y >= 0 && y < maskH && mask[y * MASK_W + x] === 1;
+    }
+
+    el.addEventListener("pointermove", (e) => {
       if (e.pointerType !== "mouse") return;
-      hovering = true;
-      play();
+      const over = overArt(e);
+      if (over === hovering) return;
+      hovering = over;
+      if (over) play();
     });
     el.addEventListener("pointerleave", (e) => {
       if (e.pointerType !== "mouse") return;
@@ -265,7 +321,7 @@ const sprite = hero.images.sceneCharacterSprite;
     });
     el.addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse") return;
-      play(1);
+      if (overArt(e)) play(1);
     });
   });
 </script>

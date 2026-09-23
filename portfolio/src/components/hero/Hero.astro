@@ -155,8 +155,16 @@ const stampY = logoY + logoSize.height + columnGap;
   .hero-frame {
     container-type: inline-size;
     aspect-ratio: var(--canvasW) / var(--canvasH);
-    /* Shapes deliberately run off the bottom of the cover. */
-    overflow: hidden;
+    /* Clip sideways only (the big starburst hangs off the left edge and
+       would otherwise cause horizontal scroll). Vertically the cover is
+       left open so the character's splash art can swell past the bottom
+       edge into the cream gap above Work instead of being sliced off —
+       the buildings' drawn art all ends above that edge anyway. `clip`,
+       unlike `hidden`, allows mixing with a visible axis. */
+    overflow-x: clip;
+    overflow-y: visible;
+    /* Paint above the Work section's cream top padding, which comes next. */
+    z-index: 1;
   }
 
   .hero-canvas {

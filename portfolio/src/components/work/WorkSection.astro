@@ -16,25 +16,27 @@ import PillBadge from "../PillBadge.astro";
 >
   <div class="work-section__band">
     <div class="work-section__inner">
-      {
-        work.caseStudies.map((study) => (
-          <CaseStudyCard study={study} />
-        ))
-      }
+      <div class="case-grid">
+        {work.caseStudies.map((study) => <CaseStudyCard study={study} />)}
+      </div>
 
       <!-- Heading + CTA sit on the surrounding coral background, not the
            tan panel underneath — that panel is only for the three project
            shapes, and cream-on-tan text was unreadable. -->
-      <div class="other-projects-group">
-        <p class="other-projects-heading font-script">
-          {work.otherProjectsHeading}
-        </p>
+      <div class:list={["other-projects-group", { "other-projects-group--cta-only": !work.showOtherProjects }]}>
+        {
+          work.showOtherProjects && (
+            <>
+              <p class="other-projects-heading font-script">{work.otherProjectsHeading}</p>
 
-        <div id="other-projects" class="other-projects" data-other-projects>
-          <OtherProjectsScene />
-        </div>
+              <div id="other-projects" class="other-projects" data-other-projects>
+                <OtherProjectsScene />
+              </div>
+            </>
+          )
+        }
 
-        <p class="playground-cta font-script">
+        <p id="playground-cta" class="playground-cta font-script">
           <span>{work.playgroundCta.before}</span>
           <PillBadge
             label={work.playgroundCta.pill}
@@ -54,6 +56,9 @@ import PillBadge from "../PillBadge.astro";
     position: relative;
     background: var(--color-paper);
     padding-inline: clamp(0.75rem, 2.5vw, 2.5rem);
+    /* Extra cream breathing room between the landing cover and this band,
+       on top of the cover's own bottom margin. */
+    padding-top: 3rem;
     padding-bottom: 0;
   }
 
@@ -71,10 +76,41 @@ import PillBadge from "../PillBadge.astro";
     gap: clamp(4rem, 10vw, 8rem);
   }
 
+  /* The case-study cards, side by side. This is the container the cards
+     size themselves against (cqi), standing in for Figma's 1214px row. */
+  .case-grid {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: max(3.5rem, 2.72cqi);
+    margin-top: clamp(1.5rem, 4.5vw, 4rem);
+    /* Room for the stacked layers that hang below each card's panel. */
+    padding-bottom: 2rem;
+  }
+
+  @media (min-width: 700px) {
+    .case-grid {
+      flex-direction: row;
+      align-items: stretch;
+      gap: 6.5cqi;
+    }
+  }
+
   .other-projects-group {
     display: flex;
     flex-direction: column;
     margin-top: clamp(2rem, 5vw, 4rem);
+  }
+
+  /* Other projects hidden: only the playground line follows the cards, so
+     drop the spacing that belonged to the heading/panels and tuck the line
+     up closer (~80px below the cards' stacked layers at 1440px). */
+  .other-projects-group--cta-only {
+    margin-top: calc(-1 * clamp(1.5rem, 3.3vw, 3rem));
+  }
+
+  .other-projects-group--cta-only .playground-cta {
+    margin-top: 0;
   }
 
   .other-projects-heading {
@@ -87,6 +123,7 @@ import PillBadge from "../PillBadge.astro";
   }
 
   .playground-cta {
+    scroll-margin-top: calc(var(--nav-offset) + 6rem);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -159,100 +196,3 @@ import PillBadge from "../PillBadge.astro";
   }
 
 </style>
-
-<script>
-  import {
-    gsap,
-    ScrollTrigger,
-    EASE,
-    prefersReducedMotion,
-    showAll,
-  } from "../../scripts/gsap-setup.js";
-
-  const root = document.querySelector("[data-work]");
-  if (!root) throw new Error("work section missing");
-
-  if (prefersReducedMotion()) {
-    showAll(root);
-  } else {
-    // Not targets(root, "case-card") — data-anim="case-card" now lives on
-    // the inner wrapper (see CaseStudyCard.astro), not this stable outer
-    // element that the tuck observer below needs to watch.
-    const cards = Array.from(root.querySelectorAll("[data-case-card]"));
-
-    cards.forEach((card, i) => {
-      // Animated on the inner wrapper, not `card` itself — see the comment
-      // in CaseStudyCard.astro. `card` (the trigger, and what the tuck
-      // IntersectionObserver below watches) needs to stay geometrically
-      // stable the whole time.
-      const inner = card.querySelector("[data-case-inner]") || card;
-
-      gsap.fromTo(
-        inner,
-        { opacity: 0, scale: 0.86, rotate: i % 2 === 0 ? -3.5 : 3.5 },
-        {
-          opacity: 1,
-          scale: 1,
-          rotate: 0,
-          duration: 0.85,
-          ease: EASE.pop,
-          scrollTrigger: {
-            trigger: card,
-            start: "top 82%",
-            toggleActions: "play none none reverse",
-          },
-        },
-      );
-
-      const text = card.querySelector("[data-case-text]");
-      const media = card.querySelector("[data-case-media]");
-      const fold = card.getAttribute("data-fold");
-      if (!text || !media) return;
-
-      const tuckX = fold === "left" ? "80%" : "-80%";
-
-      // Text starts tucked out of view; scrolling the card into the viewport
-      // slides it out so it's readable, and scrolling it fully past (either
-      // direction) tucks it back away.
-      gsap.set(text, { x: tuckX });
-
-      function reveal() {
-        gsap.to(text, { x: 0, duration: 0.55, ease: EASE.glide, overwrite: "auto" });
-        gsap.to(media, { scale: 1, rotate: 0, duration: 0.55, ease: EASE.glide, overwrite: "auto" });
-      }
-
-      function tuck() {
-        gsap.to(text, { x: tuckX, duration: 0.55, ease: EASE.glide, overwrite: "auto" });
-        gsap.to(media, {
-          scale: 1.04,
-          rotate: fold === "left" ? 2 : -2,
-          duration: 0.55,
-          ease: EASE.pop,
-          overwrite: "auto",
-        });
-      }
-
-      // ScrollTrigger's start/end ("top bottom" / "bottom top") are pixel
-      // offsets it measures ONCE and caches — if that measurement runs even
-      // slightly before layout has settled (web fonts swapping in, images
-      // finishing decode, anything above this card on the page shifting),
-      // the cached numbers go stale and the tuck fires at the wrong scroll
-      // position. An IntersectionObserver has no such cache: the browser
-      // tells it directly, on every layout change, whether the card
-      // currently has any pixels on screen — so "out of view" always means
-      // out of view, not "past some offset computed a moment ago."
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) reveal();
-            else tuck();
-          });
-        },
-        { threshold: 0 },
-      );
-      io.observe(card);
-    });
-
-    ScrollTrigger.refresh();
-  }
-</script>

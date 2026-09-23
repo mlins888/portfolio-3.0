@@ -1,227 +1,180 @@
 ---
 /**
- * One case-study unit: eyebrow pills + text panel + image panel + shape cluster.
- * The whole card (image + shapes) is one link. Optional `videoSrc` is a future
- * hover-playback seam — not wired yet.
+ * One case-study card (Figma "Wireframe - work 3"): a rounded screenshot on
+ * top of a paper text panel, with two coloured layers stacked underneath
+ * the panel. The whole card is a single link, and hovering or focusing it
+ * lifts it slightly to show it's clickable.
+ *
+ * Sizes are in `cqi` of the surrounding .case-grid (see WorkSection.astro),
+ * converted from Figma's pixels against its 1214px-wide row of cards, so
+ * both cards' type matches and everything scales together. Each value has
+ * a rem floor for when the cards stack on small screens.
+ *
+ * The panel starts under the bottom of the image (the image paints on top),
+ * so only its lower part and rounded bottom corners show, as in Figma.
  */
 import { Image } from "astro:assets";
 import type { CaseStudy } from "../../content/work";
-import PillBadge from "../PillBadge.astro";
-import CardBackdrop from "./CardBackdrop.astro";
+import sparkle from "../../assets/decor/sparkle-divider.svg";
 
 interface Props {
   study: CaseStudy;
 }
 
 const { study } = Astro.props;
-const imageRight = study.layout === "image-right";
 ---
 
-<article
-  class:list={[
-    "case-card",
-    imageRight ? "case-card--image-right" : "case-card--image-left",
-  ]}
+<a
+  class="case-card"
   id={study.id}
-  data-case-card
-  data-fold={study.fold}
+  href={study.href}
+  style={`--aspect: ${study.imageAspect}; --focus-x: ${study.imageFocusX ?? "50%"};`}
 >
-  <!-- The entrance animation's opacity/scale/rotate — and the data-anim tag
-       that gates initial opacity via CSS — lands on THIS wrapper, not the
-       <article> above. A CSS transform changes what getBoundingClientRect()
-       reports, and the article is what the tuck IntersectionObserver
-       watches; keeping it untransformed means "in view" always means the
-       real, untransformed position. -->
-  <div class="case-card__inner" data-case-inner data-anim="case-card">
-    <div class="case-card__pills">
-      {study.pills.map((pill) => <PillBadge label={pill.label} tone={pill.tone} />)}
-    </div>
-
-    <div class="case-card__stage">
-      <div class="case-card__text" data-case-text>
-        <h3 class="case-card__title font-body font-semibold">{study.title}</h3>
-        <p class="case-card__role font-body font-light">{study.role}</p>
-        <p class="case-card__desc font-body font-light">{study.description}</p>
-      </div>
-
-      <a
-        class="case-card__media"
-        href={study.href}
-        data-case-media
-        aria-label={`${study.title} — view case study`}
-      >
-        <CardBackdrop
-          variant={study.id === "hackduke" ? "hackduke" : "pulse"}
-          class="case-card__shapes"
-        />
-
-        <div class="case-card__frame">
-          {
-            study.videoSrc ? (
-              <video
-                class="case-card__asset"
-                src={study.videoSrc}
-                muted
-                playsinline
-                loop
-                preload="metadata"
-                data-case-video
-                aria-hidden="true"
-              />
-            ) : null
-          }
-          <Image
-            class="case-card__asset"
-            src={study.image}
-            alt={study.imageAlt}
-            widths={[480, 720, 960]}
-            sizes="(min-width: 900px) 40vw, 90vw"
-          />
-        </div>
-      </a>
-    </div>
+  <div class="case-card__media">
+    <Image
+      class="case-card__image"
+      src={study.image}
+      alt={study.imageAlt}
+      widths={[480, 720, 960, 1280]}
+      sizes="(min-width: 700px) 45vw, 90vw"
+    />
   </div>
-</article>
+
+  <div class="case-card__panel">
+    <h3 class="case-card__title font-body font-semibold">{study.title}</h3>
+    <p class="case-card__meta font-body">
+      <span>{study.role}</span>
+      <img class="case-card__sparkle" src={sparkle.src} alt="" aria-hidden="true" width="30" height="24" />
+      <span>{study.year}</span>
+    </p>
+    <p class="case-card__desc font-body font-light">{study.description}</p>
+  </div>
+</a>
 
 <style>
   .case-card {
-    position: relative;
-    scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
-  }
+    /* Figma: image radius 35–37px, panel 57px, green layer 14px below the
+       panel, teal layer 33px below — all out of a 1214px row. */
+    --panel-radius: max(1.75rem, 4.7cqi);
+    --layer-1: max(0.5rem, 1.15cqi);
+    --layer-2: max(1.1rem, 2.72cqi);
 
-  .case-card__pills {
+    position: relative;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem 1rem;
-    margin-bottom: 0rem;
+    flex-direction: column;
+    min-width: 0;
+    color: var(--color-ink);
+    text-decoration: none;
+    scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
+    transition: transform 0.3s ease;
   }
 
-  .case-card--image-left .case-card__pills {
-    justify-content: flex-end;
-  }
-
-  .case-card__stage {
-    position: relative;
-    display: grid;
-    align-items: center;
-  }
-
-  @media (min-width: 900px) {
-    .case-card__stage {
-      grid-template-columns: 1fr 1fr;
-      min-height: 28rem;
+  /* Side by side: width in proportion to the image's aspect, so both
+     cards' images come out the same height. */
+  @media (min-width: 700px) {
+    .case-card {
+      flex: var(--aspect) 1 0;
     }
   }
 
-  .case-card__text {
-    position: relative;
-    z-index: 1;
-    background: var(--color-paper);
-    border: 12px solid var(--color-ink);
-    border-radius: 57px;
-    padding: clamp(1.5rem, 3vw, 2.75rem) clamp(1.5rem, 3.5vw, 3.5rem);
-    color: var(--color-ink);
+  .case-card:hover,
+  .case-card:focus-visible {
+    transform: translateY(max(-0.6rem, -0.75cqi));
   }
 
-  .case-card__title {
-    font-size: clamp(1.75rem, 3.2vw, 3.125rem);
-    line-height: 0.95;
-    margin: 0 0 0.4rem;
+  .case-card:focus-visible {
+    outline: none;
   }
 
-  .case-card__role {
-    font-size: clamp(1.25rem, 2.4vw, 2.5rem);
-    line-height: 0.95;
-    margin: 0 0 1.25rem;
-  }
-
-  .case-card__desc {
-    font-size: clamp(1.1rem, 2vw, 2.25rem);
-    line-height: 1.05;
-    margin: 0;
-    max-width: 22ch;
-  }
-
-  .case-card--image-left .case-card__text {
-    text-align: right;
-  }
-
-  .case-card--image-left .case-card__desc {
-    margin-left: auto;
+  .case-card:focus-visible .case-card__media {
+    outline: 3px solid var(--color-cream);
+    outline-offset: 4px;
   }
 
   .case-card__media {
     position: relative;
-    z-index: 2;
-    display: block;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .case-card__shapes {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-  }
-
-  .case-card__frame {
-    position: relative;
     z-index: 1;
+    aspect-ratio: var(--aspect);
     overflow: hidden;
-    border: 12px solid var(--color-ink);
-    border-radius: 43px;
-    background: #d9d9d9;
-    aspect-ratio: 4 / 3;
+    border-radius: max(1.25rem, 3cqi);
   }
 
-  .case-card__asset {
+  .case-card__image {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: var(--focus-x) 50%;
   }
 
-  .case-card__frame video.case-card__asset {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
+  .case-card__panel {
+    position: relative;
+    z-index: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Tucks up under the image — past its own rounded top corners, plus a
+       little extra so the image sits further down onto the panel. */
+    margin-top: calc(-1 * (var(--panel-radius) + max(0.6rem, 1.4cqi)));
+    padding: calc(var(--panel-radius) + max(1.5rem, 3.2cqi)) 7% max(1.25rem, 2.8cqi);
+    background: var(--color-paper);
+    border-radius: var(--panel-radius);
+    box-shadow:
+      0 var(--layer-1) 0 #00b781,
+      0 var(--layer-2) 0 var(--color-teal-deep);
+    text-align: center;
   }
 
-  @media (min-width: 900px) {
-    .case-card--image-right .case-card__text {
-      grid-column: 1;
-      grid-row: 1;
-      width: 115%;
-      margin-left: -15%;
-      margin-right: -15%;
+  .case-card__title {
+    margin: 0 0 max(0.6rem, 1cqi);
+    font-size: clamp(1.5rem, 3.3cqi, 2.5rem);
+    line-height: 0.91;
+  }
+
+  /* Role ✦ year, between two hairlines spanning ~71% of the card. */
+  .case-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: max(0.75rem, 1.5cqi);
+    width: 82%;
+    min-width: min(100%, 17rem);
+    margin: 0 0 max(0.9rem, 1.55cqi);
+    padding-block: max(0.5rem, 0.95cqi);
+    border-block: 1px solid var(--color-ink);
+    font-size: clamp(1rem, 1.98cqi, 1.5rem);
+    line-height: 0.91;
+  }
+
+  .case-card__meta span {
+    white-space: nowrap;
+  }
+
+  .case-card__sparkle {
+    display: block;
+    width: auto;
+    height: 0.95em;
+    flex: none;
+  }
+
+  .case-card__desc {
+    margin: 0;
+    max-width: 23em;
+    font-size: clamp(0.95rem, 1.65cqi, 1.25rem);
+    line-height: 0.91;
+    /* Even line lengths, as in Figma — no single orphaned word. */
+    text-wrap: balance;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .case-card {
+      transition: none;
     }
 
-    .case-card--image-right .case-card__media {
-      grid-column: 2;
-      grid-row: 1;
-      margin-left: -8%;
-    }
-
-    .case-card--image-left .case-card__media {
-      grid-column: 1;
-      grid-row: 1;
-      margin-right: -8%;
-    }
-
-    .case-card--image-left .case-card__text {
-      grid-column: 2;
-      grid-row: 1;
-      width: 115%;
-      margin-left: -15%;
-    }
-
-    /* HackDuke's image-left layout reads a little left-heavy against the
-       Pulse card above it — nudge the whole text+media pair right so it
-       sits more centered in the section. */
-    #hackduke .case-card__stage {
-      transform: translateX(clamp(1rem, 3vw, 2.5rem));
+    .case-card:hover,
+    .case-card:focus-visible {
+      transform: none;
     }
   }
 </style>
