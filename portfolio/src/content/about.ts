@@ -54,7 +54,7 @@ export const about: AboutContent = {
   // Static — no API. Edit this block whenever the character changes.
   dnd: {
     name: "Cha'Nari",
-    title: "Level 2 Kalashtar Barbarian",
+    title: "Level 3 Kalashtar Barbarian",
     stats: [
       { label: "STR", value: 15 },
       { label: "DEX", value: 14 },
@@ -71,11 +71,11 @@ export const about: AboutContent = {
   // Static — no API. The Spotify player is just an embed iframe.
   practicing: {
     instrument: "Flute",
-    piece: "Syrinx",
-    composer: "Claude Debussy",
-    ensemble: "",
-    note: "Solo flute — all breath control and colour.",
-    // e.g. "track/6b2oQwSGFkzsMH30153NQnj" — paste your own from a Spotify link
-    spotifyEmbed: "",
+    piece: "Duos for Flute and Clarinet in B♭, Op. 24",
+    composer: "Robert Muczynski",
+    ensemble: "Duo",
+    note: "A fun modern American duet with my roomie",
+    // Muczynski: Works for Flute (Complete) — the Duos are on this album.
+    spotifyEmbed: "album/4NTQQFz3WgpdSOR44bWy7Q",
   },
 };

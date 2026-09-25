@@ -428,11 +428,17 @@ const practiceMeta = [practicing.instrument, practicing.ensemble]
     align-items: center;
   }
 
-  .ap-panel--dnd .ap-panel__card,
+  /* Each pop-up slides out toward its own side of the cluster, by how much
+     room that side has (canvas units). */
   .ap-panel--game .ap-panel__card {
-    --card-shift: calc(-60 * var(--u));
+    --card-shift: calc(-130 * var(--u));
   }
-  .ap-panel--music .ap-panel__card,
+  .ap-panel--dnd .ap-panel__card {
+    --card-shift: calc(-85 * var(--u));
+  }
+  .ap-panel--music .ap-panel__card {
+    --card-shift: calc(85 * var(--u));
+  }
   .ap-panel--practice .ap-panel__card {
     --card-shift: calc(60 * var(--u));
   }

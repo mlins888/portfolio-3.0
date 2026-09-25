@@ -32,12 +32,50 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
 ---
 
 <div class="playground-card" data-modal-panel={pathway.id} hidden>
-  {/* The social card's title already says what it is, so it skips the eyebrow. */}
-  {pathway.type !== "social" && <p class="playground-card__eyebrow font-script text-coral">{EYEBROW[pathway.type]}</p>}
+  {/* The social and game cards' titles already say what they are, so they
+      skip the eyebrow — the game card shows its tags up here instead. */}
+  {
+    pathway.type !== "social" && pathway.type !== "game" && (
+      <p class="playground-card__eyebrow font-script text-coral">{EYEBROW[pathway.type]}</p>
+    )
+  }
+
+  {
+    "tags" in pathway && pathway.tags && pathway.tags.length > 0 && (
+      <div class="playground-card__tags">
+        {pathway.tags.map((tag) => (
+          <span class="playground-card__tag font-script">{tag}</span>
+        ))}
+      </div>
+    )
+  }
   <h2 class="playground-card__title font-body font-semibold" id={`playground-card-title-${pathway.id}`}>
     {pathway.title}
   </h2>
   {pathway.description && <p class="playground-card__desc font-body font-light">{pathway.description}</p>}
+
+  {
+    pathway.type === "game" && pathway.progress && (
+      <section class="progress font-body" aria-label={pathway.progress.heading}>
+        <p class="progress__heading font-body font-semibold">{pathway.progress.heading}</p>
+        <ol class="progress__list">
+          {pathway.progress.steps.map((step) => (
+            <li class:list={["progress__step", `progress__step--${step.status}`]}>
+              <span class="progress__box" aria-hidden="true" />
+              <span class="progress__text">
+                <span class="progress__label font-semibold">{step.label}</span>
+                {step.detail && <span class="progress__detail font-light"> ({step.detail})</span>}
+                {step.status === "current" && <span class="progress__now">in progress</span>}
+                <span class="sr-only">
+                  {step.status === "done" ? " — done" : step.status === "current" ? "" : " — not started"}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
 
   {
     pathway.type === "social" ? (
@@ -67,15 +105,6 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
     )
   }
 
-  {
-    "tags" in pathway && pathway.tags && pathway.tags.length > 0 && (
-      <div class="playground-card__tags">
-        {pathway.tags.map((tag) => (
-          <span class="playground-card__tag font-script">{tag}</span>
-        ))}
-      </div>
-    )
-  }
 </div>
 
 <style>
@@ -104,6 +133,89 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
     margin: 0;
     color: var(--color-ink);
     opacity: 0.85;
+  }
+
+  /* Video-game progress checklist. Done steps get a teal check, the
+     current step a coral box with an "in progress" tag, and upcoming steps
+     an empty box with dimmed text. */
+  .progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    color: var(--color-ink);
+  }
+
+  .progress__heading {
+    /* On top of the section's 0.75rem gap: a bit more air above the list. */
+    margin: 0 0 0.5rem;
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    line-height: 1.2;
+    color: var(--color-coral);
+  }
+
+  .progress__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .progress__step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: clamp(1rem, 1.5vw, 1.1rem);
+    line-height: 1.35;
+  }
+
+  .progress__box {
+    flex: none;
+    position: relative;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-top: 0.08rem;
+    border: 3px solid var(--color-ink);
+    border-radius: 5px;
+    background: var(--color-cream);
+  }
+
+  .progress__step--done .progress__box {
+    background: var(--color-teal);
+  }
+
+  /* Check mark: an L rotated into a tick. */
+  .progress__step--done .progress__box::after {
+    content: "";
+    position: absolute;
+    left: 0.28rem;
+    top: 0.05rem;
+    width: 0.3rem;
+    height: 0.55rem;
+    border-right: 3px solid var(--color-cream);
+    border-bottom: 3px solid var(--color-cream);
+    transform: rotate(45deg);
+  }
+
+  .progress__step--current .progress__box {
+    background: var(--color-coral);
+  }
+
+  .progress__step--todo .progress__text {
+    opacity: 0.55;
+  }
+
+  .progress__now {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    background: var(--color-coral);
+    color: white;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    vertical-align: 0.1em;
   }
 
   .playground-card__media {
@@ -197,7 +309,6 @@ const EYEBROW: Record<PlaygroundPathway["type"], string> = {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    margin-top: 0.25rem;
   }
 
   .playground-card__tag {

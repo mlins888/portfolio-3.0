@@ -89,11 +89,23 @@ interface PathwayBase {
   description?: string;
 }
 
+export interface ProgressStep {
+  label: string;
+  /** Short aside after the label, e.g. "concept art, story-writing…". */
+  detail?: string;
+  status: "done" | "current" | "todo";
+}
+
 export interface MediaPathway extends PathwayBase {
   type: "game";
   image: ImageMetadata | any;
   imageAlt: string;
   tags?: string[];
+  /** Static "where it's at" checklist shown in place of a caption. */
+  progress?: {
+    heading: string;
+    steps: ProgressStep[];
+  };
 }
 
 /** Content lives in src/content/boardgame.ts — see BoardGameCard.astro. */
@@ -176,9 +188,20 @@ export const playground = {
       label: "peek at the game I'm building?",
       hotspotTarget: "TV screen",
       hotspot: { x: 91, y: 333, width: 546.194, height: 442.488 },
-      title: "Video game — in progress",
-      description:
-        "A small game I'm prototyping on the side. Swap this copy (and the screenshot below) in src/content/playground.ts once there's something to show off.",
+      title: "Video game — WIP",
+      // Flip each step's status as the game moves along: "done" checks it
+      // off, "current" marks where things are right now.
+      progress: {
+        heading: "Where I am in the process right now...",
+        steps: [
+          { label: "Drafting", detail: "concept art, story-writing, the works", status: "current" },
+          { label: "Prototyping", detail: "a rough playable build to test the core mechanics", status: "todo" },
+          { label: "Art & animation", detail: "turning sketches into final sprites and scenes", status: "todo" },
+          { label: "Level design & playtesting", detail: "building out the world and watching people play it", status: "todo" },
+          { label: "Polish", detail: "sound, music, menus, and all the little details", status: "todo" },
+          { label: "Release", detail: "getting it into players’ hands", status: "todo" },
+        ],
+      },
       image: gamePlaceholder,
       imageAlt: "Placeholder game controller icon",
       tags: ["Unity", "Pixel art", "Solo project"],
