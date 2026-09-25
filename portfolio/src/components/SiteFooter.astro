@@ -56,7 +56,7 @@ const [linkedIn, gitHub, email, resume] = footer.contacts;
         </div>
       </div>
 
-      <div class="site-footer__divider" aria-hidden="true"></div>
+      <div class="site-footer__divider site-footer__divider--a" aria-hidden="true"></div>
 
       <div class="site-footer__col site-footer__col--contacts">
         <div class="site-footer__contacts">
@@ -74,7 +74,7 @@ const [linkedIn, gitHub, email, resume] = footer.contacts;
         </div>
       </div>
 
-      <div class="site-footer__divider" aria-hidden="true"></div>
+      <div class="site-footer__divider site-footer__divider--b" aria-hidden="true"></div>
 
       <nav class="site-footer__col site-footer__col--nav" aria-label="Footer">
         <ul class="site-footer__nav">
@@ -282,6 +282,77 @@ const [linkedIn, gitHub, email, resume] = footer.contacts;
   .site-footer__nav-link:hover {
     text-decoration: underline;
     text-underline-offset: 4px;
+  }
+
+  /* Below the desktop layout: the cat + tagline sit centred on top, then the
+     external links and the page links share one row, split by a divider
+     like desktop — instead of three tall stacked blocks. Everything a notch
+     smaller so it reads as a footer, not a page. */
+  @media (max-width: 899px) {
+    .site-footer__sprockets {
+      padding-block: 0.4rem;
+    }
+
+    .site-footer__hole {
+      width: 14px;
+      height: 20px;
+    }
+
+    .site-footer__body {
+      grid-template-columns: auto 3px auto;
+      grid-template-areas:
+        "dream dream dream"
+        "contacts divider nav";
+      justify-content: center;
+      align-items: center;
+      gap: 0.25rem clamp(1rem, 5vw, 1.75rem);
+      padding: 0.25rem 1rem 1rem;
+    }
+
+    .site-footer__col--dream {
+      grid-area: dream;
+      justify-content: center;
+      height: 7.5rem;
+    }
+
+    .site-footer__dream-canvas {
+      max-width: 17rem;
+    }
+
+    .site-footer__col--contacts {
+      grid-area: contacts;
+    }
+
+    .site-footer__col--nav {
+      grid-area: nav;
+    }
+
+    .site-footer__divider--b {
+      display: block;
+      grid-area: divider;
+      width: 3px;
+      align-self: stretch;
+      background: var(--color-ink);
+    }
+
+    .site-footer__contacts {
+      column-gap: 0.5rem;
+      row-gap: 0.85rem;
+    }
+
+    .site-footer__contact,
+    .site-footer__nav-link {
+      font-size: 0.9rem;
+    }
+
+    .site-footer__inline-star {
+      width: 1.1rem;
+      height: 1.1rem;
+    }
+
+    .site-footer__nav {
+      gap: 0.6rem;
+    }
   }
 </style>
 
