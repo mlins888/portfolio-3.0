@@ -1,0 +1,240 @@
+---
+/**
+ * Phones-only welcome screen (Figma "Wireframe - about", nodes 272:2 and
+ * 272:32): the cat-and-globe mascot floats gently above a note that the site
+ * is best on a computer, with a "Visit anyway?" pill. Tapping it sends two
+ * waves (green, then teal) rising up over the screen, and once they've
+ * covered it the whole overlay fades away onto the real site.
+ *
+ * Shown only below 700px wide, and once per browser session: dismissing sets
+ * a sessionStorage flag, and the inline script in BaseLayout's <head> reads
+ * that flag before first paint (html[data-gate="done"]) so the overlay never
+ * flashes for someone who has already been through it.
+ */
+import { Image } from "astro:assets";
+import PillBadge from "./PillBadge.astro";
+import cat from "../assets/illustrations/mobile-gate-cat.png";
+import waveGreen from "../assets/decor/gate-wave-green.svg?raw";
+import waveTeal from "../assets/decor/gate-wave-teal.svg?raw";
+---
+
+<div class="gate" data-mobile-gate role="dialog" aria-modal="true" aria-labelledby="gate-title">
+  <div class="gate__content">
+    <Image
+      class="gate__cat"
+      src={cat}
+      alt="The site's cat mascot hugging a globe"
+      widths={[320, 480, 720]}
+      sizes="72vw"
+      loading="eager"
+    />
+    <h2 id="gate-title" class="gate__title font-script">Hey there!</h2>
+    <p class="gate__text font-body">I’d love if you get the full experience of my site by visiting on a computer.</p>
+    <button class="gate__cta" type="button" data-gate-enter>
+      <PillBadge label="Visit anyway?" tone="teal" size="lg" />
+    </button>
+  </div>
+
+  <!-- The waves wait just below the screen; each is its wavy top edge plus a
+       solid block tall enough to cover the viewport once it has risen. -->
+  <div class="gate__wave gate__wave--green" aria-hidden="true">
+    <div class="gate__wave-edge" set:html={waveGreen} />
+    <div class="gate__wave-fill"></div>
+  </div>
+  <div class="gate__wave gate__wave--teal" aria-hidden="true">
+    <div class="gate__wave-edge" set:html={waveTeal} />
+    <div class="gate__wave-fill"></div>
+  </div>
+</div>
+
+<style>
+  .gate {
+    display: none;
+  }
+
+  @media (max-width: 699px) {
+    :global(html:not([data-gate="done"])) .gate {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: var(--color-coral);
+      color: white;
+    }
+
+    /* The site underneath shouldn't scroll while the gate is up. */
+    :global(html:not([data-gate="done"]) body) {
+      overflow: hidden;
+    }
+  }
+
+  /* Sizes are Figma's 579px-wide frame expressed in vw, capped for larger
+     phones in landscape. */
+  .gate__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(100%, 36rem);
+    padding: 1.5rem 1.25rem 3rem;
+    text-align: center;
+  }
+
+  .gate__cat {
+    display: block;
+    width: min(72vw, 22rem);
+    height: auto;
+    animation: gate-cat-float 3.4s ease-in-out infinite alternate;
+  }
+
+  /* Just a gentle bob — the mascot hovering in place. */
+  @keyframes gate-cat-float {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(-9px);
+    }
+  }
+
+  .gate__title {
+    margin: 0.5rem 0 0;
+    font-size: clamp(2.25rem, 8.3vw, 3rem);
+    line-height: 0.91;
+  }
+
+  .gate__text {
+    margin: 0.9rem 0 0;
+    max-width: 21rem;
+    width: 58vw;
+    min-width: min(16rem, 100%);
+    font-size: clamp(1.05rem, 4.15vw, 1.5rem);
+    line-height: 1.05;
+  }
+
+  .gate__cta {
+    margin-top: clamp(1.75rem, 7vw, 2.75rem);
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gate__cta :global(.pill-badge) {
+    padding: 0.85rem 2.5rem;
+    font-size: clamp(1.5rem, 5.5vw, 2rem);
+  }
+
+  /* Same "lifted card" treatment as the playground pill on the homepage:
+     nudge up-left with a hard-edged gold shadow behind. */
+  .gate__cta :global(.pill-badge) {
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1), filter 0.35s ease;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+
+  .gate__cta:hover :global(.pill-badge),
+  .gate__cta:focus-visible :global(.pill-badge),
+  .gate__cta:active :global(.pill-badge),
+  .gate__cta[data-pressed] :global(.pill-badge) {
+    transform: translate(-0.25rem, -0.25rem);
+    filter: drop-shadow(0.25rem 0.25rem 0 var(--color-gold));
+  }
+
+  .gate__cta:focus-visible {
+    outline: none;
+  }
+
+  .gate__cta:focus-visible :global(.pill-badge) {
+    outline: 3px solid var(--color-cream);
+    outline-offset: 4px;
+  }
+
+  /* Wave layers: parked just below the screen until the pill is tapped. */
+  .gate__wave {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    pointer-events: none;
+  }
+
+  .gate__wave-edge :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 709 / 310;
+    /* Hairline overlap so no seam shows between the curve and the fill. */
+    margin-bottom: -1px;
+  }
+
+  .gate__wave-fill {
+    height: 100lvh;
+  }
+
+  .gate__wave--green .gate__wave-fill {
+    background: #00ba7d;
+  }
+
+  .gate__wave--teal .gate__wave-fill {
+    background: #007a82;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gate__cat {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  const KEY = "ml-mobile-gate-done";
+  const gate = document.querySelector<HTMLElement>("[data-mobile-gate]");
+  const cta = gate?.querySelector<HTMLButtonElement>("[data-gate-enter]");
+
+  if (gate && cta) {
+    const showing = () => getComputedStyle(gate).display !== "none";
+    if (showing()) cta.focus({ preventScroll: true });
+
+    const close = () => {
+      try {
+        sessionStorage.setItem(KEY, "1");
+      } catch {
+        // Storage blocked (private mode etc.) — it'll just show next visit too.
+      }
+      document.documentElement.dataset.gate = "done";
+      gate.remove();
+    };
+
+    cta.addEventListener("click", () => {
+      cta.disabled = true;
+      cta.dataset.pressed = "";
+
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        close();
+        return;
+      }
+
+      const [green, teal] = gate.querySelectorAll<HTMLElement>(".gate__wave");
+      // Rise by the wave's full height: its wavy edge ends up just above the
+      // screen and its solid fill covers the whole viewport.
+      const rise = (el: HTMLElement, delay: number) =>
+        el.animate([{ transform: "translateY(0)" }, { transform: "translateY(-100%)" }], {
+          duration: 1100,
+          delay,
+          easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+          fill: "forwards",
+        });
+
+      rise(green, 0);
+      rise(teal, 140).finished.then(() => {
+        // Covered: swap to the site underneath with a quick fade.
+        gate
+          .animate([{ opacity: 1 }, { opacity: 0 }], { duration: 450, easing: "ease-out", fill: "forwards" })
+          .finished.then(close);
+      });
+    });
+  }
+</script>

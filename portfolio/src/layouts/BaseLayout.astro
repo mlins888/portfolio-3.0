@@ -4,6 +4,7 @@ import "../styles/global.css";
 import Nav from "../components/Nav.astro";
 import ScrollRocket from "../components/ScrollRocket.astro";
 import SiteFooter from "../components/SiteFooter.astro";
+import MobileGate from "../components/MobileGate.astro";
 import { site } from "../content/site";
 
 interface Props {
@@ -64,10 +65,16 @@ const ogImage = new URL(image, Astro.site);
          animations start hidden only when GSAP can reveal them. -->
     <script is:inline>
       document.documentElement.classList.add("js");
+      // Phones see MobileGate once per session; skip it before first paint
+      // if it's already been dismissed, so it never flashes.
+      try {
+        if (sessionStorage.getItem("ml-mobile-gate-done")) document.documentElement.dataset.gate = "done";
+      } catch (e) {}
     </script>
   </head>
 
   <body class="bg-paper font-script text-ink antialiased">
+    <MobileGate />
     <Nav />
     <ScrollRocket />
     <div class="page-content">

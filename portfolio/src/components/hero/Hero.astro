@@ -342,8 +342,13 @@ const stampY = logoY + logoSize.height + columnGap;
       onEnter: showBubble,
       onLeave: clearBubble,
       onClick: (hotspot) => {
-        const target = hotspot.getAttribute("data-target");
+        let target = hotspot.getAttribute("data-target");
         if (!target) return;
+        // A target can be hidden at some sizes (the "other projects" panels
+        // are hidden on phones) — land on the playground link instead of
+        // scrolling to nothing.
+        const el = document.querySelector(target);
+        if (el instanceof HTMLElement && el.offsetParent === null) target = "#playground-cta";
         if (prefersReducedMotion()) {
           document.querySelector(target)?.scrollIntoView();
           return;

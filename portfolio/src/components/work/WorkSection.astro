@@ -121,6 +121,24 @@ import PillBadge from "../PillBadge.astro";
     margin-top: 0;
   }
 
+  /* Phones: the project panels don't hold up at this size, so hide them
+     (and their heading) and let the playground line follow the cards
+     directly, spaced like the "cta only" variant above. */
+  @media (max-width: 699px) {
+    .other-projects-heading,
+    .other-projects {
+      display: none;
+    }
+
+    .other-projects-group {
+      margin-top: calc(-1 * clamp(1.5rem, 3.3vw, 3rem));
+    }
+
+    .other-projects-group .playground-cta {
+      margin-top: 0;
+    }
+  }
+
   .other-projects-heading {
     font-size: clamp(1.5rem, 3vw, 2.5rem);
     line-height: 0.91;

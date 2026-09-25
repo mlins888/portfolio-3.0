@@ -45,7 +45,7 @@ export const about: AboutContent = {
   heading: "Hiya! I’m Makenna",
   paragraphs: [
     "I love creating vibrant, lively designs that reinvent the old and challenge the new norms of modern technology. I’m in love with all things vintage- catch me watching Star Trek or thrifting for all my outfits.",
-    "Right now, I’m studying Computer Science and Visual Media Studies at Duke University, designing for HackDuke + DuQuantum, and developing for Web Surfing Studios.",
+    "Right now, I’m studying Computer Science and Visual Media Studies at Duke University, designing for HackDuke + DuQuantum, and developing personal projects.",
     "When I’m not creating art, you can find me practicing flute or trumpet, or playing a number of videogames.",
   ],
   photo: aboutPortrait,
