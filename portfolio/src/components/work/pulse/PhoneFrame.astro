@@ -3,14 +3,15 @@
  * iPhone bezel mockup for Pulse's vertical screen-recording demos.
  *
  * `phone-frame-1.png` has a true transparent cutout where the screen goes —
- * measured directly from the PNG's alpha channel, not eyeballed: the hole
- * sits inset 4.40% / 1.88% / 4.56% / 1.92% (left/top/right/bottom) in the
- * 1294×2656 canvas, which is why those exact percentages appear below. Media
- * is layered *underneath* the frame image at that inset and the frame's own
- * opaque bezel — including its rounded screen corners — masks the media's
- * square edges for free, so nothing here needs its own border-radius.
+ * measured directly from the PNG's alpha channel, not eyeballed (see
+ * .phone-frame__screen below). Media is layered *underneath* the frame
+ * image, clipped to the same rounded opening. Media must be a plain screen
+ * capture (no device bezel of its own) at the iPhone screen's ~0.461
+ * aspect — a recording that already includes a phone frame shows its own
+ * bezel and Dynamic Island through this one.
  *
- * Two variants:
+ * Three variants:
+ *  - "image": one still screenshot.
  *  - "video": a single silent, autoplaying, looping <video> (goal-setting /
  *    trophy-case demos).
  *  - "flip": two stacked images that cross-fade forever via a pure-CSS
@@ -28,7 +29,8 @@ interface FlipImage {
 }
 
 interface Props {
-  variant: "video" | "flip";
+  variant: "image" | "video" | "flip";
+  image?: FlipImage;
   video?: string;
   before?: FlipImage;
   after?: FlipImage;
@@ -39,6 +41,7 @@ interface Props {
 
 const {
   variant,
+  image,
   video,
   before,
   after,
@@ -52,7 +55,15 @@ const {
   <div class="phone-frame">
     <div class="phone-frame__screen">
       {
-        variant === "video" && video ? (
+        variant === "image" && image ? (
+          <Image
+            class="phone-frame__media"
+            src={image.image}
+            alt={image.alt}
+            widths={[320, 480, 640]}
+            sizes="(min-width: 900px) 20rem, 60vw"
+          />
+        ) : variant === "video" && video ? (
           <video
             class="phone-frame__media"
             src={video}
@@ -118,14 +129,26 @@ const {
     pointer-events: none;
   }
 
+  /* The frame PNG's screen opening, measured from its alpha channel:
+     1179 × 2556 px (exactly an iPhone screenshot) at 57 / 50 / 58 / 50 px
+     from the left / top / right / bottom of the 1294 × 2656 canvas, with
+     rounded corners. Those corners are a squircle (Apple's continuous
+     curve), not a circular arc, so no single border-radius matches them.
+     160px is just under the largest circular radius (163px, measured)
+     whose curve stays entirely outside the opening — i.e. under the
+     opaque bezel — at every point. Bigger would cut inside the opening and
+     leave gaps of empty space; anything at or under it stays hidden, and
+     staying close to the curve keeps no sliver of square corner showing
+     through the bezel's soft anti-aliased edge. */
   .phone-frame__screen {
     position: absolute;
     z-index: 1;
-    left: 4.4%;
-    top: 1.88%;
-    right: 4.56%;
-    bottom: 1.92%;
+    left: 4.405%;
+    top: 1.883%;
+    right: 4.482%;
+    bottom: 1.883%;
     overflow: hidden;
+    border-radius: 13.57% / 6.26%;
     background: #d9d9d9;
   }
 
@@ -188,9 +211,9 @@ const {
   .phone-frame__caption-text {
     position: absolute;
     inset: 0;
-    font-family: var(--font-script);
-    color: var(--color-coral);
-    font-size: 1.15rem;
+    font-family: var(--font-body);
+    color: var(--color-ink);
+    font-size: 1rem;
     line-height: 1.5em;
   }
 

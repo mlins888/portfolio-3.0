@@ -1,17 +1,14 @@
 ---
 /**
- * One case-study card (Figma "Wireframe - work 3"): a rounded screenshot on
- * top of a paper text panel, with two coloured layers stacked underneath
- * the panel. The whole card is a single link, and hovering or focusing it
- * lifts it slightly to show it's clickable.
+ * One case-study card (Figma "Wireframe - work 3"): a tan frame holding a
+ * rounded screenshot with the text below it, and two coloured layers
+ * stacked under the frame. The whole card is a single link, and hovering
+ * or focusing it lifts it slightly to show it's clickable.
  *
  * Sizes are in `cqi` of the surrounding .case-grid (see WorkSection.astro),
- * converted from Figma's pixels against its 1214px-wide row of cards, so
+ * converted from Figma's pixels against its 1237px-wide row of cards, so
  * both cards' type matches and everything scales together. Each value has
  * a rem floor for when the cards stack on small screens.
- *
- * The panel starts under the bottom of the image (the image paints on top),
- * so only its lower part and rounded bottom corners show, as in Figma.
  */
 import { Image } from "astro:assets";
 import type { CaseStudy } from "../../content/work";
@@ -53,27 +50,37 @@ const { study } = Astro.props;
 
 <style>
   .case-card {
-    /* Figma: image radius 35–37px, panel 57px, green layer 14px below the
-       panel, teal layer 33px below — all out of a 1214px row. */
-    --panel-radius: max(1.75rem, 4.7cqi);
-    --layer-1: max(0.5rem, 1.15cqi);
-    --layer-2: max(1.1rem, 2.72cqi);
+    /* All sizes are Figma pixels over its 1237px row of cards: tan frame
+       radius 57, image inset ~38 sides / ~22 top, image radius ~36, green
+       layer 14px and teal layer 33px below the frame. */
+    --frame-radius: max(1.75rem, 4.6cqi);
+    --inset-x: max(0.9rem, 3.1cqi);
+    --inset-top: max(0.75rem, 1.8cqi);
+    --layer-1: max(0.5rem, 1.13cqi);
+    --layer-2: max(1.1rem, 2.67cqi);
 
     position: relative;
     display: flex;
     flex-direction: column;
     min-width: 0;
+    padding: var(--inset-top) var(--inset-x) max(1.25rem, 2.75cqi);
+    background: var(--color-paper);
+    border-radius: var(--frame-radius);
+    box-shadow:
+      0 var(--layer-1) 0 #00b781,
+      0 var(--layer-2) 0 var(--color-teal-deep);
     color: var(--color-ink);
     text-decoration: none;
     scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
     transition: transform 0.3s ease;
   }
 
-  /* Side by side: width in proportion to the image's aspect, so both
-     cards' images come out the same height. */
+  /* Side by side: each card grows in proportion to its image's aspect on
+     top of a fixed basis equal to its two side insets, so both images come
+     out exactly the same height. */
   @media (min-width: 700px) {
     .case-card {
-      flex: var(--aspect) 1 0;
+      flex: var(--aspect) 1 calc(2 * var(--inset-x));
     }
   }
 
@@ -83,20 +90,14 @@ const { study } = Astro.props;
   }
 
   .case-card:focus-visible {
-    outline: none;
-  }
-
-  .case-card:focus-visible .case-card__media {
     outline: 3px solid var(--color-cream);
     outline-offset: 4px;
   }
 
   .case-card__media {
-    position: relative;
-    z-index: 1;
     aspect-ratio: var(--aspect);
     overflow: hidden;
-    border-radius: max(1.25rem, 3cqi);
+    border-radius: max(1.25rem, 2.9cqi);
   }
 
   .case-card__image {
@@ -108,31 +109,21 @@ const { study } = Astro.props;
   }
 
   .case-card__panel {
-    position: relative;
-    z-index: 0;
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Tucks up under the image — past its own rounded top corners, plus a
-       little extra so the image sits further down onto the panel. */
-    margin-top: calc(-1 * (var(--panel-radius) + max(0.6rem, 1.4cqi)));
-    padding: calc(var(--panel-radius) + max(1.5rem, 3.2cqi)) 7% max(1.25rem, 2.8cqi);
-    background: var(--color-paper);
-    border-radius: var(--panel-radius);
-    box-shadow:
-      0 var(--layer-1) 0 #00b781,
-      0 var(--layer-2) 0 var(--color-teal-deep);
+    padding: max(1.5rem, 4.4cqi) 4% 0;
     text-align: center;
   }
 
   .case-card__title {
     margin: 0 0 max(0.6rem, 1cqi);
-    font-size: clamp(1.5rem, 3.3cqi, 2.5rem);
+    font-size: clamp(1.5rem, 3.23cqi, 2.5rem);
     line-height: 0.91;
   }
 
-  /* Role ✦ year, between two hairlines spanning ~71% of the card. */
+  /* Role ✦ year, between two hairlines spanning ~70% of the frame. */
   .case-card__meta {
     display: flex;
     align-items: center;
@@ -143,7 +134,7 @@ const { study } = Astro.props;
     margin: 0 0 max(0.9rem, 1.55cqi);
     padding-block: max(0.5rem, 0.95cqi);
     border-block: 1px solid var(--color-ink);
-    font-size: clamp(1rem, 1.98cqi, 1.5rem);
+    font-size: clamp(1rem, 1.94cqi, 1.5rem);
     line-height: 0.91;
   }
 
@@ -161,7 +152,7 @@ const { study } = Astro.props;
   .case-card__desc {
     margin: 0;
     max-width: 23em;
-    font-size: clamp(0.95rem, 1.65cqi, 1.25rem);
+    font-size: clamp(0.95rem, 1.62cqi, 1.25rem);
     line-height: 0.91;
     /* Even line lengths, as in Figma — no single orphaned word. */
     text-wrap: balance;

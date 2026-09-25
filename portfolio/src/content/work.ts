@@ -55,7 +55,7 @@ export const work = {
         "Creating a new UI personality and developing the engagement layer to foster Duke health research",
       image: pulsePreview,
       imageAlt: "Pulse for Research app screens on phone and watch",
-      imageAspect: 547 / 410,
+      imageAspect: 488 / 366,
     },
     {
       id: "hackduke",
@@ -67,7 +67,7 @@ export const work = {
       description: "Crafting UI design decisions for Duke’s premier hackathon",
       image: hackdukePreview,
       imageAlt: "HackDuke website mockup with storefront illustration",
-      imageAspect: 634 / 411,
+      imageAspect: 561 / 364,
       // Figma crops this wide screenshot slightly left of centre.
       imageFocusX: "39%",
     },

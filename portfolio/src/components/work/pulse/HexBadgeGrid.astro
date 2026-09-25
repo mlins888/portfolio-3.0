@@ -105,14 +105,18 @@ badges.forEach((badge, i) => cols[i % columns].push(badge));
     left: 50%;
     transform: translateX(-50%) translateY(4px);
     z-index: 6;
+    /* Flex centring (rather than relying on line-height) keeps the label
+       vertically centred in the pill. */
+    display: inline-flex;
+    align-items: center;
     white-space: nowrap;
-    padding: 0.35rem 0.7rem;
+    padding: 0.4rem 0.75rem;
     border-radius: 999px;
     border: 2px solid var(--color-ink);
     background: var(--color-cream);
     color: var(--color-ink);
-    font-family: var(--font-script);
-    font-size: 0.95rem;
+    font-family: var(--font-body);
+    font-size: 0.9rem;
     line-height: 1;
     opacity: 0;
     pointer-events: none;

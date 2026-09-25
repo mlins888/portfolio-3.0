@@ -33,9 +33,9 @@ interface Props {
 
 const { frames, columns = 4, class: className } = Astro.props;
 
-/* A frame with more entries than this renders its values a notch smaller
-   and tighter, so one long list (e.g. a tools stack) doesn't stretch the
-   whole strip taller than the two-line frames around it. */
+/* A frame with more entries than this splits its values into two columns,
+   so one long list (e.g. a tools stack) doesn't stretch the whole strip
+   taller than the two-line frames around it. */
 const DENSE_THRESHOLD = 2;
 ---
 
@@ -69,7 +69,7 @@ const DENSE_THRESHOLD = 2;
   .film-strip {
     /* One knob scales the whole strip — hole size, rail height and the
        spacing between holes all derive from it. */
-    --hole-w: clamp(0.7rem, 1.6vw, 0.95rem);
+    --hole-w: clamp(0.6rem, 1.2vw, 0.8rem);
     --hole-pitch: calc(var(--hole-w) * 3);
     --rail-h: calc(var(--hole-w) * 1.7);
     --divider: 3px;
@@ -111,16 +111,21 @@ const DENSE_THRESHOLD = 2;
   .film-strip__frame {
     border-left: var(--divider) solid var(--color-ink);
     border-top: var(--divider) solid var(--color-ink);
-    padding: clamp(0.85rem, 2vw, 1.4rem) clamp(0.9rem, 2vw, 1.5rem)
-      clamp(1rem, 2.4vw, 1.6rem);
+    padding: clamp(0.55rem, 1.2vw, 0.85rem) clamp(0.9rem, 2vw, 1.5rem);
+  }
+
+  /* All text in the strip — labels and values, dense or not — shares the
+     tools list's size, so every frame reads at one scale. */
+  .film-strip {
+    --film-text: clamp(0.8rem, 1.3vw, 0.95rem);
   }
 
   .film-strip__label {
     font-weight: 300;
-    font-size: clamp(0.95rem, 1.6vw, 1.15rem);
+    font-size: var(--film-text);
     line-height: 1;
     color: var(--color-ink);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
   }
 
   .film-strip__values {
@@ -132,12 +137,12 @@ const DENSE_THRESHOLD = 2;
 
   .film-strip__value {
     font-weight: 600;
-    font-size: clamp(1.05rem, 1.9vw, 1.35rem);
-    line-height: 1.16;
+    font-size: var(--film-text);
+    line-height: 1.32;
     color: var(--color-ink);
   }
 
-  /* Long lists shrink and split into two columns, so they stay near the
+  /* Long lists split into two columns, so they stay near the
      height of the two-line frames instead of running down as one tall
      stack. Tighter side padding buys the width for the second column;
      narrow frames (the 2-column strip) fall back to a single column. */
@@ -150,11 +155,6 @@ const DENSE_THRESHOLD = 2;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0 clamp(0.5rem, 1.4vw, 0.9rem);
-  }
-
-  .film-strip__frame--dense .film-strip__value {
-    font-size: clamp(0.8rem, 1.3vw, 0.95rem);
-    line-height: 1.32;
   }
 
   @media (max-width: 700px) {

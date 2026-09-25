@@ -63,9 +63,12 @@ import PillBadge from "../PillBadge.astro";
   }
 
   .work-section__band {
+    /* The case-study row sizes itself against this band (see .case-grid). */
+    container-type: inline-size;
+    --band-pad-x: clamp(1rem, 3vw, 2.5rem);
     background: var(--color-coral);
     border-radius: 0;
-    padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 3vw, 2.5rem) clamp(3rem, 8vw, 6rem);
+    padding: clamp(3rem, 8vw, 6rem) var(--band-pad-x) clamp(3rem, 8vw, 6rem);
   }
 
   .work-section__inner {
@@ -77,13 +80,13 @@ import PillBadge from "../PillBadge.astro";
   }
 
   /* The case-study cards, side by side. This is the container the cards
-     size themselves against (cqi), standing in for Figma's 1214px row. */
+     size themselves against (cqi), standing in for Figma's 1237px row. */
   .case-grid {
     container-type: inline-size;
     display: flex;
     flex-direction: column;
     gap: max(3.5rem, 2.72cqi);
-    margin-top: clamp(1.5rem, 4.5vw, 4rem);
+    margin-top: clamp(0.5rem, 1.5vw, 1.5rem);
     /* Room for the stacked layers that hang below each card's panel. */
     padding-bottom: 2rem;
   }
@@ -93,6 +96,11 @@ import PillBadge from "../PillBadge.astro";
       flex-direction: row;
       align-items: stretch;
       gap: 6.5cqi;
+      /* Figma's row spans 1237 of the band's 1355px — wider than the
+         section's text column — so break out of it, centred on the band. */
+      --row-w: calc((100cqi + 2 * var(--band-pad-x)) * 0.913);
+      width: var(--row-w);
+      margin-inline: calc((100% - var(--row-w)) / 2);
     }
   }
 

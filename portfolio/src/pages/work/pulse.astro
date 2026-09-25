@@ -3,83 +3,384 @@
  * Bespoke Pulse case-study page. Static routes win over the generic
  * [slug].astro stub in Astro's router, so this file — not the dynamic
  * route — serves /work/pulse.
+ *
+ * Layout: one continuous, centred reading column (TL;DR, then each section
+ * with its heading). Tall media — the phone mock-ups — hangs in the margin
+ * beside the section it illustrates, out of the text flow so it never
+ * opens a gap in the text; wide media (badge grid, admin screenshots)
+ * breaks across the page between sections. Below ~1100px there's no room
+ * for margins, so side media drops inline under its section heading.
+ *
+ * All copy and media placement live in src/content/pulse.ts.
  */
 import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import BackToWork from "../../components/work/BackToWork.astro";
 import FilmStrip from "../../components/work/FilmStrip.astro";
 import PhoneFrame from "../../components/work/pulse/PhoneFrame.astro";
-import FeatureRow from "../../components/work/pulse/FeatureRow.astro";
 import HexBadgeGrid from "../../components/work/pulse/HexBadgeGrid.astro";
 import { pulse, badges } from "../../content/pulse";
-
-const { goalSetting, trophyCase, adminPortal } = pulse.features;
 ---
 
 <BaseLayout title={`${pulse.title} — Makenna Linsky`}>
-  <main class="pulse-page mx-auto max-w-5xl px-6 py-24" style="padding-top: calc(var(--nav-offset) + 6rem)">
-    <header class="mx-auto max-w-3xl">
+  <main class="cs" style="padding-top: calc(var(--nav-offset) + 6rem)">
+    <header class="cs__column">
       <h1 class="font-display text-4xl uppercase">{pulse.title}</h1>
+      <div class="mt-8">
+        <FilmStrip frames={pulse.meta} />
+      </div>
     </header>
 
-    <div class="mx-auto max-w-3xl mt-8">
-      <FilmStrip frames={pulse.meta} />
-    </div>
-
-    <FeatureRow mediaSide="right">
-      <PhoneFrame slot="media" variant="flip" before={pulse.landing.before} after={pulse.landing.after} />
-      {pulse.overview}
-    </FeatureRow>
-
-    <FeatureRow id={goalSetting.id} title={goalSetting.title} mediaSide="left">
-      <PhoneFrame slot="media" variant="video" video={goalSetting.video} />
-      {goalSetting.description}
-    </FeatureRow>
-
-    <FeatureRow id={trophyCase.id} title={trophyCase.title} stacked>
-      <HexBadgeGrid slot="media" badges={badges} />
-      {trophyCase.description}
-    </FeatureRow>
-
-    <FeatureRow id={adminPortal.id} title={adminPortal.title} stacked>
-      <div class="admin-shots" slot="media">
+    <!-- Collapsed by default so readers start with the full story; the
+         summary line is the click target. -->
+    <details class="cs__column cs__tldr font-body" data-tldr>
+      <summary class="cs__tldr-title font-body font-semibold">
+        <span class="cs__tldr-label">TL;DR</span>
+        <span class="cs__tldr-chevron" aria-hidden="true"></span>
+      </summary>
+      <ul class="cs__list cs__tldr-list">
         {
-          adminPortal.images.map((shot) => (
-            <Image
-              class="admin-shots__img"
-              src={shot.image}
-              alt={shot.alt}
-              widths={[480, 640, 960]}
-              sizes="(min-width: 700px) 45vw, 90vw"
-            />
+          pulse.tldr.map((item) => (
+            <li>
+              <strong>{item.lead}:</strong> {item.text}
+            </li>
           ))
         }
-      </div>
-      {adminPortal.description}
-    </FeatureRow>
+      </ul>
+    </details>
 
-    <BackToWork class="mt-16" />
+    {
+      pulse.sections.map((section) => (
+        <>
+          <section
+            id={section.id}
+            class:list={["cs__section", section.aside && `cs__section--aside-${section.aside.side}`]}
+            aria-labelledby={`${section.id}-heading`}
+          >
+            <h2 id={`${section.id}-heading`} class="cs__heading font-body font-semibold">
+              {section.heading}
+            </h2>
+
+            {section.aside && (
+              <div class="cs__aside" style={section.aside.offset ? `--aside-offset-y: ${section.aside.offset}rem` : undefined}>
+                {section.aside.kind === "image" ? (
+                  <PhoneFrame variant="image" image={section.aside.image} />
+                ) : section.aside.kind === "flip" ? (
+                  <PhoneFrame variant="flip" before={section.aside.before} after={section.aside.after} />
+                ) : (
+                  <PhoneFrame variant="video" video={section.aside.video} />
+                )}
+              </div>
+            )}
+
+            <div class="cs__body font-body font-light">
+              {section.body.map((block) =>
+                typeof block === "string" ? (
+                  <p>{block}</p>
+                ) : (
+                  <ul class="cs__list">
+                    {block.list.map((item) => (
+                      <li>
+                        {item.lead && <strong>{item.lead}</strong>} {item.text}
+                      </li>
+                    ))}
+                  </ul>
+                ),
+              )}
+            </div>
+          </section>
+
+          {section.after === "badges" && (
+            <div class="cs__wide">
+              <HexBadgeGrid badges={badges} />
+            </div>
+          )}
+
+          {section.after === "admin" && (
+            <div class="cs__wide cs__admin-shots">
+              {pulse.adminShots.map((shot) => (
+                <Image
+                  class="cs__admin-shot"
+                  src={shot.image}
+                  alt={shot.alt}
+                  widths={[480, 640, 960]}
+                  sizes="(min-width: 700px) 45vw, 90vw"
+                />
+              ))}
+            </div>
+          )}
+        </>
+      ))
+    }
+
+    <div class="cs__column">
+      <BackToWork class="mt-16" />
+    </div>
   </main>
 </BaseLayout>
 
+<script>
+  // Smooth open/close for the TL;DR. <details> snaps by default, so the
+  // click is intercepted and the box's height is animated between its
+  // closed and open sizes, with the list fading in on the way open.
+  // Reduced-motion visitors (and no-JS) get the native instant toggle.
+  const tldr = document.querySelector<HTMLDetailsElement>("[data-tldr]");
+  const summary = tldr?.querySelector("summary");
+  const list = tldr?.querySelector<HTMLElement>(".cs__tldr-list");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (tldr && summary && list && !reduce) {
+    const DURATION = 380;
+    const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+    let expanded = tldr.open;
+    let running: Animation | null = null;
+
+    summary.addEventListener("click", (e) => {
+      e.preventDefault();
+      expanded = !expanded;
+
+      // Start from wherever the box is right now — mid-animation included —
+      // so a quick second click reverses smoothly instead of jumping.
+      const from = tldr.offsetHeight;
+      running?.cancel();
+      tldr.style.height = "";
+      tldr.style.overflow = "hidden";
+      // The chevron flips on click, not when the animation lands.
+      tldr.classList.toggle("is-collapsing", !expanded);
+
+      tldr.open = true;
+      const full = tldr.offsetHeight;
+      const listSpace = list.offsetHeight + parseFloat(getComputedStyle(list).marginTop);
+      const to = expanded ? full : full - listSpace;
+
+      if (expanded) {
+        list.animate(
+          [
+            { opacity: 0, transform: "translateY(-6px)" },
+            { opacity: 1, transform: "none" },
+          ],
+          { duration: DURATION, easing: EASE },
+        );
+      }
+
+      // Hold the end size until the animation lands, so there's no
+      // one-frame flash of the wrong height.
+      tldr.style.height = `${to}px`;
+      running = tldr.animate({ height: [`${from}px`, `${to}px`] }, { duration: DURATION, easing: EASE });
+      running.onfinish = () => {
+        tldr.open = expanded;
+        tldr.classList.remove("is-collapsing");
+        tldr.style.height = "";
+        tldr.style.overflow = "";
+        running = null;
+      };
+    });
+  }
+</script>
+
 <style>
-  /* Side by side on anything roomy enough for two ~320px+ frames; wraps to
-     stacked on narrow viewports since flex-wrap wins over flex-basis there. */
-  .admin-shots {
+  .cs {
+    --measure: 38rem;
+    max-width: 82rem;
+    margin-inline: auto;
+    padding: 6rem 1.5rem;
+    color: var(--color-ink);
+    /* The badge grid's (hidden) hover tooltips on edge tiles poke past the
+       viewport on phones; never let them cause a sideways scroll. */
+    overflow-x: clip;
+  }
+
+  /* The reading column everything text-shaped shares. */
+  .cs__column,
+  .cs__heading,
+  .cs__body {
+    width: 100%;
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+
+  .cs__tldr {
+    margin-top: 3rem;
+    padding: 1.5rem 1.75rem;
+    background: var(--color-cream);
+    border: 5px solid var(--color-ink);
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 var(--color-teal);
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+
+  .cs__tldr {
+    padding-block: 1rem;
+  }
+
+  /* Collapsed bar: label left-aligned and vertically centred, chevron
+     pinned to the right edge. */
+  .cs__tldr-title {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-right: 2rem;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--color-coral);
+    cursor: pointer;
+    list-style: none;
+    border-radius: 12px;
+  }
+
+  /* Hide the browser's own disclosure triangle; the chevron replaces it. */
+  .cs__tldr-title::-webkit-details-marker {
+    display: none;
+  }
+
+  .cs__tldr-title:focus-visible {
+    outline: 3px solid var(--color-teal);
+    outline-offset: 4px;
+  }
+
+  .cs__tldr-chevron {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-right: 3px solid var(--color-ink);
+    border-bottom: 3px solid var(--color-ink);
+    transform: translateY(-70%) rotate(45deg);
+    transition: transform 0.35s ease;
+  }
+
+  .cs__tldr[open]:not(.is-collapsing) .cs__tldr-chevron {
+    transform: translateY(-30%) rotate(-135deg);
+  }
+
+  .cs__tldr .cs__tldr-list {
+    margin-top: 0.9rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cs__tldr-chevron {
+      transition: none;
+    }
+  }
+
+  .cs__section {
+    margin-top: 4rem;
+  }
+
+  .cs__heading {
+    margin-bottom: 1rem;
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    line-height: 1.1;
+  }
+
+  .cs__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.55;
+  }
+
+  .cs__body p {
+    margin: 0;
+  }
+
+  .cs__list {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  /* Tailwind's reset strips bullets; the body's lists want them back (the
+     TL;DR reads cleaner without). */
+  .cs__body .cs__list {
+    list-style: disc;
+  }
+
+  .cs__body .cs__list li::marker {
+    color: var(--color-coral);
+  }
+
+  .cs__tldr .cs__list {
+    padding-left: 0;
+  }
+
+  .cs__list strong {
+    font-weight: 600;
+  }
+
+  /* Narrow screens: side media sits inline under the heading. */
+  .cs__aside {
+    margin: 0.5rem auto 1.75rem;
+    max-width: 18rem;
+  }
+
+  .cs__aside :global(.phone-frame-figure),
+  .cs__aside :global(.phone-frame) {
+    width: 100%;
+  }
+
+  /* Wide media, breaking across the page between sections. */
+  .cs__wide {
+    margin: 4.5rem auto 0;
+    max-width: 64rem;
+  }
+
+  .cs__admin-shots {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 1.25rem;
-    width: 100%;
   }
 
-  .admin-shots__img {
+  .cs__admin-shot {
     display: block;
     flex: 1 1 320px;
+    /* Let the images shrink below their intrinsic width so the pair can
+       sit side by side instead of wrapping. */
+    min-width: 0;
     max-width: 100%;
     height: auto;
     border: 6px solid var(--color-ink);
     border-radius: 20px;
     background: var(--color-cream);
+  }
+
+  /* Wide screens: the text column stays one continuous flow, and side
+     media hangs in the margin beside its section's heading. It's taken out
+     of the flow (absolutely positioned), so a phone taller than its section
+     just overlaps into the next section's empty margin instead of pushing
+     the text apart. Offset = centred in the margin, which is
+     (100% - column - 2 × 3rem gap) / 2 wide. */
+  @media (min-width: 1100px) {
+    .cs__section--aside-left,
+    .cs__section--aside-right {
+      position: relative;
+    }
+
+    .cs__section--aside-left > .cs__aside,
+    .cs__section--aside-right > .cs__aside {
+      --aside-w: 17rem;
+      --aside-offset: calc((100% - var(--measure) - 6rem - 2 * var(--aside-w)) / 4);
+
+      position: absolute;
+      top: var(--aside-offset-y, 0);
+      z-index: 1;
+      width: var(--aside-w);
+      max-width: none;
+      margin: 0;
+    }
+
+    .cs__section--aside-left > .cs__aside {
+      left: var(--aside-offset);
+    }
+
+    .cs__section--aside-right > .cs__aside {
+      right: var(--aside-offset);
+    }
   }
 </style>
