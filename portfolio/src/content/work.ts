@@ -1,7 +1,7 @@
 import type { ImageMetadata } from "astro";
 
 import pulsePreview from "../assets/work/pulse-preview.png";
-import hackdukePreview from "../assets/work/hackduke-preview.webp";
+import heirloomPreview from "../assets/work/heirloom-preview.png";
 import healthHoundPreview from "../assets/work/health-hound-preview.png";
 
 export type PillTone = "coral" | "teal";
@@ -58,18 +58,16 @@ export const work = {
       imageAspect: 488 / 366,
     },
     {
-      id: "hackduke",
-      slug: "hackduke",
-      href: "/work/hackduke",
-      title: "HackDuke",
-      role: "Design Executive",
-      year: "2025-2026",
-      description: "Crafting UI design decisions for Duke’s premier hackathon",
-      image: hackdukePreview,
-      imageAlt: "HackDuke website mockup with storefront illustration",
+      id: "heirloom",
+      slug: "heirloom",
+      href: "/work/heirloom",
+      title: "Heirloom",
+      role: "Design Lead, Developer",
+      year: "2026",
+      description: "Designing a digital hearth that keeps scattered families’ stories alive",
+      image: heirloomPreview,
+      imageAlt: "heirloom logo on a tan grid with pink pushpins and plum thread",
       imageAspect: 561 / 364,
-      // Figma crops this wide screenshot slightly left of centre.
-      imageFocusX: "39%",
     },
   ] satisfies CaseStudy[],
 
@@ -118,9 +116,9 @@ export const work = {
       height: 617,
     },
     {
-      id: "hackduke",
-      target: "#hackduke",
-      prompt: "travel to HackDuke?",
+      id: "heirloom",
+      target: "#heirloom",
+      prompt: "travel to heirloom?",
       x: 944,
       y: 747,
       width: 435,

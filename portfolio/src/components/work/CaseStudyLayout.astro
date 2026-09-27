@@ -1,0 +1,554 @@
+---
+/**
+ * Shared case-study page (Pulse, heirloom, ...). Static routes win over the
+ * generic [slug].astro stub in Astro's router, so each study gets its own
+ * tiny page under pages/work/ that hands its content to this layout.
+ *
+ * Layout: one continuous, centred reading column (TL;DR, then each section
+ * with its heading). Tall media — the phone mock-ups — hangs in the margin
+ * beside the section it illustrates, out of the text flow so it never
+ * opens a gap in the text; wide media breaks across the page between
+ * sections, passed in as a named slot matching the section's `after`.
+ * Below ~1100px there's no room for margins, so side media drops inline
+ * under its section heading.
+ */
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import BackToWork from "./BackToWork.astro";
+import FilmStrip from "./FilmStrip.astro";
+import PhoneFrame from "./pulse/PhoneFrame.astro";
+import type { CaseStudyContent } from "../../content/caseStudy";
+
+interface Props {
+  study: CaseStudyContent;
+}
+
+const { study } = Astro.props;
+
+// Wide media between sections, rendered from the page's named slots.
+const afterSlots = Object.fromEntries(
+  await Promise.all(
+    study.sections
+      .filter((s) => s.after && Astro.slots.has(s.after))
+      .map(async (s) => [s.after!, await Astro.slots.render(s.after!)] as const),
+  ),
+);
+---
+
+<BaseLayout title={`${study.title} — Makenna Linsky`}>
+  <main class="cs" style="padding-top: calc(var(--nav-offset) + 6rem)">
+    <header class="cs__column">
+      <div class="cs__title-row">
+        <h1 class="font-display text-4xl uppercase">{study.title}</h1>
+        {
+          study.links && (
+            <p class="cs__links font-body">
+              {study.links.map((link) => (
+                <a class="cs__link font-semibold" href={link.href} target="_blank" rel="noopener noreferrer">
+                  {link.label}
+                  <span aria-hidden="true">↗</span>
+                </a>
+              ))}
+            </p>
+          )
+        }
+      </div>
+      <div class="mt-8">
+        <FilmStrip frames={study.meta} />
+      </div>
+    </header>
+
+    <!-- Collapsed by default so readers start with the full story; the
+         summary line is the click target. -->
+    <details class="cs__column cs__tldr font-body" data-tldr>
+      <summary class="cs__tldr-title font-body font-semibold">
+        <span class="cs__tldr-label">TL;DR</span>
+        <span class="cs__tldr-chevron" aria-hidden="true"></span>
+      </summary>
+      <ul class="cs__list cs__tldr-list">
+        {
+          study.tldr.map((item) => (
+            <li>
+              <strong>{item.lead}:</strong> {item.text}
+            </li>
+          ))
+        }
+      </ul>
+    </details>
+
+    {
+      study.sections.map((section) => (
+        <>
+          <section
+            id={section.id}
+            class:list={["cs__section", section.aside && `cs__section--aside-${section.aside.side}`]}
+            aria-labelledby={`${section.id}-heading`}
+          >
+            <h2 id={`${section.id}-heading`} class="cs__heading font-body font-semibold">
+              {section.heading}
+            </h2>
+
+            {section.aside && (
+              <div class="cs__aside" style={section.aside.offset ? `--aside-offset-y: ${section.aside.offset}rem` : undefined}>
+                {section.aside.kind === "image" ? (
+                  <PhoneFrame variant="image" image={section.aside.image} />
+                ) : section.aside.kind === "flip" ? (
+                  <PhoneFrame variant="flip" before={section.aside.before} after={section.aside.after} />
+                ) : (
+                  <PhoneFrame variant="video" video={section.aside.video} />
+                )}
+              </div>
+            )}
+
+            <div class="cs__body font-body font-light">
+              {section.body.map((block) => {
+                if (typeof block === "string") return <p>{block}</p>;
+
+                if ("table" in block) {
+                  const { columns, rows } = block.table;
+                  return (
+                    <div class="cs__table-wrap">
+                      <table class="cs__table">
+                        <thead>
+                          <tr>
+                            {columns.map((col) => (
+                              <th scope="col">{col}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((row) => (
+                            <tr>
+                              {row.map((cell, i) =>
+                                i === 0 ? (
+                                  <th scope="row" data-label={columns[i]}>{cell}</th>
+                                ) : (
+                                  <td data-label={columns[i]}>{cell}</td>
+                                ),
+                              )}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                }
+
+                const ListTag = block.ordered ? "ol" : "ul";
+                return (
+                  <ListTag class:list={["cs__list", block.ordered && "cs__list--ordered"]}>
+                    {block.list.map((item) => (
+                      <li>
+                        {item.lead && <strong>{item.lead}</strong>} {item.text}
+                      </li>
+                    ))}
+                  </ListTag>
+                );
+              })}
+            </div>
+          </section>
+
+          {section.after && afterSlots[section.after] && (
+            <div class="cs__wide">
+              <Fragment set:html={afterSlots[section.after]} />
+            </div>
+          )}
+        </>
+      ))
+    }
+
+    <div class="cs__column">
+      <BackToWork class="mt-16" />
+    </div>
+  </main>
+</BaseLayout>
+
+<script>
+  // Smooth open/close for the TL;DR. <details> snaps by default, so the
+  // click is intercepted and the box's height is animated between its
+  // closed and open sizes, with the list fading in on the way open.
+  // Reduced-motion visitors (and no-JS) get the native instant toggle.
+  const tldr = document.querySelector<HTMLDetailsElement>("[data-tldr]");
+  const summary = tldr?.querySelector("summary");
+  const list = tldr?.querySelector<HTMLElement>(".cs__tldr-list");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (tldr && summary && list && !reduce) {
+    const DURATION = 380;
+    const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+    let expanded = tldr.open;
+    let running: Animation | null = null;
+
+    summary.addEventListener("click", (e) => {
+      e.preventDefault();
+      expanded = !expanded;
+
+      // Start from wherever the box is right now — mid-animation included —
+      // so a quick second click reverses smoothly instead of jumping.
+      const from = tldr.offsetHeight;
+      running?.cancel();
+      tldr.style.height = "";
+      tldr.style.overflow = "hidden";
+      // The chevron flips on click, not when the animation lands.
+      tldr.classList.toggle("is-collapsing", !expanded);
+
+      tldr.open = true;
+      const full = tldr.offsetHeight;
+      const listSpace = list.offsetHeight + parseFloat(getComputedStyle(list).marginTop);
+      const to = expanded ? full : full - listSpace;
+
+      if (expanded) {
+        list.animate(
+          [
+            { opacity: 0, transform: "translateY(-6px)" },
+            { opacity: 1, transform: "none" },
+          ],
+          { duration: DURATION, easing: EASE },
+        );
+      }
+
+      // Hold the end size until the animation lands, so there's no
+      // one-frame flash of the wrong height.
+      tldr.style.height = `${to}px`;
+      running = tldr.animate({ height: [`${from}px`, `${to}px`] }, { duration: DURATION, easing: EASE });
+      running.onfinish = () => {
+        tldr.open = expanded;
+        tldr.classList.remove("is-collapsing");
+        tldr.style.height = "";
+        tldr.style.overflow = "";
+        running = null;
+      };
+    });
+  }
+</script>
+
+<style>
+  .cs {
+    --measure: 38rem;
+    max-width: 82rem;
+    margin-inline: auto;
+    padding: 6rem 1.5rem;
+    color: var(--color-ink);
+    /* The badge grid's (hidden) hover tooltips on edge tiles poke past the
+       viewport on phones; never let them cause a sideways scroll. */
+    overflow-x: clip;
+  }
+
+  /* The reading column everything text-shaped shares. */
+  .cs__column,
+  .cs__heading,
+  .cs__body {
+    width: 100%;
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
+
+  .cs__tldr {
+    margin-top: 3rem;
+    padding: 1.5rem 1.75rem;
+    background: var(--color-cream);
+    border: 5px solid var(--color-ink);
+    border-radius: 24px;
+    box-shadow: 8px 8px 0 var(--color-teal);
+    font-size: 1.05rem;
+    line-height: 1.45;
+  }
+
+  .cs__tldr {
+    padding-block: 1rem;
+  }
+
+  /* Collapsed bar: label left-aligned and vertically centred, chevron
+     pinned to the right edge. */
+  .cs__tldr-title {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-right: 2rem;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--color-coral);
+    cursor: pointer;
+    list-style: none;
+    border-radius: 12px;
+  }
+
+  /* Hide the browser's own disclosure triangle; the chevron replaces it. */
+  .cs__tldr-title::-webkit-details-marker {
+    display: none;
+  }
+
+  .cs__tldr-title:focus-visible {
+    outline: 3px solid var(--color-teal);
+    outline-offset: 4px;
+  }
+
+  .cs__tldr-chevron {
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-right: 3px solid var(--color-ink);
+    border-bottom: 3px solid var(--color-ink);
+    transform: translateY(-70%) rotate(45deg);
+    transition: transform 0.35s ease;
+  }
+
+  .cs__tldr[open]:not(.is-collapsing) .cs__tldr-chevron {
+    transform: translateY(-30%) rotate(-135deg);
+  }
+
+  .cs__tldr .cs__tldr-list {
+    margin-top: 0.9rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cs__tldr-chevron {
+      transition: none;
+    }
+  }
+
+  .cs__section {
+    margin-top: 4rem;
+  }
+
+  .cs__heading {
+    margin-bottom: 1rem;
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    line-height: 1.1;
+  }
+
+  .cs__body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.55;
+  }
+
+  .cs__body p {
+    margin: 0;
+  }
+
+  .cs__list {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  /* Tailwind's reset strips bullets; the body's lists want them back (the
+     TL;DR reads cleaner without). */
+  .cs__body .cs__list {
+    list-style: disc;
+  }
+
+  .cs__body .cs__list li::marker {
+    color: var(--color-coral);
+  }
+
+  .cs__tldr .cs__list {
+    padding-left: 0;
+  }
+
+  .cs__list strong {
+    font-weight: 600;
+  }
+
+  /* Narrow screens: side media sits inline under the heading. */
+  .cs__aside {
+    margin: 0.5rem auto 1.75rem;
+    max-width: 18rem;
+  }
+
+  .cs__aside :global(.phone-frame-figure),
+  .cs__aside :global(.phone-frame) {
+    width: 100%;
+  }
+
+  /* Wide media, breaking across the page between sections. */
+  .cs__wide {
+    margin: 4.5rem auto 0;
+    max-width: 64rem;
+  }
+
+
+  /* Title left, repo / demo links right-aligned on the same line; the
+     links wrap under the title when there isn't room. */
+  .cs__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+  }
+
+  .cs__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  .cs__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 1rem;
+    background: var(--color-cream);
+    border: 3px solid var(--color-ink);
+    border-radius: 999px;
+    box-shadow: 4px 4px 0 var(--color-teal);
+    color: var(--color-ink);
+    font-size: 1rem;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .cs__link:hover,
+  .cs__link:focus-visible {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--color-teal);
+  }
+
+  .cs__link:focus-visible {
+    outline: 3px solid var(--color-teal);
+    outline-offset: 4px;
+  }
+
+  .cs__body .cs__list--ordered {
+    list-style: decimal;
+  }
+
+  .cs__body .cs__list--ordered li::marker {
+    font-weight: 600;
+  }
+
+  /* Tables sit in the reading column on small screens and break a little
+     wider than it on large ones, where four columns need the room. */
+  .cs__table-wrap {
+    margin-block: 0.5rem;
+  }
+
+  .cs__table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--color-cream);
+    border: 4px solid var(--color-ink);
+    border-radius: 20px;
+    overflow: hidden;
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .cs__table th,
+  .cs__table td {
+    padding: 0.8rem 0.9rem;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .cs__table thead th {
+    background: var(--color-ink);
+    color: var(--color-cream);
+    font-weight: 600;
+  }
+
+  .cs__table tbody th {
+    font-weight: 600;
+  }
+
+  .cs__table tbody tr + tr > * {
+    border-top: 2px solid color-mix(in srgb, var(--color-ink) 20%, transparent);
+  }
+
+  @media (min-width: 900px) {
+    .cs__table-wrap {
+      --table-w: min(54rem, calc(100vw - 3rem));
+      width: var(--table-w);
+      margin-inline: calc((100% - var(--table-w)) / 2);
+    }
+  }
+
+  /* Phones: each row becomes its own card, labelled by column. */
+  @media (max-width: 699px) {
+    .cs__table,
+    .cs__table tbody,
+    .cs__table tr,
+    .cs__table th,
+    .cs__table td {
+      display: block;
+    }
+
+    .cs__table thead {
+      display: none;
+    }
+
+    .cs__table tbody tr {
+      padding: 0.9rem 1rem;
+    }
+
+    .cs__table tbody tr + tr > * {
+      border-top: 0;
+    }
+
+    .cs__table tbody tr + tr {
+      border-top: 2px solid color-mix(in srgb, var(--color-ink) 20%, transparent);
+    }
+
+    .cs__table th,
+    .cs__table td {
+      padding: 0.2rem 0;
+    }
+
+    .cs__table tbody th {
+      font-size: 1.05rem;
+    }
+
+    .cs__table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-coral);
+    }
+  }
+
+  /* Wide screens: the text column stays one continuous flow, and side
+     media hangs in the margin beside its section's heading. It's taken out
+     of the flow (absolutely positioned), so a phone taller than its section
+     just overlaps into the next section's empty margin instead of pushing
+     the text apart. Offset = centred in the margin, which is
+     (100% - column - 2 × 3rem gap) / 2 wide. */
+  @media (min-width: 1100px) {
+    .cs__section--aside-left,
+    .cs__section--aside-right {
+      position: relative;
+    }
+
+    .cs__section--aside-left > .cs__aside,
+    .cs__section--aside-right > .cs__aside {
+      --aside-w: 17rem;
+      --aside-offset: calc((100% - var(--measure) - 6rem - 2 * var(--aside-w)) / 4);
+
+      position: absolute;
+      top: var(--aside-offset-y, 0);
+      z-index: 1;
+      width: var(--aside-w);
+      max-width: none;
+      margin: 0;
+    }
+
+    .cs__section--aside-left > .cs__aside {
+      left: var(--aside-offset);
+    }
+
+    .cs__section--aside-right > .cs__aside {
+      right: var(--aside-offset);
+    }
+  }
+</style>

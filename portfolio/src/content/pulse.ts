@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import type { ListItem, Section } from "./caseStudy";
 
 import landingNew from "../assets/work/pulse/landing-screen-new.png";
 import homeScreen from "../assets/work/pulse/home-screen.webp";
@@ -78,37 +79,6 @@ export const badges: Badge[] = Object.entries(badgeModules)
     return catDiff !== 0 ? catDiff : a.order - b.order;
   })
   .map(({ id, image, label }) => ({ id, image, label }));
-
-/** A bulleted item; `lead` renders bold ahead of the text. */
-export interface ListItem {
-  lead?: string;
-  text: string;
-}
-
-/** A paragraph, or a bulleted list. */
-export type Block = string | { list: ListItem[] };
-
-/** Media pinned beside a section's text on wide screens (inline below). */
-export type SideMedia =
-  | { kind: "image"; image: { image: ImageMetadata; alt: string } }
-  | {
-      kind: "flip";
-      before: { image: ImageMetadata; alt: string };
-      after: { image: ImageMetadata; alt: string };
-    }
-  | { kind: "video"; video: string };
-
-export interface Section {
-  id: string;
-  heading: string;
-  body: Block[];
-  /** `offset` (rem, wide screens only) shifts the media up (negative) or
-   *  down from its section's heading — e.g. to stagger it between phones in
-   *  the opposite margin. */
-  aside?: SideMedia & { side: "left" | "right"; offset?: number };
-  /** Wide media that breaks across the page after this section. */
-  after?: "badges" | "admin";
-}
 
 export const pulse = {
   title: "Pulse: For Research",
