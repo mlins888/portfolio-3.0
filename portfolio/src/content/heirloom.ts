@@ -1,5 +1,13 @@
 import type { CaseStudyContent } from "./caseStudy";
 
+import familyMap from "../assets/work/heirloom/family-map.webp";
+import photoAlbum from "../assets/work/heirloom/photo-album.webp";
+
+import loadingVideo from "../assets/work/heirloom/loading-demo.mp4?url";
+import photoBoardVideo from "../assets/work/heirloom/photo-board-demo.mp4?url";
+import loomieVideo from "../assets/work/heirloom/loomie-demo.mp4?url";
+import sparkFlowVideo from "../assets/work/heirloom/spark-flow-demo.mp4?url";
+
 /**
  * Heirloom case study (Hack GT, Sep 2026). Side media (phone mock-ups,
  * GIFs) goes on a section as `aside`, exactly as in pulse.ts.
@@ -42,6 +50,7 @@ export const heirloom = {
     {
       id: "overview",
       heading: "What is Heirloom?",
+      aside: { side: "left", kind: "video", video: loadingVideo },
       body: [
         "Our app is designed to act as an archive for family heritage and culture, while also inspiring connection between distant family members in the present. A family-tree-like interface, a friendly record-keeping chatbot, and family notebooks make up the core of Heirloom. I led its design by creating in Figma and building its interface in SwiftUI, turning a feeling of home into a working iOS app.",
         "Our trio built it at Hack GT in September 2026, where it placed 3rd in Meta’s challenge: Bringing People Closer Together with AI.",
@@ -50,6 +59,7 @@ export const heirloom = {
     {
       id: "why",
       heading: "Why We Built It",
+      aside: { side: "right", kind: "video", video: photoBoardVideo },
       body: [
         "The people who raise us shape our values and sense of self, but modern life has scattered families across cities, demanding careers, and generational divides. A group chat that wakes up only for birthday emojis offers the illusion of closeness, while irreplaceable oral histories quietly disappear.",
         "Most people know little about their lineage past their grandparents, and elders’ life lessons often vanish before anyone writes them down. The tools that exist don’t help: family-tree sites feel like filling out forms, and shared albums become impersonal photo dumps.",
@@ -59,6 +69,11 @@ export const heirloom = {
     {
       id: "role",
       heading: "My Role",
+      aside: {
+        side: "left",
+        kind: "image",
+        image: { image: photoAlbum, alt: "Heirloom Photo Album: a scrapbook of tilted, captioned polaroids" },
+      },
       body: [
         "Lead product designer and iOS UI engineer, and the team’s integration lead. My teammates built the voice agent, the archive AI, and the backend.",
         "I designed every screen in Figma, then built it with Claude Code as my pair programmer: I set direction, reviewed each change, and tested on the simulator and my iPhone. The Figma MCP bridge carried each design into code, so its vectors, colors, and spacing arrived exactly as drawn.",
@@ -75,6 +90,7 @@ export const heirloom = {
     {
       id: "direction",
       heading: "Design Direction",
+      aside: { side: "right", kind: "video", video: loomieVideo },
       body: [
         "The initial branding of the app was important to me. My team floated a more traditional, nature-inspired theme for a family-tree project, but I wanted an identity that was more unique and memorable. Before touching the UI, I spent time looking through color palettes, brainstorming names, and drafting a logo. We landed on a warm pink, purple, and tan palette to make the app feel comforting and homey, and a logo whose linked O’s represent intertwining family relations.",
         "We carried that idea into our AI agent, Loomie, a ball of yarn that keeps in line with the multiple meanings nested within “Heirloom”: it’s meant to knit people together. Instead of questionnaires or cold text prompts, Loomie speaks aloud and listens like an attentive grandchild, latching onto sensory details, like the song on an old road trip or the smell of a childhood kitchen, to gently guide elders through their memories.",
@@ -85,6 +101,7 @@ export const heirloom = {
     {
       id: "sparks",
       heading: "Sparks: Designing for Connection",
+      aside: { side: "left", kind: "video", video: sparkFlowVideo },
       body: [
         "Sparks are Heirloom’s answer to “why would a teenager care?” As stories come in, our AI agent synthesizes threads between generations based on their story and history data, like a great-grandfather’s mechanical tinkering relating to a granddaughter studying engineering today. Each spark arrives as a notification with a prompt: call the relative, or ask Loomie for more.",
         "We looked at one pertinent user story in particular:",
@@ -105,6 +122,11 @@ export const heirloom = {
     {
       id: "outcome",
       heading: "Outcome",
+      aside: {
+        side: "right",
+        kind: "image",
+        image: { image: familyMap, alt: "Heirloom family map: a sepia globe with pink pushpins at family places" },
+      },
       body: [
         "Heirloom ended as one working iOS app that feels the way we hoped: a warm place where a grandfather’s story becomes a pinned polaroid, a thread to his grandson, and a reason to call. My Figma designs, the team’s voice and AI work, and a shared family archive run together on real phones. Out of 200+ teams, it placed 3rd in Meta’s challenge: Bringing People Closer Together with AI.",
         "What I contributed:",
