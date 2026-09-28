@@ -13,7 +13,7 @@
  * `buildingOther` is a crop of a shared oversized master canvas (see
  * FillImage); `buildingPulse` is its own tightly framed drawing (spire
  * included), positioned with FillImage so its body lands exactly where the
- * old crop's did; `buildingHackduke` and the scene artwork are already
+ * old crop's did; `buildingHeirloom` and the scene artwork are already
  * framed to their own bounds, so they use a plain cover crop.
  */
 import { Image } from "astro:assets";
@@ -34,7 +34,7 @@ const sprite = hero.images.sceneCharacterSprite;
 <div
   class="absolute pointer-events-none hotspot-glow"
   data-glow-id="other-projects"
-  style={canvasStyle({ x: 1185, y: 444.57, width: 258, height: 581 })}
+  style={canvasStyle({ x: 1185, y: 424.57, width: 258, height: 581 })}
 >
   <FillImage
     src={hero.images.buildingOther}
@@ -54,7 +54,7 @@ const sprite = hero.images.sceneCharacterSprite;
   class="absolute"
   style={canvasStyle({
     x: 731.72,
-    y: 438.47,
+    y: 418.47,
     width: 418.927,
     height: 617.494,
     rotation: -1.26,
@@ -119,10 +119,10 @@ const sprite = hero.images.sceneCharacterSprite;
 <div
   class="absolute pointer-events-none hotspot-glow"
   data-glow-id="heirloom"
-  style={canvasStyle({ x: 944, y: 747, width: 435, height: 298 })}
+  style={canvasStyle({ x: 887.9, y: 711.24, width: 487.2, height: 333.76 })}
 >
   <Image
-    src={hero.images.buildingHackduke}
+    src={hero.images.buildingHeirloom}
     alt=""
     class="h-full w-full object-cover"
   />

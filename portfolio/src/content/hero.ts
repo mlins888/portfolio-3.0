@@ -5,7 +5,7 @@ import heroSceneCharacter from "../assets/illustrations/hero-scene-character.png
 import heroCharacterSprite from "../assets/illustrations/hero-character-sprite.webp";
 import heroCornerCat from "../assets/illustrations/hero-corner-cat.png";
 import buildingPulse from "../assets/illustrations/building-pulse.png";
-import buildingHackduke from "../assets/illustrations/building-hackduke.png";
+import buildingHeirloom from "../assets/illustrations/building-heirloom.png";
 import buildingOther from "../assets/illustrations/building-other.png";
 
 /**
@@ -46,7 +46,7 @@ export interface HeroContent {
     cornerCat: ImageMetadata;
     cornerCatAlt: string;
     buildingPulse: ImageMetadata;
-    buildingHackduke: ImageMetadata;
+    buildingHeirloom: ImageMetadata;
     buildingOther: ImageMetadata;
   };
 }
@@ -73,7 +73,7 @@ export const hero: HeroContent = {
     cornerCat: heroCornerCat,
     cornerCatAlt: "Cat mascot illustration",
     buildingPulse,
-    buildingHackduke,
+    buildingHeirloom,
     buildingOther,
   },
 };

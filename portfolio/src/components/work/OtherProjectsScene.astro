@@ -51,12 +51,6 @@ const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
 ---
 
 <div class="scene" style={css({ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` })} data-other-projects-scene>
-  <Starburst variant="large" x={1085} y={199} size={268.107} idleDelay={0.2} />
-  <Starburst variant="small" x={32} y={780.38} size={261.541} rotation={-38.47} idleDelay={0.5} />
-  <Sparkle variant="c" x={1131} y={543} size={104} idleDelay={0.8} />
-  <Sparkle variant="d" x={1216} y={501} size={57} idleDelay={1.1} />
-  <Sparkle variant="d" x={284} y={848} size={57} idleDelay={1.4} />
-
   <!-- Health Hound panel -->
   <div class="project-group" data-group="health-hound">
     <a
@@ -72,7 +66,7 @@ const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
       >
         <div
           class="h-full w-full"
-          style={`mask-image:url(${phoneMaskUrl}); -webkit-mask-image:url(${phoneMaskUrl}); mask-size:100% 100%; -webkit-mask-size:100% 100%; mask-repeat:no-repeat; -webkit-mask-repeat:no-repeat;`}
+          style={`mask-image:url("${phoneMaskUrl}"); -webkit-mask-image:url("${phoneMaskUrl}"); mask-size:100% 100%; -webkit-mask-size:100% 100%; mask-repeat:no-repeat; -webkit-mask-repeat:no-repeat;`}
         >
           <Image src={healthHoundPreview} alt="" class="h-full w-full object-cover" />
         </div>
@@ -154,6 +148,14 @@ const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
       </span>
     </div>
   </div>
+
+  <!-- Decorations come last so they draw over the panels, matching Figma's
+       layer order (the small sparkle overlaps Health Hound's bottom edge). -->
+  <Starburst variant="large" x={1085} y={199} size={268.107} idleDelay={0.2} />
+  <Starburst variant="small" x={32} y={780.38} size={261.541} rotation={-38.47} idleDelay={0.5} />
+  <Sparkle variant="c" x={1131} y={543} size={104} idleDelay={0.8} />
+  <Sparkle variant="d" x={1216} y={501} size={57} idleDelay={1.1} />
+  <Sparkle variant="d" x={284} y={848} size={57} idleDelay={1.4} />
 </div>
 
 <style define:vars={{ canvasW: CANVAS_W, canvasH: CANVAS_H }}>

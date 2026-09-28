@@ -110,9 +110,10 @@ export const work = {
       id: "pulse",
       target: "#pulse",
       prompt: "travel to Pulse?",
-      // Matches the pulse_building illustration's exact box (Figma canvas units).
+      // Matches the pulse_building illustration's exact box (Figma canvas
+      // units), raised 20 to sit further behind the heirloom house.
       x: 725,
-      y: 438,
+      y: 418,
       width: 419,
       height: 617,
     },
@@ -120,17 +121,20 @@ export const work = {
       id: "heirloom",
       target: "#heirloom",
       prompt: "travel to heirloom?",
-      x: 944,
-      y: 747,
-      width: 435,
-      height: 298,
+      // The heirloom house's box: scaled 1.12× about its bottom-centre,
+      // then nudged 30 units left.
+      x: 887.9,
+      y: 711.24,
+      width: 487.2,
+      height: 333.76,
     },
     {
       id: "other-projects",
       target: SHOW_OTHER_PROJECTS ? "#other-projects" : "#playground-cta",
       prompt: SHOW_OTHER_PROJECTS ? "see other projects?" : "visit the playground?",
+      // Raised 20 to sit further behind the heirloom house.
       x: 1185,
-      y: 444.57,
+      y: 424.57,
       width: 258,
       height: 581,
     },
