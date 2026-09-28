@@ -1,7 +1,7 @@
 import type { CaseStudyContent } from "./caseStudy";
 
 /**
- * Heirloom case study (GT Hacks, Sep 2026). Side media (phone mock-ups,
+ * Heirloom case study (Hack GT, Sep 2026). Side media (phone mock-ups,
  * GIFs) goes on a section as `aside`, exactly as in pulse.ts.
  */
 export const heirloom = {
@@ -10,11 +10,14 @@ export const heirloom = {
   meta: [
     { label: "Role", values: ["Design Lead", "iOS UI Engineer"] },
     { label: "Duration", values: ["3 days", "Sep 2026"] },
-    { label: "Award", values: ["3rd Place", "Meta Challenge"] },
-    { label: "Tools", values: ["Figma", "SwiftUI", "FastAPI", "MongoDB"] },
+    { label: "Award", values: ["3rd Place", "Meta @ Hack GT"] },
+    { label: "Tools", values: ["Figma", "SwiftUI", "Backboard", "MongoDB"] },
   ],
 
-  links: [{ label: "View on GitHub", href: "https://github.com/Adalo-Gusa/SPIRE_GT_Hacks" }],
+  links: [
+    { label: "View on GitHub", href: "https://github.com/Adalo-Gusa/SPIRE_GT_Hacks" },
+    { label: "View on Devpost", href: "https://devpost.com/software/heirloom-3q2bn9" },
+  ],
 
   tldr: [
     {
@@ -23,7 +26,7 @@ export const heirloom = {
     },
     {
       lead: "My role",
-      text: "Lead product designer and iOS UI engineer, and the team’s integration lead, over about three days at GT Hacks.",
+      text: "Lead product designer and iOS UI engineer, and the team’s integration lead, over about three days at Hack GT.",
     },
     {
       lead: "What I did",
@@ -31,7 +34,7 @@ export const heirloom = {
     },
     {
       lead: "The outcome",
-      text: "A working iOS app that won 3rd place in the Meta Challenge, Bringing People Closer Together with AI, at a hackathon of 800+ participants and 200+ teams.",
+      text: "A working iOS app that won 3rd place in Meta’s challenge, Bringing People Closer Together with AI, at a hackathon of 800+ participants and 200+ teams.",
     },
   ],
 
@@ -41,7 +44,7 @@ export const heirloom = {
       heading: "What is Heirloom?",
       body: [
         "Our app is designed to act as an archive for family heritage and culture, while also inspiring connection between distant family members in the present. A family-tree-like interface, a friendly record-keeping chatbot, and family notebooks make up the core of Heirloom. I led its design by creating in Figma and building its interface in SwiftUI, turning a feeling of home into a working iOS app.",
-        "Our trio built it at GT Hacks in September 2026, where it placed 3rd in the Meta Challenge: Bringing People Closer Together with AI.",
+        "Our trio built it at Hack GT in September 2026, where it placed 3rd in Meta’s challenge: Bringing People Closer Together with AI.",
       ],
     },
     {
@@ -103,7 +106,7 @@ export const heirloom = {
       id: "outcome",
       heading: "Outcome",
       body: [
-        "Heirloom ended as one working iOS app that feels the way we hoped: a warm place where a grandfather’s story becomes a pinned polaroid, a thread to his grandson, and a reason to call. My Figma designs, the team’s voice and AI work, and a shared family archive run together on real phones. Out of 200+ teams, it placed 3rd in the Meta Challenge: Bringing People Closer Together with AI.",
+        "Heirloom ended as one working iOS app that feels the way we hoped: a warm place where a grandfather’s story becomes a pinned polaroid, a thread to his grandson, and a reason to call. My Figma designs, the team’s voice and AI work, and a shared family archive run together on real phones. Out of 200+ teams, it placed 3rd in Meta’s challenge: Bringing People Closer Together with AI.",
         "What I contributed:",
         {
           list: [

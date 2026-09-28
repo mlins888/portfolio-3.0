@@ -58,22 +58,26 @@ const afterSlots = Object.fromEntries(
     </header>
 
     <!-- Collapsed by default so readers start with the full story; the
-         summary line is the click target. -->
-    <details class="cs__column cs__tldr font-body" data-tldr>
-      <summary class="cs__tldr-title font-body font-semibold">
-        <span class="cs__tldr-label">TL;DR</span>
-        <span class="cs__tldr-chevron" aria-hidden="true"></span>
-      </summary>
-      <ul class="cs__list cs__tldr-list">
-        {
-          study.tldr.map((item) => (
-            <li>
-              <strong>{item.lead}:</strong> {item.text}
-            </li>
-          ))
-        }
-      </ul>
-    </details>
+         summary line is the click target. Short write-ups skip it. -->
+    {
+      study.tldr && (
+        <details class="cs__column cs__tldr font-body" data-tldr>
+          <summary class="cs__tldr-title font-body font-semibold">
+            <span class="cs__tldr-label">TL;DR</span>
+            <span class="cs__tldr-chevron" aria-hidden="true"></span>
+          </summary>
+          <ul class="cs__list cs__tldr-list">
+            {
+              study.tldr.map((item) => (
+                <li>
+                  <strong>{item.lead}:</strong> {item.text}
+                </li>
+              ))
+            }
+          </ul>
+        </details>
+      )
+    }
 
     {
       study.sections.map((section) => (

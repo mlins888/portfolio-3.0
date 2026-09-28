@@ -100,7 +100,9 @@ const DENSE_THRESHOLD = 2;
 
   .film-strip__frames {
     display: grid;
-    grid-template-columns: repeat(var(--film-cols, 4), minmax(0, 1fr));
+    /* Frames size to their content (every value stays on one line), and
+       any leftover width is shared out evenly between them. */
+    grid-template-columns: repeat(var(--film-cols, 4), auto);
     /* Pull the grid up/left by one divider width so `overflow: hidden`
        clips the outermost top and left borders — leaving only the lines
        *between* frames, in both directions, however the cells wrap. */
@@ -111,7 +113,7 @@ const DENSE_THRESHOLD = 2;
   .film-strip__frame {
     border-left: var(--divider) solid var(--color-ink);
     border-top: var(--divider) solid var(--color-ink);
-    padding: clamp(0.55rem, 1.2vw, 0.85rem) clamp(0.9rem, 2vw, 1.5rem);
+    padding: clamp(0.55rem, 1.2vw, 0.85rem) clamp(0.9rem, 2vw, 1.25rem);
   }
 
   /* All text in the strip — labels and values, dense or not — shares the
@@ -140,6 +142,9 @@ const DENSE_THRESHOLD = 2;
     font-size: var(--film-text);
     line-height: 1.32;
     color: var(--color-ink);
+    /* Each value is one line; a slightly long one ("Meta @ Hack GT") may
+       dip into the frame's side padding rather than wrap. */
+    white-space: nowrap;
   }
 
   /* Long lists split into two columns, so they stay near the
@@ -153,7 +158,7 @@ const DENSE_THRESHOLD = 2;
 
   .film-strip__frame--dense .film-strip__values {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto auto;
     gap: 0 clamp(0.5rem, 1.4vw, 0.9rem);
   }
 

@@ -76,11 +76,11 @@ export const work = {
   otherProjects: [
     {
       id: "health-hound",
-      title: "Health Hound",
+      title: "HealthHound",
       href: "/work/health-hound",
       tone: "teal",
       image: healthHoundPreview,
-      imageAlt: "Health Hound mobile app preview",
+      imageAlt: "HealthHound mobile app preview",
       interactive: true,
     },
     {

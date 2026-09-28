@@ -50,8 +50,9 @@ export interface CaseStudyContent {
   title: string;
   /** Film-strip frames for the header — one label over its stacked values. */
   meta: FilmFrame[];
-  /** Optional links under the film strip (repo, live demo, ...). */
+  /** Optional links beside the title (repo, Devpost, ...). */
   links?: { label: string; href: string }[];
-  tldr: ListItem[];
+  /** Omit for short write-ups; the TL;DR box is then left out. */
+  tldr?: ListItem[];
   sections: Section[];
 }
