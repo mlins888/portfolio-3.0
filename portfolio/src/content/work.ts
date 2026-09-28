@@ -84,10 +84,11 @@ export const work = {
       interactive: true,
     },
     {
-      id: "coming-soon-a",
-      title: "Coming Soon",
+      id: "hackduke",
+      title: "HackDuke",
+      href: "/work/hackduke",
       tone: "orange",
-      interactive: false,
+      interactive: true,
     },
     {
       id: "coming-soon-b",

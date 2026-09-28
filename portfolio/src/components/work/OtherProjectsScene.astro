@@ -2,8 +2,8 @@
 /**
  * The "see other projects" panel, reproduced at Figma's exact layout instead
  * of a generic card grid: three tilted panels (Health Hound's phone mockup,
- * two "Coming Soon" placeholders) each built from the real exported base +
- * shading + ribbon shapes, positioned on a local 1440-wide canvas the same
+ * HackDuke's site screenshot, and a "Coming Soon" placeholder) each built
+ * from the real exported base + shading/screenshot + ribbon shapes, positioned on a local 1440-wide canvas the same
  * way Hero.astro lays out the comic cover (see hero/canvas.ts).
  *
  * Each project is a `.project-group` — a `display: contents` wrapper with no
@@ -23,9 +23,11 @@ import phoneMaskUrl from "../../assets/work/phone-mask.svg?url";
 import healthHoundPreview from "../../assets/work/health-hound-preview.png";
 import HealthHoundRibbon from "../../assets/work/health-hound-ribbon.svg";
 
-import ComingSoonABase from "../../assets/work/coming-soon-a-panel-base.svg";
-import ComingSoonAShading from "../../assets/work/coming-soon-a-shading.svg";
-import ComingSoonARibbon from "../../assets/work/coming-soon-a-ribbon.svg";
+import HackDukeBase from "../../assets/work/hackduke-panel-base.svg";
+import hackDukeMaskUrl from "../../assets/work/hackduke-panel-base.svg?url";
+import hackDukePreview from "../../assets/work/hackduke-panel-preview.png";
+import HackDukeOverlay from "../../assets/work/hackduke-panel-overlay.svg";
+import HackDukeRibbon from "../../assets/work/hackduke-ribbon.svg";
 
 import ComingSoonBBase from "../../assets/work/coming-soon-b-panel-base.svg";
 import ComingSoonBShading from "../../assets/work/coming-soon-b-shading.svg";
@@ -38,6 +40,14 @@ const CANVAS_W = 1440;
 const CANVAS_H = 1080;
 
 const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
+const hackDuke = work.otherProjects.find((p) => p.id === "hackduke");
+
+// HackDuke's screenshot sits rotated inside its panel (Figma node 275:78),
+// in coordinates local to the panel box at (456, 221). Figma gives the
+// rotated image's bounding box; the image itself is centred in it.
+const HD_PANEL = { x: 456, y: 221, width: 447, height: 679 };
+const HD_SHOT_BOX = { x: 541 - HD_PANEL.x, y: 251 - HD_PANEL.y, width: 510.484, height: 721.485 };
+const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
 ---
 
 <div class="scene" style={css({ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` })} data-other-projects-scene>
@@ -80,14 +90,32 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
     </div>
   </div>
 
-  <!-- Coming Soon (orange) panel -->
-  <div class="project-group" data-group="coming-soon-a" tabindex="0" role="group" aria-label="Coming soon">
-    <div class="panel" style={canvasStyle({ x: 456, y: 221, width: 447, height: 679 })}>
-      <ComingSoonABase class="absolute block h-full w-full" />
-    </div>
-    <div class="panel" style={canvasStyle({ x: 473, y: 250, width: 390, height: 637 })}>
-      <ComingSoonAShading class="absolute block h-full w-full" />
-    </div>
+  <!-- HackDuke panel: the orange base, then the site screenshot clipped to
+       the panel's shape, then the same shape again as a 49% orange tint +
+       black outline on top (Figma nodes 92:684, 275:78, 275:79). -->
+  <div class="project-group" data-group="hackduke">
+    <a
+      class="panel-link"
+      href={hackDuke?.href}
+      aria-label={hackDuke?.title}
+      style={canvasStyle(HD_PANEL)}
+    >
+      <HackDukeBase class="absolute block h-full w-full" />
+      <div
+        class="absolute inset-0 overflow-hidden pointer-events-none"
+        style={`mask-image:url("${hackDukeMaskUrl}"); -webkit-mask-image:url("${hackDukeMaskUrl}"); mask-size:100% 100%; -webkit-mask-size:100% 100%; mask-repeat:no-repeat; -webkit-mask-repeat:no-repeat;`}
+      >
+        <div class="absolute flex items-center justify-center" style={canvasStyle(HD_SHOT_BOX)}>
+          <Image
+            src={hackDukePreview}
+            alt=""
+            class="block flex-none object-cover"
+            style={css({ width: u(HD_SHOT.width), height: u(HD_SHOT.height), transform: `rotate(${HD_SHOT.rotate}deg)` })}
+          />
+        </div>
+      </div>
+      <HackDukeOverlay class="absolute block h-full w-full" />
+    </a>
     <!-- Bundling the ribbon graphic and its label into one wrapper is what
          lets them move together, as one card, on hover. The old markup
          mirrored the ribbon art via rotate(180deg) + scaleY(-1) on two
@@ -97,13 +125,13 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
          hover transform below). -->
     <div class="ribbon-group" style={canvasStyle({ x: 621, y: 362.5, width: 274, height: 131.5 })}>
       <div class="ribbon-fill">
-        <ComingSoonARibbon class="absolute block h-full w-full" style="transform: scaleX(-1);" />
+        <HackDukeRibbon class="absolute block h-full w-full" style="transform: scaleX(-1);" />
       </div>
       <span
         class="ribbon__label ribbon__label--floating font-script"
         style={css({ left: u(60), top: u(60.5), fontSize: u(30), transform: "rotate(-10.55deg) translateY(0.27em)" })}
       >
-        Coming Soon
+        HackDuke
       </span>
     </div>
   </div>
@@ -156,7 +184,7 @@ const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
      still while the panel lifts off it — and, like the label, it's hidden
      until then and fades into view rather than being on screen the whole
      time. `.ribbon` covers this for Health Hound and the teal Coming Soon
-     panel; the orange one's ribbon graphic and label are bundled in
+     panel; HackDuke's ribbon graphic and label are bundled in
      `.ribbon-group` instead (see the markup above), so that wrapper gets
      the same hover motion + fade. */
   .ribbon,
