@@ -2,8 +2,8 @@
 /**
  * The "see other projects" panel, reproduced at Figma's exact layout instead
  * of a generic card grid: three tilted panels (Health Hound's phone mockup,
- * HackDuke's site screenshot, and a "Coming Soon" placeholder) each built
- * from the real exported base + shading/screenshot + ribbon shapes, positioned on a local 1440-wide canvas the same
+ * DuQuantum's and HackDuke's site screenshots) each built from the real
+ * exported base + screenshot + ribbon shapes, positioned on a local 1440-wide canvas the same
  * way Hero.astro lays out the comic cover (see hero/canvas.ts).
  *
  * Each project is a `.project-group` — a `display: contents` wrapper with no
@@ -23,15 +23,17 @@ import phoneMaskUrl from "../../assets/work/phone-mask.svg?url";
 import healthHoundPreview from "../../assets/work/health-hound-preview.png";
 import HealthHoundRibbon from "../../assets/work/health-hound-ribbon.svg";
 
+import DuQuantumBase from "../../assets/work/duquantum-panel-base.svg";
+import duQuantumMaskUrl from "../../assets/work/duquantum-panel-base.svg?url";
+import duQuantumPreview from "../../assets/work/duquantum-panel-preview.png";
+import DuQuantumOverlay from "../../assets/work/duquantum-panel-overlay.svg";
+import DuQuantumRibbon from "../../assets/work/duquantum-ribbon.svg";
+
 import HackDukeBase from "../../assets/work/hackduke-panel-base.svg";
 import hackDukeMaskUrl from "../../assets/work/hackduke-panel-base.svg?url";
 import hackDukePreview from "../../assets/work/hackduke-panel-preview.png";
 import HackDukeOverlay from "../../assets/work/hackduke-panel-overlay.svg";
 import HackDukeRibbon from "../../assets/work/hackduke-ribbon.svg";
-
-import ComingSoonBBase from "../../assets/work/coming-soon-b-panel-base.svg";
-import ComingSoonBShading from "../../assets/work/coming-soon-b-shading.svg";
-import ComingSoonBRibbon from "../../assets/work/coming-soon-b-ribbon.svg";
 
 // Just tall enough for the panels + the lowest star (the small starburst
 // bottom-left, which is the tallest-reaching decoration) — the heading and
@@ -40,14 +42,21 @@ const CANVAS_W = 1440;
 const CANVAS_H = 1080;
 
 const healthHound = work.otherProjects.find((p) => p.id === "health-hound");
+const duQuantum = work.otherProjects.find((p) => p.id === "duquantum");
 const hackDuke = work.otherProjects.find((p) => p.id === "hackduke");
 
-// HackDuke's screenshot sits rotated inside its panel (Figma node 275:78),
-// in coordinates local to the panel box at (456, 221). Figma gives the
-// rotated image's bounding box; the image itself is centred in it.
-const HD_PANEL = { x: 456, y: 221, width: 447, height: 679 };
-const HD_SHOT_BOX = { x: 541 - HD_PANEL.x, y: 251 - HD_PANEL.y, width: 510.484, height: 721.485 };
-const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
+// Each screenshot sits rotated inside its panel, in coordinates local to
+// the panel box. Figma gives the rotated image's bounding box; the image
+// itself is centred in it.
+// DuQuantum: Figma node 275:78, panel box at (456, 221).
+const DQ_PANEL = { x: 456, y: 221, width: 447, height: 679 };
+const DQ_SHOT_BOX = { x: 266 - DQ_PANEL.x, y: 206 - DQ_PANEL.y, width: 568.478, height: 701.049 };
+const DQ_SHOT = { width: 560.061, height: 694.277, rotate: -0.7 };
+// HackDuke: Figma node 278:88. The panel box is the base shape's full
+// bounds (stroke included), so the mask lines up with Figma's exactly.
+const HD_PANEL = { x: 931 - 6.279, y: 181 - 7.134, width: 306.246, height: 764.73 };
+const HD_SHOT_BOX = { x: 911.21 - HD_PANEL.x, y: 157.77 - HD_PANEL.y, width: 465.535, height: 722.297 };
+const HD_SHOT = { width: 417.006, height: 694.283, rotate: 4.1 };
 ---
 
 <div class="scene" style={css({ aspectRatio: `${CANVAS_W} / ${CANVAS_H}` })} data-other-projects-scene>
@@ -84,9 +93,55 @@ const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
     </div>
   </div>
 
-  <!-- HackDuke panel: the orange base, then the site screenshot clipped to
+  <!-- DuQuantum panel: the orange base, then the site screenshot clipped to
        the panel's shape, then the same shape again as a 49% orange tint +
        black outline on top (Figma nodes 92:684, 275:78, 275:79). -->
+  <div class="project-group" data-group="duquantum">
+    <a
+      class="panel-link"
+      href={duQuantum?.href}
+      aria-label={duQuantum?.title}
+      style={canvasStyle(DQ_PANEL)}
+    >
+      <DuQuantumBase class="absolute block h-full w-full" />
+      <div
+        class="absolute inset-0 overflow-hidden pointer-events-none"
+        style={`mask-image:url("${duQuantumMaskUrl}"); -webkit-mask-image:url("${duQuantumMaskUrl}"); mask-size:100% 100%; -webkit-mask-size:100% 100%; mask-repeat:no-repeat; -webkit-mask-repeat:no-repeat;`}
+      >
+        <div class="absolute flex items-center justify-center" style={canvasStyle(DQ_SHOT_BOX)}>
+          <Image
+            src={duQuantumPreview}
+            alt=""
+            class="block flex-none object-cover"
+            style={css({ width: u(DQ_SHOT.width), height: u(DQ_SHOT.height), transform: `rotate(${DQ_SHOT.rotate}deg)` })}
+          />
+        </div>
+      </div>
+      <DuQuantumOverlay class="absolute block h-full w-full" />
+    </a>
+    <!-- Bundling the ribbon graphic and its label into one wrapper is what
+         lets them move together, as one card, on hover. The old markup
+         mirrored the ribbon art via rotate(180deg) + scaleY(-1) on two
+         nested inline transforms — equivalent to a single scaleX(-1), which
+         also sidesteps the fact that inline and CSS transforms on the same
+         element don't compose (an inline rotate would have blocked the CSS
+         hover transform below). -->
+    <div class="ribbon-group" style={canvasStyle({ x: 621, y: 362.5, width: 274, height: 131.5 })}>
+      <div class="ribbon-fill">
+        <DuQuantumRibbon class="absolute block h-full w-full" style="transform: scaleX(-1);" />
+      </div>
+      <span
+        class="ribbon__label ribbon__label--floating font-script"
+        style={css({ left: u(60), top: u(60.5), fontSize: u(30), transform: "rotate(-10.55deg) translateY(0.27em)" })}
+      >
+        DuQuantum
+      </span>
+    </div>
+  </div>
+
+  <!-- HackDuke panel: the green base, then the site screenshot clipped to
+       the panel's shape, then the same shape again as a 40% green tint +
+       black outline on top (Figma nodes 92:685, 275:75, 278:91). -->
   <div class="project-group" data-group="hackduke">
     <a
       class="panel-link"
@@ -110,41 +165,15 @@ const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
       </div>
       <HackDukeOverlay class="absolute block h-full w-full" />
     </a>
-    <!-- Bundling the ribbon graphic and its label into one wrapper is what
-         lets them move together, as one card, on hover. The old markup
-         mirrored the ribbon art via rotate(180deg) + scaleY(-1) on two
-         nested inline transforms — equivalent to a single scaleX(-1), which
-         also sidesteps the fact that inline and CSS transforms on the same
-         element don't compose (an inline rotate would have blocked the CSS
-         hover transform below). -->
-    <div class="ribbon-group" style={canvasStyle({ x: 621, y: 362.5, width: 274, height: 131.5 })}>
-      <div class="ribbon-fill">
-        <HackDukeRibbon class="absolute block h-full w-full" style="transform: scaleX(-1);" />
-      </div>
-      <span
-        class="ribbon__label ribbon__label--floating font-script"
-        style={css({ left: u(60), top: u(60.5), fontSize: u(30), transform: "rotate(-10.55deg) translateY(0.27em)" })}
-      >
-        HackDuke
-      </span>
-    </div>
-  </div>
-
-  <!-- Coming Soon (teal) panel -->
-  <div class="project-group" data-group="coming-soon-b" tabindex="0" role="group" aria-label="Coming soon">
-    <div class="panel" style={canvasStyle({ x: 931, y: 181, width: 293, height: 751 })}>
-      <ComingSoonBBase class="absolute block h-full w-full" />
-    </div>
-    <div class="panel" style={canvasStyle({ x: 1012.5, y: 197, width: 204, height: 723 })}>
-      <ComingSoonBShading class="absolute block h-full w-full" />
-    </div>
-    <div class="ribbon" style={canvasStyle({ x: 949, y: 562.5, width: 203, height: 190 })}>
-      <ComingSoonBRibbon class="absolute block h-full w-full" />
+    <!-- Nudged left/up from Figma's (946.5, 562.5) so the ribbon's left edge
+         tucks under the panel outline like the other two. -->
+    <div class="ribbon" style={canvasStyle({ x: 942.5, y: 559.5, width: 233, height: 195 })}>
+      <HackDukeRibbon class="absolute block h-full w-full" />
       <span
         class="ribbon__label ribbon__label--left font-script"
         style={css({ fontSize: u(30), transform: "rotate(14.57deg) translateY(0.27em)" })}
       >
-        Coming Soon
+        HackDuke
       </span>
     </div>
   </div>
@@ -185,8 +214,8 @@ const HD_SHOT = { width: 396.492, height: 660.129, rotate: -10.53 };
   /* The ribbon moves with the rest of the card on hover instead of sitting
      still while the panel lifts off it — and, like the label, it's hidden
      until then and fades into view rather than being on screen the whole
-     time. `.ribbon` covers this for Health Hound and the teal Coming Soon
-     panel; HackDuke's ribbon graphic and label are bundled in
+     time. `.ribbon` covers this for Health Hound and HackDuke;
+     DuQuantum's ribbon graphic and label are bundled in
      `.ribbon-group` instead (see the markup above), so that wrapper gets
      the same hover motion + fade. */
   .ribbon,
