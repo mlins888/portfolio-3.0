@@ -96,19 +96,19 @@ export const pulse = {
   tldr: [
     {
       lead: "The problem",
-      text: "Duke’s health-research app depended on participants opening it daily, but gave them no reason to.",
+      text: "Duke’s health-research app only collects data when participants open it, and it gave them no reason to.",
     },
     {
       lead: "My role",
-      text: "Design lead and developer on a team of four sophomores in Duke’s Code+ program, over 10 weeks.",
+      text: "Design lead and developer on a team of four in Duke Code+, over 10 weeks.",
     },
     {
       lead: "What I did",
-      text: "Set the app’s visual direction, designed its engagement system (a Tamagotchi-style pet tied to daily streaks, plus goals that earn badges I illustrated), built goal setting in SwiftUI, and designed a secure admin portal for moderating the social features.",
+      text: "Set the visual direction, designed a streak-based engagement system (a Tamagotchi-style pet plus 30+ badges I illustrated), built goal setting in SwiftUI, and designed a secure admin portal.",
     },
     {
       lead: "The outcome",
-      text: "A tested, iterated prototype that’s continuing toward a production release. Along the way, I raised concerns about student art being used for AI training, which led to design-policy changes for future Code+ students.",
+      text: "A tested prototype continuing toward production. Separately, my concerns about student art being used for AI training changed Code+’s design policy.",
     },
   ] satisfies ListItem[],
 
@@ -116,43 +116,9 @@ export const pulse = {
     {
       id: "problem",
       heading: "The Problem",
-      body: [
-        "Life-saving health research moves slowly. At institutions like Duke, every new study can mean another round of costly, time-consuming IRB approval before any data is collected. Dr. Amanda Randles and the Duke Center for Computational and Digital Health Innovation (DCCDHI) came up with a way around it: a health app that collects wearable data from consenting participants into one shared, de-identified pool that researchers at many institutions can draw from.",
-        "There was a catch. On iOS, the background tasks that collect that data only keep running if people actually open the app. The original app offered basically no reason to come back, so the whole research pipeline depended on an engagement problem nobody had solved yet.",
-      ],
-    },
-    {
-      id: "role",
-      heading: "My Role",
-      body: [
-        "Design lead and developer on a team of four Duke sophomores, over a 10-week summer (May–July 2026) in Duke’s Code+ program. I owned the app’s visual direction and gamification system, built the goal-setting feature in SwiftUI, and designed and co-developed the admin web portal.",
-      ],
-    },
-    {
-      id: "question",
-      heading: "The Question",
-      body: [
-        "One question drove the whole project: why would someone actually want to keep using this app? As design lead, I felt that this is a motivation backing a majority of our work, and so it shaped every decision that followed.",
-        "Our team scoped four features around it:",
-        {
-          list: [
-            {
-              lead: "Meaningful health metrics:",
-              text: "For an app centered around health data, allowing users to simply understand and make beneficial decisions based on their trends is crucial.",
-            },
-            {
-              lead: "Duke Recreation, in one place:",
-              text: "Duke Rec’s classes and fitness events were scattered across a confusing collection of websites, which made them hard to find and sign up for. Pulse pulls from the Duke Rec API and gathers every sign-up in one place, then sends you straight to the right registration page. It’s a Duke-specific feature, and a practical reason to open the app.",
-            },
-            { lead: "Gamified check-ins and fitness goals", text: "" },
-            {
-              lead: "Social features:",
-              text: "so participants can connect with each other.",
-            },
-          ],
-        },
-        "Together they make Pulse an all-in-one place to keep up with your health, connect with others, and get rewarded for showing up. That consistency is exactly what the research needs.",
-      ],
+      // The three phones (landing, before/after flip, goal-setting video)
+      // alternate sides on an even ~28.6rem step, measured at 1440px wide,
+      // so the last one clears the badge row below it.
       aside: {
         side: "left",
         kind: "image",
@@ -161,18 +127,43 @@ export const pulse = {
           alt: "Pulse for Research welcome screen with the branded gradient and a Continue button",
         },
       },
+      body: [
+        "Dr. Amanda Randles and Duke’s DCCDHI built an app that pools wearable data from consenting participants into one de-identified dataset. Researchers at many institutions can draw from it without a new round of IRB approval for every study. The catch: on iOS, background data collection only keeps running if people open the app, and the original app gave them no reason to.",
+      ],
+    },
+    {
+      id: "role",
+      heading: "My Role",
+      body: [
+        "Design lead and developer on a team of four Duke sophomores in Code+ (May–July 2026). I owned the visual direction and gamification system and built goal setting in SwiftUI. I also worked on the Python backend and its API integration, and designed and helped build the admin portal.",
+      ],
+    },
+    {
+      id: "question",
+      heading: "The Question",
+      body: [
+        "Every decision came back to one question: why would someone want to open this app every day? We scoped four features around it:",
+        {
+          list: [
+            { text: "Health metrics people can actually understand" },
+            { text: "Duke Rec classes gathered in one place" },
+            { text: "Gamified check-ins and goals" },
+            { text: "Social features" },
+          ],
+        },
+      ],
     },
     {
       id: "design",
       heading: "Designing From a Blank Canvas",
       body: [
-        "The original app had minimal functionality and no real visual design, which meant I was starting almost from scratch. I built the design system around DCCDHI’s existing brand identity, so the app still reads as a credible Duke research tool. I then combined that with some more playful and fluid elements, so it feels like something you’d open on your own and not just a study you signed up for.",
+        "The original app was a plain chart with almost no visual design. I built a design system on DCCDHI’s brand so Pulse still reads as a credible Duke research tool. Then I layered in playful, fluid elements so it feels like something you’d open on your own, not just a study you signed up for.",
       ],
       aside: {
         side: "right",
         // Pulled up so it sits vertically centred between the two phones in
         // the left margin (the landing screen above, goal-setting below).
-        offset: -14.6,
+        offset: -25.5,
         kind: "flip",
         before: {
           image: landingOld,
@@ -188,23 +179,38 @@ export const pulse = {
       id: "engagement",
       heading: "Making Engagement a Habit",
       body: [
-        "I took charge of the heart of the engagement strategy: gamification. Before designing anything, I looked at how habit-forming apps like Duolingo keep people coming back. The pattern that kept showing up was the streak: a small daily commitment that feels costly to break.",
-        "So I tied the streak to something people would care about. Participants choose a Tamagotchi-style pet, and its health rises and falls with their daily check-in streak. Skip a day and your pet feels it. That turns an invisible requirement (open the app so data can sync) into something personal.",
-        "Streaks bring people back daily, but I also wanted to implement longer-term retention. I built a goal-setting feature that turns the metrics participants already track, like steps, distance and sleep, into daily or weekly targets. Hitting a target earns a badge. I illustrated the full badge set, tiered by category and milestone, so new users get early wins and dedicated users always have something further to chase.",
+        "Habit-forming apps like Duolingo rely on the streak: a small daily commitment that feels costly to break. So I tied the streak to something people would care about. Your Tamagotchi-style pet’s health rises and falls with your daily check-ins. That turns an invisible requirement (open the app so data syncs) into something personal.",
+        "For longer-term retention, I built goal setting that turns steps, distance, and sleep into daily or weekly targets. Hitting a target earns a badge. I illustrated 30+ badges, tiered by category and milestone, so new users get early wins and dedicated users always have something to chase.",
       ],
       // TODO(pet): add the pet visual as a second, left-side aside once it exists.
       aside: {
         side: "left",
+        offset: -11.5,
         kind: "video",
         video: goalSetVideo,
       },
       after: "badges",
     },
     {
+      id: "testing",
+      heading: "Testing and Iterating",
+      body: [
+        "We ran small-group usability and accessibility tests with about 10 participants. The usability feedback led to three changes:",
+        {
+          list: [
+            { text: "We added goal setting to the fitness screen, not just the home screen." },
+            { text: "We reworked the social screens." },
+            { text: "We added info pop-ups explaining features." },
+          ],
+        },
+        "The accessibility checks made sure consent screens were readable, color contrast was high, and buttons worked with screen readers.",
+      ],
+    },
+    {
       id: "community",
       heading: "Keeping the Community Safe",
       body: [
-        "Social features create a responsibility, especially in a university-affiliated research app. Research staff needed a way to moderate posts and groups without touching code, so I designed a minimal admin website that matches the app’s design language, and helped build it. We put it behind Duke’s Shibboleth login and containerized it with Docker, so only authorized administrators can reach the moderation tools.",
+        "Social features in a research app need moderation. I designed an admin site in the app’s design language and helped build it. It sits behind Duke’s Shibboleth login and is containerized with Docker, so only authorized staff can manage posts and groups.",
       ],
       after: "admin",
     },
@@ -212,9 +218,8 @@ export const pulse = {
       id: "ahead",
       heading: "Looking Ahead",
       body: [
-        "Toward the end of the project, we ran some preliminary UI/UX testing, which gave us a window into smaller fixes we could make right away and larger-scope tasks for future iterations.",
-        "We finished with a solid prototype that will keep being iterated on toward a production release. With more time, I’d polish the designs further and innovate more unique icon sets and motion designs beyond some of Apple’s generic SwiftUI features we utilized for this timeframe. A more custom component set would make the design more cohesive and easier to carry over to an Android release.",
-        "Some of my impact reached past the app itself. I raised concerns within Code+ about how the work students make, especially original art, could be used for AI training. That conversation led to changes in the program’s design policies for Code+ students in years to come.",
+        "Pulse ended as a tested prototype continuing toward a production release, with larger-scale testing planned. With more time, I’d replace generic SwiftUI elements with custom icons and motion. That would make the design more cohesive and easier to carry over to Android.",
+        "I also raised concerns within Code+ about student work, especially original art, being used for AI training. That conversation changed the program’s design policies for future students.",
       ],
     },
   ] satisfies Section[],
