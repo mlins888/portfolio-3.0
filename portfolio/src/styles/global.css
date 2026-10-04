@@ -105,9 +105,15 @@ body {
     transform: scale(1);
   }
   50% {
-    opacity: 0.55;
-    transform: scale(0.88);
+    opacity: var(--twinkle-opacity, 0.55);
+    transform: scale(var(--twinkle-scale, 0.88));
   }
+}
+
+/* Sparkles twinkle more gently than the starbursts that share this loop. */
+[data-anim="sparkle"] {
+  --twinkle-opacity: 0.8;
+  --twinkle-scale: 0.95;
 }
 
 @keyframes idle-wobble {

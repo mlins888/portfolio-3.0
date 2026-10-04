@@ -129,29 +129,33 @@ const sprite = hero.images.sceneCharacterSprite;
 </div>
 
 <style>
+  /* Kept deliberately small: a slow drift behind the character, not
+     something that pulls the eye away from it. */
   .scene-art__splash {
     transform-origin: center;
-    transform: rotate(-2deg) scale(1.04);
+    transform: rotate(-0.6deg) scale(1.04);
     animation: scene-splash-idle 11s ease-in-out infinite;
   }
 
   @keyframes scene-splash-idle {
     0%,
     100% {
-      transform: rotate(-2deg) scale(1.04);
+      transform: rotate(-0.6deg) scale(1.04);
     }
     50% {
-      transform: rotate(2deg) scale(1.09);
+      transform: rotate(0.6deg) scale(1.055);
     }
   }
 
   /* Placement matched to where the character sat in the original combined
      artwork. The frames are cropped (1309 × 1499) so frame 1 lands exactly
      where the old single still did: same left edge, same scale, a little
-     extra width on the right for the frames where the swing kicks out. */
+     extra width on the right for the frames where the swing kicks out.
+     Raised from there so the tops of the chains sit just above the top of
+     the coral panel (canvas y 394). */
   .scene-art__character {
     left: 14%;
-    top: 49.5%;
+    top: 45.47%;
     width: 58.61%;
     aspect-ratio: 1309 / 1499;
     transform: translateY(-50%);
