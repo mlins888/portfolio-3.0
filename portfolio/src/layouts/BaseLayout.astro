@@ -7,6 +7,7 @@ import Nav from "../components/Nav.astro";
 import ScrollRocket from "../components/ScrollRocket.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import MobileGate from "../components/MobileGate.astro";
+import CursorTrail from "../components/CursorTrail.astro";
 import { site } from "../content/site";
 
 interface Props {
@@ -85,8 +86,13 @@ const ogImage = new URL(image, Astro.site);
       <slot />
     </div>
     <SiteFooter />
+    <CursorTrail />
   </body>
 </html>
+
+<script>
+  import "../scripts/smooth-scroll.js";
+</script>
 
 <style>
   /* Sticky-footer pattern: on pages shorter than the viewport, this pushes

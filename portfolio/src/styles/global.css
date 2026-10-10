@@ -59,6 +59,30 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
+   CURSOR
+   Custom arrow and hover hand from the Figma file (public/cursor.svg,
+   public/cursor-hand.svg). Hotspots are the arrow's tip and the hand's
+   fingertip. Anything clickable gets the hand — components that set their
+   own pointer cursor use var(--cursor-hand) — and text fields keep the I-beam.
+--------------------------------------------------------------------------- */
+:root {
+  --cursor-hand: url("/cursor-hand.svg") 14 1, pointer;
+}
+
+html {
+  cursor: url("/cursor.svg") 2 2, auto;
+}
+
+a[href],
+button:not(:disabled),
+[role="button"],
+summary,
+label[for],
+select {
+  cursor: var(--cursor-hand);
+}
+
+/* ---------------------------------------------------------------------------
    SVG TINTING
    The decorative SVGs are the real exported artwork, so their fills are baked
    in. Adding .svg-tint makes any painted fill/stroke follow the CSS `color`
@@ -189,7 +213,7 @@ body {
   padding: 0;
   border: 0;
   background: transparent;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   border-radius: 1rem;
   /* Always clickable even when a caller wraps hotspots in a
      pointer-events:none row (e.g. the playground's shirt row) to let clicks

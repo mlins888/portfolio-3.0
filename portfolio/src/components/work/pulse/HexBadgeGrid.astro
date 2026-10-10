@@ -82,7 +82,7 @@ badges.forEach((badge, i) => cols[i % columns].push(badge));
     aspect-ratio: 1;
     transform: translate(var(--hex-x, 0px), var(--hex-y, 0px)) scale(var(--hex-scale, 1));
     transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    cursor: pointer;
+    cursor: var(--cursor-hand);
     outline: none;
   }
 
