@@ -16,7 +16,7 @@ import { gsap, ScrollTrigger, prefersReducedMotion } from "./gsap-setup.js";
  */
 if (!prefersReducedMotion()) {
   const lenis = new Lenis({
-    wheelMultiplier: 0.65,
+    wheelMultiplier: 0.8,
     lerp: 0.09,
     // Let scrollable children (the playground modal, carousels) scroll
     // themselves instead of Lenis hijacking the wheel.
