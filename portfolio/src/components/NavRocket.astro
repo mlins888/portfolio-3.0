@@ -1,0 +1,891 @@
+---
+/**
+ * The nav bar's rocket. The bar's links are checkpoints (`data-checkpoint`
+ * in Nav.astro): clicking one flies the rocket there before the page
+ * changes, and the next page picks the flight up from where it left off.
+ * Scrolling carries it along its page's stretch of the bar: on the
+ * homepage from the Home checkpoint (under the cat), passing under Work
+ * halfway through the Work section; elsewhere from halfway back to the previous checkpoint
+ * to halfway on to the next, over the length of the page.
+ *
+ * As it flies, its exhaust prints a permanent halftone trail into the bar,
+ * the way a press prints colour: each ink (teal, coral, a little gold) has
+ * its own dot screen at its own angle, the exhaust lays down ink density,
+ * and each screen dot is sized by the ink under it. Passes add ink, so the
+ * most-travelled stretches go bold; inks overlap by multiplying, so where
+ * they cross they mix into rosettes rather than one sitting on top. The
+ * trail is kept
+ * in sessionStorage, so it builds up across the whole visit.
+ *
+ * Rendered inside Nav.astro's <header>; positioned against it.
+ */
+import rocket from "../assets/decor/rocket.svg";
+
+/**
+ * Trail settings shared by the first-paint script below and the main
+ * script (which reads them from the canvas's data-trail), so the two always
+ * draw the trail identically.
+ */
+const TRAIL = {
+  storageKey: "navRocket:halftone",
+  fromKey: "navRocket:from",
+  // Screen pitch (px between dot centres); the largest dot's radius is
+  // maxR × pitch, which just lets neighbours kiss at full ink.
+  pitch: 11,
+  maxR: 0.6,
+  // Ink fainter than this prints nothing.
+  cutoff: 0.15,
+  // Above this, a dot prints as plain solid ink instead of multiplying:
+  // overlaps mix nicely while light, but pile up into mud once dense.
+  heavy: 0.5,
+  // Clearings around the nav text: fully empty within `clear` px, dots
+  // growing back over the next `fade` px.
+  clear: 2,
+  fade: 16,
+  // One ink per screen, in screen order.
+  inks: ["--color-teal", "--color-coral", "--color-gold"],
+};
+---
+
+<canvas class="nav-trail" data-nav-trail data-trail={JSON.stringify(TRAIL)} aria-hidden="true"></canvas>
+
+<div class="nav-rocket" data-nav-rocket aria-hidden="true">
+  <div class="nav-rocket__ship" data-nav-rocket-ship>
+    <img class="nav-rocket__img" src={rocket.src} alt="" width="24" height="64" />
+    <!-- Exhaust puffs off the tail, shown only while flying. -->
+    <span class="rocket-particle rocket-particle--teal" style="--particle-delay: 0s; --particle-y: -4px; --particle-drift: 4px;"></span>
+    <span class="rocket-particle rocket-particle--coral" style="--particle-delay: 0.25s; --particle-y: 2px; --particle-drift: -3px;"></span>
+    <span class="rocket-particle rocket-particle--teal" style="--particle-delay: 0.5s; --particle-y: 4px; --particle-drift: 3px;"></span>
+    <span class="rocket-particle rocket-particle--coral" style="--particle-delay: 0.75s; --particle-y: -2px; --particle-drift: -4px;"></span>
+  </div>
+</div>
+
+<!-- First paint. The main script below is a deferred module, so it only
+     runs after the new page has been shown once — for that moment the
+     rocket would sit at the far left and the trail would be blank, then
+     both jump into place. This runs while the page is still being parsed,
+     before anything is shown: it parks the rocket exactly where the last
+     page's flight ended (facing the same way) and redraws the saved trail,
+     so a page change is one continuous path. -->
+<script is:inline define:vars={{ TRAIL }}>
+  const header = document.currentScript && document.currentScript.closest("[data-site-header]");
+  if (header) {
+    const canvas = header.querySelector("[data-nav-trail]");
+    const rocketEl = header.querySelector("[data-nav-rocket]");
+    const shipEl = header.querySelector("[data-nav-rocket-ship]");
+    const read = (key) => {
+      try {
+        return JSON.parse(window.sessionStorage.getItem(key) || "null");
+      } catch (e) {
+        return null;
+      }
+    };
+    const box = canvas.getBoundingClientRect();
+
+    const list = read(TRAIL.storageKey);
+    if (Array.isArray(list) && list.length && box.width) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(box.width * dpr);
+      canvas.height = Math.round(box.height * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const css = getComputedStyle(document.documentElement);
+      const colors = TRAIL.inks.map((name) => css.getPropertyValue(name).trim() || "#f15e42");
+      const clearings = Array.from(header.querySelectorAll(".site-header__brand, .site-header__link, .site-header__icons"))
+        .map((el) => ({ el, r: el.getBoundingClientRect() }))
+        .filter((c) => c.r.width && c.r.height)
+        .map((c) => ({
+          round: c.el.classList.contains("site-header__brand"),
+          l: c.r.left - box.left,
+          t: c.r.top - box.top,
+          r: c.r.right - box.left,
+          b: c.r.bottom - box.top,
+        }));
+      const clearance = (x, y) => {
+        let nearest = Infinity;
+        for (const c of clearings) {
+          const d = c.round
+            ? Math.max(0, Math.hypot(x - (c.l + c.r) / 2, y - (c.t + c.b) / 2) - Math.max(c.r - c.l, c.b - c.t) / 2)
+            : Math.hypot(Math.max(c.l - x, 0, x - c.r), Math.max(c.t - y, 0, y - c.b));
+          nearest = Math.min(nearest, d);
+        }
+        const k = Math.min(1, Math.max(0, (nearest - TRAIL.clear) / TRAIL.fade));
+        return k * k * (3 - 2 * k);
+      };
+      const heavy = [];
+      ctx.globalCompositeOperation = "multiply";
+      colors.forEach((color, k) => {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (const [s, fx, y, v, t] of list) {
+          if (s !== k || v < TRAIL.cutoff) continue;
+          const x = fx * box.width;
+          const r = TRAIL.pitch * TRAIL.maxR * Math.sqrt(v) * clearance(x, y);
+          if (r < 0.6) continue;
+          if (v >= TRAIL.heavy) {
+            heavy.push({ x, y, r, color, t: t || 0 });
+            continue;
+          }
+          ctx.moveTo(x + r, y);
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      });
+      ctx.globalCompositeOperation = "source-over";
+      heavy.sort((a, b) => a.t - b.t);
+      for (const d of heavy) {
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const from = read(TRAIL.fromKey);
+    if (from && typeof from.x === "number" && box.width) {
+      const length = rocketEl.offsetWidth || 64;
+      rocketEl.style.transform = "translateX(" + (from.x * box.width - length / 2) + "px)";
+      if (from.dir === -1) shipEl.style.transform = "scaleX(-1)";
+      rocketEl.classList.add("is-placed");
+    }
+  }
+</script>
+
+<style>
+  /* Fills the bar above its 3px ink border, behind the name and links
+     (Nav.astro lifts those to z-index 1). */
+  .nav-trail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(var(--nav-h) - 3px);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* The flight lane: centred on the bar's bottom border, so the rocket
+     hangs at most half its thickness below the bar. JS moves it with a
+     translateX; --ship-l / --ship-t are its flying length and thickness. */
+  .nav-rocket {
+    --ship-l: 64px;
+    --ship-t: calc(var(--ship-l) * 62.804 / 166.582);
+    position: absolute;
+    left: 0;
+    top: calc(var(--nav-h) - 1.5px - var(--ship-t) / 2);
+    width: var(--ship-l);
+    height: var(--ship-t);
+    z-index: 2;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  /* Hidden until it's been put in place (by the first-paint script or the
+     main one), so it never flashes at the bar's left edge. */
+  .nav-rocket:not(.is-placed) {
+    visibility: hidden;
+  }
+
+  @media (max-width: 699px) {
+    .nav-rocket {
+      --ship-l: 48px;
+    }
+  }
+
+  /* Flipped (scaleX -1) by JS when flying left; the puffs flip with it. */
+  .nav-rocket__ship {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* The artwork is drawn nose-up; rotating it 90° points it right. */
+  .nav-rocket__img {
+    position: absolute;
+    left: calc((var(--ship-l) - var(--ship-t)) / 2);
+    top: calc((var(--ship-t) - var(--ship-l)) / 2);
+    width: var(--ship-t);
+    height: var(--ship-l);
+    transform: rotate(90deg);
+  }
+
+  .nav-rocket.is-flying .nav-rocket__img {
+    animation: nav-rocket-bob 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes nav-rocket-bob {
+    from { transform: rotate(90deg) translateX(-1.5px); }
+    to { transform: rotate(90deg) translateX(1.5px); }
+  }
+
+  .rocket-particle {
+    position: absolute;
+    left: 2px;
+    top: calc(50% + var(--particle-y, 0px));
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .nav-rocket.is-flying .rocket-particle {
+    visibility: visible;
+    animation: rocket-particle 0.9s ease-out infinite;
+    animation-delay: var(--particle-delay, 0s);
+  }
+
+  .rocket-particle--teal {
+    background: var(--color-teal);
+  }
+
+  .rocket-particle--coral {
+    background: var(--color-coral);
+  }
+
+  @keyframes rocket-particle {
+    0% {
+      opacity: 0.85;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(-50% - 14px), calc(-50% + var(--particle-drift, 3px))) scale(0.3);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav-rocket.is-flying .nav-rocket__img,
+    .nav-rocket.is-flying .rocket-particle {
+      animation: none;
+      visibility: hidden;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, prefersReducedMotion } from "../scripts/gsap-setup.js";
+
+  const header = /** @type {HTMLElement | null} */ (document.querySelector("[data-site-header]"));
+  const rocketEl = /** @type {HTMLElement | null} */ (header?.querySelector("[data-nav-rocket]"));
+  const shipEl = /** @type {HTMLElement | null} */ (header?.querySelector("[data-nav-rocket-ship]"));
+  const canvas = /** @type {HTMLCanvasElement | null} */ (header?.querySelector("[data-nav-trail]"));
+
+  if (header && rocketEl && shipEl && canvas) {
+    const reduced = prefersReducedMotion();
+    const isHome = header.dataset.home === "true";
+    const current = header.dataset.currentCheckpoint || "";
+
+    // Shared with the first-paint script (see TRAIL in the frontmatter).
+    const TRAIL = JSON.parse(canvas.dataset.trail || "{}");
+    const FROM_KEY = TRAIL.fromKey;
+    const TRAIL_KEY = TRAIL.storageKey;
+
+    /** sessionStorage can be missing or throw (private windows, blocked
+     *  site data); the rocket just starts parked and the trail fresh. */
+    const store = {
+      get(key) {
+        try {
+          return window.sessionStorage.getItem(key);
+        } catch {
+          return null;
+        }
+      },
+      set(key, value) {
+        try {
+          window.sessionStorage.setItem(key, value);
+        } catch {}
+      },
+      remove(key) {
+        try {
+          window.sessionStorage.removeItem(key);
+        } catch {}
+      },
+    };
+
+    // ── Exhaust trail: halftone screens ───────────────────────────────
+    // Emit every EMIT_STEP px of travel so fast flights still leave a
+    // continuous trail.
+    const EMIT_STEP = 9;
+    // How far behind the nozzle the exhaust cone reaches.
+    const CONE = 44;
+    const PITCH = TRAIL.pitch;
+    const MAX_R = PITCH * TRAIL.maxR;
+    const CUTOFF = TRAIL.cutoff;
+    // A freshly inked cell starts at least this dark, so every dot that
+    // prints is a visible size, never a speck.
+    const FIRST_INK = 0.3;
+    // The most ink one cell can hold, so even the busiest stretch stays an
+    // open dot pattern rather than closing up into solid.
+    const MAX_INK = 0.75;
+    const HEAVY = TRAIL.heavy;
+    const css = getComputedStyle(document.documentElement);
+    const token = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+    // One screen per ink, each at its own angle like print separations, so
+    // overlapping inks form rosettes instead of lining up.
+    const ANGLES = [15, 75, 45];
+    const SCREENS = TRAIL.inks.map((name, k) => ({ color: token(name, "#f15e42"), angle: ANGLES[k] })).map((screen) => {
+      const rad = (screen.angle * Math.PI) / 180;
+      return { ...screen, cos: Math.cos(rad), sin: Math.sin(rad), cells: new Map() };
+    });
+    // true: the trail prints in coral alone. false: teal and coral lead,
+    // with gold now and then, and a second ink splashed into some puffs.
+    const CORAL_ONLY = true;
+    const pickInk = () => (CORAL_ONLY ? 1 : Math.random() < 0.12 ? 2 : Math.random() < 0.5 ? 0 : 1);
+
+    const ctx = canvas.getContext("2d");
+    let width = 0;
+    let height = 0;
+    let drawQueued = false;
+    let saveTimer = 0;
+    /** Counts up on every inking, so heavy dots can stack newest-on-top. */
+    let tick = 0;
+
+    /** Bar point → the nearest cell of a screen (its rotated grid). */
+    function cellAt(screen, x, y) {
+      return [Math.round((x * screen.cos + y * screen.sin) / PITCH), Math.round((-x * screen.sin + y * screen.cos) / PITCH)];
+    }
+
+    /** A screen cell's centre in bar coordinates. */
+    function cellCentre(screen, i, j) {
+      const u = i * PITCH;
+      const v = j * PITCH;
+      return [u * screen.cos - v * screen.sin, u * screen.sin + v * screen.cos];
+    }
+
+    /** Every printed cell as a resolution-independent list:
+     *  [screen, centre x as a fraction of the bar's width, centre y, ink,
+     *  when it was last inked]. */
+    function snapshot() {
+      const list = [];
+      SCREENS.forEach((screen, k) => {
+        for (const cell of screen.cells.values()) {
+          if (cell.v < CUTOFF) continue;
+          const [x, y] = cellCentre(screen, cell.i, cell.j);
+          list.push([k, +(x / width).toFixed(4), +y.toFixed(1), +cell.v.toFixed(2), cell.t]);
+        }
+      });
+      return list;
+    }
+
+    /** Re-bins a snapshot onto the screens at the current width. */
+    function restore(list) {
+      for (const item of list) {
+        if (!Array.isArray(item) || item.length < 4) continue;
+        const [k, fx, y, v, t = 0] = item;
+        const screen = SCREENS[k];
+        if (!screen) continue;
+        const [i, j] = cellAt(screen, fx * width, y);
+        const key = `${i},${j}`;
+        const cell = screen.cells.get(key);
+        if (!cell) screen.cells.set(key, { i, j, v: Math.min(MAX_INK, v), t });
+        else {
+          cell.v = Math.max(cell.v, Math.min(MAX_INK, v));
+          cell.t = Math.max(cell.t, t);
+        }
+        tick = Math.max(tick, t);
+      }
+    }
+
+    // ── Clearings around the nav text ─────────────────────────────────
+    // Dots shrink as they near a word and vanish right around it, like a
+    // halftone fading to paper, so the text sits in a soft clearing of the
+    // pattern. Display only: the stored ink is untouched, so the clearings
+    // follow the words wherever the layout puts them.
+    const CLEAR = TRAIL.clear;
+    const FADE = TRAIL.fade;
+    /** @type {{ l: number; t: number; r: number; b: number }[]} */
+    let clearings = [];
+
+    function measureClearings() {
+      const origin = canvas.getBoundingClientRect();
+      clearings = [...header.querySelectorAll(".site-header__brand, .site-header__link, .site-header__icons")]
+        .map((el) => ({ el, r: el.getBoundingClientRect() }))
+        .filter(({ r }) => r.width && r.height)
+        .map(({ el, r }) => ({
+          // The cat is round, so its clearing is a circle, not its box.
+          round: el.classList.contains("site-header__brand"),
+          l: r.left - origin.left,
+          t: r.top - origin.top,
+          r: r.right - origin.left,
+          b: r.bottom - origin.top,
+        }));
+    }
+
+    /** 0 inside / right around the nav text, easing up to 1 beyond FADE. */
+    function clearance(x, y) {
+      let nearest = Infinity;
+      for (const c of clearings) {
+        let d;
+        if (c.round) {
+          const radius = Math.max(c.r - c.l, c.b - c.t) / 2;
+          d = Math.max(0, Math.hypot(x - (c.l + c.r) / 2, y - (c.t + c.b) / 2) - radius);
+        } else {
+          d = Math.hypot(Math.max(c.l - x, 0, x - c.r), Math.max(c.t - y, 0, y - c.b));
+        }
+        nearest = Math.min(nearest, d);
+      }
+      const k = Math.min(1, Math.max(0, (nearest - CLEAR) / FADE));
+      return k * k * (3 - 2 * k);
+    }
+
+    function sizeCanvas() {
+      const kept = width ? snapshot() : null;
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Keep the trail under the same stretch of bar when the width changes.
+      if (kept) {
+        SCREENS.forEach((screen) => screen.cells.clear());
+        restore(kept);
+      }
+      measureClearings();
+      draw();
+    }
+
+    function draw() {
+      drawQueued = false;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.clearRect(0, 0, width, height);
+      // Light dots multiply where inks overlap, like ink on paper, so thin
+      // stretches mix into rosettes.
+      ctx.globalCompositeOperation = "multiply";
+      const heavy = [];
+      for (const screen of SCREENS) {
+        ctx.fillStyle = screen.color;
+        ctx.beginPath();
+        for (const cell of screen.cells.values()) {
+          if (cell.v < CUTOFF) continue;
+          const [x, y] = cellCentre(screen, cell.i, cell.j);
+          if (x < -PITCH || x > width + PITCH || y < -PITCH || y > height + PITCH) continue;
+          // Dot area tracks ink coverage, like a real halftone, shrinking
+          // to nothing in the clearings around the nav text.
+          const r = MAX_R * Math.sqrt(cell.v) * clearance(x, y);
+          if (r < 0.6) continue;
+          if (cell.v >= HEAVY) {
+            heavy.push({ x, y, r, color: screen.color, t: cell.t });
+            continue;
+          }
+          ctx.moveTo(x + r, y);
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+        }
+        ctx.fill();
+      }
+
+      // Heavy dots print as solid ink, newest on top, so dense clumps read
+      // as stacked bold dots rather than muddy darkness — and which colour
+      // ends up in front shifts as the rocket passes back and forth.
+      ctx.globalCompositeOperation = "source-over";
+      heavy.sort((a, b) => a.t - b.t);
+      for (const d of heavy) {
+        ctx.fillStyle = d.color;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function queueDraw() {
+      if (drawQueued) return;
+      drawQueued = true;
+      requestAnimationFrame(draw);
+    }
+
+    function saveNow() {
+      clearTimeout(saveTimer);
+      store.set(TRAIL_KEY, JSON.stringify(snapshot()));
+    }
+
+    function queueSave() {
+      clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(saveNow, 400);
+    }
+
+    /** Adds ink to one screen around bar point (x, y), fading out to
+     *  nothing at `reach` px, with a little grain so edges aren't ruled. */
+    function ink(screen, x, y, amount, reach) {
+      const [ci, cj] = cellAt(screen, x, y);
+      const n = Math.ceil(reach / PITCH);
+      for (let i = ci - n; i <= ci + n; i++) {
+        for (let j = cj - n; j <= cj + n; j++) {
+          const [px, py] = cellCentre(screen, i, j);
+          if (py < -PITCH || py > height + PITCH) continue;
+          const d = Math.hypot(px - x, py - y);
+          if (d >= reach) continue;
+          const add = amount * (1 - d / reach) * (0.6 + 0.4 * Math.random());
+          const key = `${i},${j}`;
+          const cell = screen.cells.get(key);
+          tick++;
+          if (cell) {
+            cell.v = Math.min(MAX_INK, cell.v + add);
+            cell.t = tick;
+          } else if (add >= 0.05) {
+            screen.cells.set(key, { i, j, v: Math.max(FIRST_INK, Math.min(MAX_INK, add)), t: tick });
+          }
+        }
+      }
+    }
+
+    /** One puff of exhaust from the nozzle at bar x `nozzle`, flying in
+     *  direction `dir`: one or two blobs of ink land behind the nozzle in a cone
+     *  that widens with distance, mostly in one ink with a splash of
+     *  another, and the cone's centre line wobbles so the trail meanders. */
+    function emit(nozzle, dir) {
+      const laneY = height - 12 + (Math.random() - 0.5) * 8;
+      const main = pickInk();
+      const splash = (main + 1 + (Math.random() < 0.5 ? 0 : 1)) % SCREENS.length;
+      const blobs = Math.random() < 0.5 ? 1 : 2;
+      for (let k = 0; k < blobs; k++) {
+        const back = 4 + (CONE - 4) * Math.pow(Math.random(), 1.3);
+        const x = nozzle - dir * back;
+        const y = laneY + (Math.random() * 2 - 1) * (3 + back * 0.35);
+        const reach = 6 + back * 0.2;
+        ink(SCREENS[main], x, y, 0.25, reach);
+        if (!CORAL_ONLY && Math.random() < 0.4) ink(SCREENS[splash], x, y, 0.12, reach * 0.8);
+      }
+      queueDraw();
+      queueSave();
+    }
+
+    // ── Rocket position ────────────────────────────────────────────────
+    const shipLength = () => rocketEl.offsetWidth || 64;
+    const headerLeft = () => header.getBoundingClientRect().left;
+
+    /** Where the rocket's centre parks for each checkpoint, in bar px.
+     *  Home sits under the start of the name; links under their centre. */
+    function checkpointX(id) {
+      const el = header.querySelector(`[data-checkpoint="${id}"]`);
+      if (!el) return shipLength() / 2;
+      const r = el.getBoundingClientRect();
+      if (id === "home") return r.left - headerLeft() + shipLength() / 2;
+      return r.left + r.width / 2 - headerLeft();
+    }
+
+    const state = { x: 0, dir: 1 };
+    /** Distance travelled against the current heading since it last held. */
+    let backtrack = 0;
+    /** Nozzle position and heading at the last puff. */
+    let lastEmit = null;
+    let flyingTimer = 0;
+    let flight = null;
+
+    function render() {
+      rocketEl.classList.add("is-placed");
+      rocketEl.style.transform = `translateX(${state.x - shipLength() / 2}px)`;
+      shipEl.style.transform = state.dir < 0 ? "scaleX(-1)" : "";
+    }
+
+    /** Move to `x`, turning to face the way it's going and puffing
+     *  exhaust out of the tail as it goes. */
+    function moveTo(x, { trail = true } = {}) {
+      const dx = x - state.x;
+      // Only turn around after a few px of real travel the other way, so
+      // sub-pixel settling (scroll catching up, layout nudges) never flips it.
+      if (dx * state.dir < 0) {
+        backtrack += Math.abs(dx);
+        if (backtrack > 4) {
+          state.dir = -state.dir;
+          backtrack = 0;
+        }
+      } else if (Math.abs(dx) > 0.5) {
+        backtrack = 0;
+      }
+      // The Home checkpoint is the far end of the bar: once there, face
+      // forward again rather than sitting pointed back at the edge.
+      if (Math.abs(x - checkpointX("home")) < 1) state.dir = 1;
+      state.x = x;
+      render();
+
+      if (!trail || reduced) {
+        lastEmit = null;
+        return;
+      }
+      rocketEl.classList.add("is-flying");
+      clearTimeout(flyingTimer);
+      flyingTimer = window.setTimeout(() => rocketEl.classList.remove("is-flying"), 220);
+
+      // The nozzle sits just inside the tail end of the ship.
+      const nozzle = x - state.dir * (shipLength() / 2 - 2);
+      // Turning around swaps which end the tail is on — start puffing fresh
+      // from the new nozzle rather than filling in across the ship's body.
+      if (!lastEmit || lastEmit.dir !== state.dir) {
+        emit(nozzle, state.dir);
+        lastEmit = { at: nozzle, dir: state.dir };
+        return;
+      }
+      const dist = nozzle - lastEmit.at;
+      const n = Math.floor(Math.abs(dist) / EMIT_STEP);
+      for (let k = 1; k <= n; k++) emit(lastEmit.at + (dist * k) / n, state.dir);
+      if (n) lastEmit.at = nozzle;
+    }
+
+    function fly(target, onComplete) {
+      flight?.kill();
+      flight = null;
+      if (reduced || Math.abs(target - state.x) < 1) {
+        moveTo(target, { trail: false });
+        onComplete?.();
+        return;
+      }
+      const duration = gsap.utils.clamp(0.45, 0.9, Math.abs(target - state.x) / 900);
+      const proxy = { x: state.x };
+      flight = gsap.to(proxy, {
+        x: target,
+        duration,
+        ease: "power2.inOut",
+        onUpdate: () => moveTo(proxy.x),
+        onComplete: () => {
+          flight = null;
+          onComplete?.();
+        },
+      });
+    }
+
+    // ── Scroll carries it along this page's stretch of the bar ─────────
+    const ORDER = ["home", "work", "about", "playground"];
+    const work = isHome ? document.querySelector("#work") : null;
+    /** How far down the page you are (0–1), read live: a cached page
+     *  height goes stale as media and fonts settle, leaving the rocket
+     *  short of its stretch's end at the very bottom. */
+    const scroll = {
+      get p() {
+        return gsap.utils.clamp(0, 1, window.scrollY / Math.max(1, scrollSpan()));
+      },
+    };
+
+    /** Where the last checkpoint's stretch runs out: the rocket's nose
+     *  touching the divider before the contact icons (or the bar's edge,
+     *  where they're hidden). */
+    function endX() {
+      const icons = header.querySelector(".site-header__icons");
+      const rect = icons?.getBoundingClientRect();
+      const edge = rect && rect.width ? rect.left - headerLeft() : header.clientWidth - 8;
+      return edge - shipLength() / 2 - 3;
+    }
+
+    /** The [start, end] of the bar this page's scroll moves the rocket
+     *  across. Home runs name → Work; any other page runs from midway back
+     *  to the previous checkpoint to midway on to the next — except the
+     *  last, which runs all the way to the icon divider. */
+    function stretch(page = isHome ? "" : current) {
+      if (!page) return [checkpointX("home"), checkpointX("work")];
+      const i = ORDER.indexOf(page);
+      const here = checkpointX(page);
+      const prev = i > 0 ? checkpointX(ORDER[i - 1]) : here;
+      const last = i === ORDER.length - 1;
+      const end = last ? endX() : (here + checkpointX(ORDER[i + 1])) / 2;
+      return [(prev + here) / 2, end];
+    }
+
+    /** Scroll distance that covers the stretch: the whole page. */
+    function scrollSpan() {
+      return document.documentElement.scrollHeight - window.innerHeight;
+    }
+
+    // The homepage's trip, like the other pages', passes under its own
+    // checkpoint midway: a steady run from Home (at the top) to Work
+    // (halfway through the Work section), then on to halfway toward About
+    // by the bottom of the page.
+    const ARRIVE_KEY = "navRocket:workArrive";
+
+    /** Scroll offsets that shape the homepage trip. */
+    function homeMarks() {
+      const span = scrollSpan();
+      const workTop = work ? work.getBoundingClientRect().top + window.scrollY - header.offsetHeight : span;
+      const split = gsap.utils.clamp(0.01, 0.98, workTop / Math.max(1, span));
+      return { split, mid: (split + 1) / 2 };
+    }
+
+    /** Homepage rocket position for overall page-scroll progress `p`. */
+    function homePath(p) {
+      const lerp = gsap.utils.interpolate;
+      const home = checkpointX("home");
+      const workX = checkpointX("work");
+      const end = (workX + checkpointX("about")) / 2;
+      const { mid } = homeMarks();
+      return p < mid ? lerp(home, workX, p / mid) : lerp(workX, end, (p - mid) / (1 - mid));
+    }
+
+    /** How far from Home to Work the rocket is when the homepage opens at
+     *  the Work section. Only the homepage can measure it, so it remembers
+     *  it for flights from other pages; before that, a typical value. */
+    function workArrival() {
+      if (isHome) {
+        const { split, mid } = homeMarks();
+        return split / mid;
+      }
+      const saved = Number(store.get(ARRIVE_KEY));
+      return saved > 0 && saved < 1 ? saved : 0.55;
+    }
+
+    // Pages too short to scroll just park under their own checkpoint.
+    const canScroll = () => scrollSpan() > 40;
+
+    /** Where the page a link leads to will start the rocket, so a flight
+     *  can end exactly there and the next page carries on without a turn.
+     *  The name opens the homepage at the top (Home); Work opens it
+     *  scrolled to the Work section (partway to Work — see workArrival); any
+     *  other page opens at its top (the start of its stretch). */
+    function landingX(id) {
+      if (id === "home") return checkpointX("home");
+      if (id === "work") return gsap.utils.interpolate(checkpointX("home"), checkpointX("work"), workArrival());
+      return stretch(id)[0];
+    }
+
+    function restingX() {
+      if (!canScroll()) return checkpointX(current || "home");
+      if (isHome) return homePath(scroll.p);
+      const [from, to] = stretch();
+      return gsap.utils.interpolate(from, to, scroll.p);
+    }
+
+    // Until the page's scroll position has settled (ScrollTrigger's first
+    // refresh, after the browser has jumped to any #anchor), scroll updates
+    // are ignored: otherwise a page opened partway down — at #work, or on a
+    // reload — would scrub the rocket there from the top, printing a streak
+    // across the bar and turning it around.
+    let settled = false;
+
+    // Scrolling eases the rocket toward its spot rather than snapping, so
+    // it glides; each scroll restarts the ease from wherever it is now.
+    const glide = { x: 0 };
+    const follow = gsap.quickTo(glide, "x", {
+      duration: reduced ? 0 : 0.5,
+      ease: "power3.out",
+      onUpdate: () => {
+        if (settled && !flight) moveTo(glide.x);
+      },
+    });
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (settled && !flight) follow(restingX(), state.x);
+      },
+      { passive: true },
+    );
+
+    /** Opened at an #anchor: has the browser's jump there landed yet? */
+    function anchorReached() {
+      const target = window.location.hash ? document.querySelector(window.location.hash) : null;
+      if (!target) return true;
+      return Math.abs(target.getBoundingClientRect().top - header.offsetHeight) < 60;
+    }
+
+    const settleBy = performance.now() + 1500;
+    function settle() {
+      if (settled) return;
+      // Wait (a frame at a time) for any anchor jump, but not forever.
+      if (!anchorReached() && performance.now() < settleBy) {
+        requestAnimationFrame(settle);
+        return;
+      }
+      settled = true;
+      if (isHome) store.set(ARRIVE_KEY, String(workArrival().toFixed(3)));
+      if (!flight) moveTo(restingX(), { trail: false });
+    }
+
+    // ── Clicks: fly to the checkpoint, then go ─────────────────────────
+    header.addEventListener("click", (event) => {
+      const link = /** @type {HTMLAnchorElement | null} */ (
+        /** @type {HTMLElement} */ (event.target).closest("a[data-checkpoint]")
+      );
+      if (!link) return;
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const id = link.dataset.checkpoint;
+      const url = new URL(link.href, window.location.href);
+      const samePage = url.pathname === window.location.pathname;
+
+      // Home page targets (Work, the name) just scroll; the scroll above
+      // carries the rocket along.
+      if (isHome && samePage) {
+        event.preventDefault();
+        const to = url.hash || 0;
+        if (reduced) {
+          to ? document.querySelector(to)?.scrollIntoView() : window.scrollTo(0, 0);
+        } else {
+          gsap.to(window, { duration: 1.05, ease: "power2.inOut", scrollTo: { y: to, offsetY: to ? header.offsetHeight + 16 : 0 } });
+        }
+        return;
+      }
+      if (samePage && !url.hash) {
+        event.preventDefault();
+        return;
+      }
+
+      event.preventDefault();
+      fly(landingX(id), () => {
+        // The debounced save would be lost to the page change.
+        saveNow();
+        store.set(FROM_KEY, JSON.stringify({ x: state.x / width, dir: state.dir }));
+        window.location.href = link.href;
+      });
+    });
+
+    // ── Start ──────────────────────────────────────────────────────────
+    sizeCanvas();
+    try {
+      const saved = JSON.parse(store.get(TRAIL_KEY) || "[]");
+      if (Array.isArray(saved)) restore(saved);
+    } catch {}
+    draw();
+
+    // Arriving from another page: pick up where the last one left off,
+    // still facing the same way. The flight there already aimed for this
+    // page's starting spot, so any remaining gap is just layout drift —
+    // small ones are snapped rather than flown, so it never turns around.
+    let from = null;
+    try {
+      from = JSON.parse(store.get(FROM_KEY) || "null");
+    } catch {}
+    store.remove(FROM_KEY);
+
+    if (from && typeof from.x === "number" && !reduced) {
+      if (from.dir === 1 || from.dir === -1) state.dir = from.dir;
+      state.x = from.x * width;
+      render();
+      // Opening the homepage at #work lands at Work. Scroll positions aren't
+      // settled yet this early (the browser's jump to the anchor comes
+      // later), so don't trust restingX() for it.
+      const target = isHome && window.location.hash === "#work" ? landingX("work") : restingX();
+      if (Math.abs(target - state.x) < 12) {
+        state.x = target;
+        render();
+      } else {
+        requestAnimationFrame(() => fly(target));
+      }
+    } else {
+      moveTo(restingX(), { trail: false });
+    }
+
+    // Checkpoints move when the layout does (resize, webfonts swapping in).
+    // A layout change mid-flight would leave the flight aiming at a stale
+    // position, so drop it and re-park.
+    function relayout() {
+      sizeCanvas();
+      // Before the scroll position settles, restingX() still reads the top
+      // of the page; settle() parks it properly once it's known.
+      if (!settled) return;
+      flight?.kill();
+      flight = null;
+      moveTo(restingX(), { trail: false });
+    }
+    window.addEventListener("resize", relayout);
+    // Webfonts swapping in nudge the checkpoints slightly; re-park without
+    // cutting short a landing that's already under way.
+    document.fonts?.ready.then(() => {
+      sizeCanvas();
+      if (settled && !flight) moveTo(restingX(), { trail: false });
+    });
+    ScrollTrigger.addEventListener("refresh", () => {
+      if (!settled) settle();
+      else if (!flight) moveTo(restingX(), { trail: false });
+    });
+    // In case the first refresh already happened before this ran.
+    window.setTimeout(settle, 1200);
+  }
+</script>

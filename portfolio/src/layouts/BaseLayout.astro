@@ -4,7 +4,6 @@ import "../styles/global.css";
 import Analytics from "@vercel/analytics/astro";
 
 import Nav from "../components/Nav.astro";
-import ScrollRocket from "../components/ScrollRocket.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import MobileGate from "../components/MobileGate.astro";
 import CursorTrail from "../components/CursorTrail.astro";
@@ -18,7 +17,6 @@ interface Props {
 }
 
 const { title = site.title, description = site.description, image = "/og.png" } = Astro.props;
-const isHome = Astro.url.pathname === "/";
 
 // Absolute URLs for canonical + Open Graph / Twitter tags. Astro.site comes
 // from `site` in astro.config.mjs.
@@ -27,7 +25,7 @@ const ogImage = new URL(image, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" style={isHome ? undefined : "--nav-offset: var(--nav-h)"}>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -81,7 +79,6 @@ const ogImage = new URL(image, Astro.site);
   <body class="bg-paper font-script text-ink antialiased">
     <MobileGate />
     <Nav />
-    <ScrollRocket />
     <div class="page-content">
       <slot />
     </div>
@@ -99,7 +96,7 @@ const ogImage = new URL(image, Astro.site);
      the footer down to the true bottom of the screen instead of leaving
      bare page background beneath it. `min-height` (not `height`) so pages
      taller than the viewport — like the homepage — still grow normally;
-     Nav/ScrollRocket are position:fixed, so they sit outside this flex
+     Nav is position:fixed, so they sit outside this flex
      flow entirely and aren't affected. */
   body {
     display: flex;

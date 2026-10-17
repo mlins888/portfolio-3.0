@@ -6,12 +6,8 @@
  * layer order — later siblings paint on top.
  *
  * Building hotspots smooth-scroll to Work anchors; SpeechBubble only mounts
- * while a building is hovered. The display name uses data-site-brand so Nav can
- * Flip it into the header on scroll.
- *
- * HeroNavBadge is the site's real nav pre-scroll (see its own doc comment)
- * — Nav.astro fades it out, alongside the rest of this cover's furniture,
- * once the real nav bar solidifies.
+ * while a building is hovered. The cover sits below the always-on nav bar
+ * (Nav.astro); HeroNavBadge's comic banners are a second, decorative way in.
  */
 import { hero } from "../../content/hero";
 import { site } from "../../content/site";
@@ -60,9 +56,6 @@ const stampY = logoY + logoSize.height + columnGap;
     <div class="absolute bg-coral" style={canvasStyle({ x: 42, y: 394, width: 1355, height: 586 })}>
     </div>
 
-    <!-- The striped ribbon and rocket are the site's scroll progress bar —
-         they live in components/ScrollRocket.astro, fixed under the nav. -->
-
     <p
       class="absolute text-center font-script text-white"
       style={css({ left: u(260), top: u(83), width: u(400), fontSize: u(32), lineHeight: "0.91" })}
@@ -71,16 +64,13 @@ const stampY = logoY + logoSize.height + columnGap;
       {hero.greeting}
     </p>
 
-    <!-- Brand slot: Flip moves this same node into the nav bar on scroll. -->
     <div
       class="hero-brand-slot absolute"
       style={css({ left: u(352), top: u(111), width: u(713) })}
-      data-brand-home
     >
       <h1
         class="hero-name text-center font-display uppercase text-cream"
         style={css({ fontSize: u(130), lineHeight: "0.91", width: "100%" })}
-        data-site-brand
       >
         {hero.nameLines.map((line) => (
           <span class="block" data-anim="headline-line">
@@ -162,6 +152,8 @@ const stampY = logoY + logoSize.height + columnGap;
        unlike `hidden`, allows mixing with a visible axis. */
     overflow-x: clip;
     overflow-y: visible;
+    /* Clear the fixed nav bar. */
+    margin-top: var(--nav-offset);
     /* Paint above the Work section's cream top padding, which comes next. */
     z-index: 1;
   }
@@ -183,24 +175,6 @@ const stampY = logoY + logoSize.height + columnGap;
       calc(17 * var(--u)) calc(8 * var(--u)) 0 var(--color-ink);
   }
 
-  .hero-name.is-in-nav {
-    text-shadow: 2px 2px 0 var(--color-ink);
-    text-align: left;
-    font-size: clamp(1.05rem, 2.2vw, 1.45rem);
-    letter-spacing: 0.02em;
-    line-height: 1;
-    width: auto;
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .hero-name.is-in-nav span {
-    display: inline;
-  }
-
-  .hero-name.is-in-nav span + span::before {
-    content: " ";
-  }
 
   .building-bubble-host {
     position: absolute;

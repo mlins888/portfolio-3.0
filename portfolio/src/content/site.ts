@@ -8,6 +8,7 @@ export const site = {
     // Work lives on the homepage, reached by anchor rather than its own route.
     { label: "Work", href: "/#work" },
     { label: "About", href: "/about" },
-    { label: "Playground", href: "/playground" },
+    // `short` is shown instead of `label` where the header bar is narrow.
+    { label: "Playground", short: "Play", href: "/playground" },
   ],
 };
