@@ -343,11 +343,8 @@ const stampY = logoY + logoSize.height + columnGap;
       onClick: (hotspot) => {
         let target = hotspot.getAttribute("data-target");
         if (!target) return;
-        // A target can be hidden at some sizes (the "other projects" panels
-        // are hidden on phones) — land on the playground link instead of
-        // scrolling to nothing.
-        const el = document.querySelector(target);
-        if (el instanceof HTMLElement && el.offsetParent === null) target = "#playground-cta";
+        // Fall back to the top of Work if a target ever goes missing.
+        if (!document.querySelector(target)) target = "#work";
         if (prefersReducedMotion()) {
           document.querySelector(target)?.scrollIntoView();
           return;

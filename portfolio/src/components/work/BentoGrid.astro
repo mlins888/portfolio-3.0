@@ -1,0 +1,518 @@
+---
+/**
+ * Homepage Work grid — every piece of work in one bento, so a quick skim
+ * still shows a lot. Big tiles are the two case studies (their demo
+ * recordings playing in phone frames), medium tiles the other projects,
+ * small tiles the tees and social accounts from the playground.
+ *
+ * Hovering (or focusing) a tile wipes a flat caption bar in along its
+ * bottom edge. Case-study / project tiles link to their pages; tee and
+ * social tiles open the playground's own cards in PlaygroundModal (mounted
+ * on the homepage) through the same `playground:open` event the closet
+ * scene uses.
+ *
+ * Layout lives entirely in CSS: tiles carry a size class and the grid's
+ * column count changes with the grid's own width (container queries), so
+ * the order and sizes are just `work.bento` in content/work.ts.
+ */
+import { Image } from "astro:assets";
+import { work, type BentoEntry } from "../../content/work";
+import { playground, type ShirtPathway, type SocialBoardPathway } from "../../content/playground";
+import PhoneFrame from "./pulse/PhoneFrame.astro";
+
+const shirts = playground.pathways.filter((p): p is ShirtPathway => p.type === "shirt");
+const social = playground.pathways.find((p): p is SocialBoardPathway => p.type === "social");
+
+const TONE = {
+  coral: "var(--color-coral)",
+  teal: "var(--color-teal)",
+  "teal-deep": "var(--color-teal-deep)",
+  orange: "var(--color-orange)",
+} as const;
+
+/** Each bento entry resolved against its real content. */
+function resolve(entry: BentoEntry) {
+  switch (entry.kind) {
+    case "case": {
+      const study = work.caseStudies.find((s) => s.id === entry.id);
+      if (!study) throw new Error(`bento: no case study "${entry.id}"`);
+      return { entry, study, title: study.title, meta: `${study.role} · ${study.year}`, tone: TONE.coral };
+    }
+    case "project": {
+      const project = work.otherProjects.find((p) => p.id === entry.id);
+      if (!project) throw new Error(`bento: no project "${entry.id}"`);
+      return { entry, project, title: project.title, meta: project.meta, tone: TONE[project.tone] };
+    }
+    case "shirt": {
+      const shirt = shirts.find((s) => s.id === entry.id);
+      if (!shirt) throw new Error(`bento: no shirt "${entry.id}"`);
+      return { entry, shirt, title: entry.caption ?? shirt.title, meta: "Tee design", tone: TONE.coral };
+    }
+    case "social": {
+      const feed = social?.feeds.find((f) => f.name === entry.feed);
+      if (!social || !feed) throw new Error(`bento: no social feed "${entry.feed}"`);
+      return { entry, feed, title: feed.name, meta: "Social media", tone: TONE.teal };
+    }
+  }
+}
+
+const tiles = work.bento.map(resolve);
+let socialIndex = 0;
+
+---
+
+<div class="bento-wrap">
+  <ul class="bento" data-bento>
+    {
+      tiles.map((tile) => {
+        const { entry } = tile;
+        const style = `--tone: ${tile.tone};`;
+        const caption = (
+          <span class="bento-tile__caption" aria-hidden="true">
+            <span class="bento-tile__title font-body font-semibold">{tile.title}</span>
+            <span class="bento-tile__meta font-body">{tile.meta}</span>
+          </span>
+        );
+
+        if (entry.kind === "case" && "study" in tile && tile.study) {
+          const { study } = tile;
+          return (
+            <li class="bento-tile bento-tile--lg" style={style}>
+              <a class="bento-tile__hit" id={study.id} href={study.href} aria-label={`${study.title} case study`}>
+                <span class="bento-tile__phones" style={`--backdrop: ${study.backdrop};`}>
+                  {study.phones.map((phone, i) => (
+                    <span class:list={["bento-phone", i % 2 ? "bento-phone--right" : "bento-phone--left"]}>
+                      {phone.framed ? (
+                        <PhoneFrame variant="video" video={phone.video} />
+                      ) : (
+                        <span class="bento-phone__bare">
+                          <video src={phone.video} autoplay muted loop playsinline preload="metadata" aria-hidden="true" />
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </span>
+                {caption}
+              </a>
+            </li>
+          );
+        }
+
+        if (entry.kind === "project" && "project" in tile && tile.project) {
+          const { project } = tile;
+          const focus = `object-position: ${project.imageFocus ?? "50% 50%"};`;
+          return (
+            <li class="bento-tile bento-tile--md" style={style}>
+              <a class="bento-tile__hit" id={project.id} href={project.href} aria-label={`${project.title} project`}>
+                {project.video ? (
+                  <video
+                    class="bento-tile__media"
+                    style={focus}
+                    src={project.video}
+                    poster={project.image.src}
+                    autoplay
+                    muted
+                    loop
+                    playsinline
+                    preload="metadata"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <Image
+                    class="bento-tile__media"
+                    style={focus}
+                    src={project.image}
+                    alt=""
+                    widths={[400, 640, 960]}
+                    sizes="(min-width: 900px) 24rem, 50vw"
+                  />
+                )}
+                {caption}
+              </a>
+            </li>
+          );
+        }
+
+        if (entry.kind === "shirt" && "shirt" in tile && tile.shirt) {
+          const { shirt } = tile;
+          const design = shirt.designs[shirt.designs.length - 1];
+          return (
+            <li class="bento-tile bento-tile--sm" style={style}>
+              <button
+                type="button"
+                class="bento-tile__hit"
+                data-playground-open={shirt.id}
+                aria-label={`${tile.title} tee design`}
+              >
+                <Image class="bento-tile__media" src={design.image} alt="" widths={[240, 400, 560]} sizes="12rem" />
+                {caption}
+              </button>
+            </li>
+          );
+        }
+
+        if (entry.kind === "social" && "feed" in tile && tile.feed) {
+          const { feed } = tile;
+          const offset = socialIndex++ * 1.1;
+          return (
+            <li class="bento-tile bento-tile--sm" style={style}>
+              <button
+                type="button"
+                class="bento-tile__hit"
+                data-playground-open="social"
+                aria-label={`${feed.name} social media designs`}
+              >
+                <span class="bento-tile__stack" style={`--count: ${feed.posts.length}; --offset: ${offset}s;`}>
+                  {feed.posts.map((post, i) => (
+                    <Image
+                      class="bento-tile__media bento-tile__post"
+                      style={`--i: ${i};`}
+                      src={post.image}
+                      alt=""
+                      widths={[240, 400, 560]}
+                      sizes="12rem"
+                    />
+                  ))}
+                </span>
+                {caption}
+              </button>
+            </li>
+          );
+        }
+
+        return null;
+      })
+    }
+  </ul>
+</div>
+
+<style>
+  .bento-wrap {
+    container-type: inline-size;
+    width: 100%;
+    max-width: 72rem;
+    margin-inline: auto;
+  }
+
+  /* A wrapping row of tiles, each with a fixed shape: lg 3:2, md 4:3,
+     sm 4:5 (the tee designs and social posts). `--per-row` sets how many
+     of a size share a row; when a row ends up short (9 small tiles = 5 + 4
+     on desktop), its tiles grow to fill the width, so every row lines up
+     edge to edge and tiles just get a little bigger instead of leaving a
+     gap. */
+  .bento {
+    --gap: clamp(0.75rem, 1.4cqi, 1.1rem);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .bento-tile {
+    /* The 0.5px shaved off stops sub-pixel rounding from bumping the last
+       tile of a full row onto the next line. */
+    flex: 1 1 calc((100% - (var(--per-row) - 1) * var(--gap)) / var(--per-row) - 0.5px);
+  }
+
+  .bento-tile--lg { --per-row: 2; aspect-ratio: 3 / 2; }
+  .bento-tile--md { --per-row: 3; aspect-ratio: 4 / 3; }
+  .bento-tile--sm { --per-row: 5; aspect-ratio: 4 / 5; }
+
+  /* Tablet: case studies full width, then three across. */
+  @container (max-width: 56rem) {
+    .bento-tile--lg { --per-row: 1; }
+    .bento-tile--sm { --per-row: 3; }
+  }
+
+  /* Phones: one project per row, small tiles three across. */
+  @container (max-width: 34rem) {
+    .bento-tile--md { --per-row: 1; }
+  }
+
+  .bento-tile {
+    position: relative;
+    min-width: 0;
+    border: 3px solid var(--color-ink);
+    border-radius: 1.25rem;
+    background: var(--color-cream);
+    overflow: hidden;
+    transition:
+      transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1),
+      box-shadow 0.35s ease;
+  }
+
+  /* Same "lifted card" hover as the playground pill: nudge up-left, a hard
+     gold silhouette shows behind. */
+  .bento-tile:hover,
+  .bento-tile:focus-within {
+    transform: translate(-0.3rem, -0.3rem);
+    box-shadow: 0.3rem 0.3rem 0 var(--color-gold);
+  }
+
+  .bento-tile__hit {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    text-decoration: none;
+    cursor: var(--cursor-hand, pointer);
+    scroll-margin-top: calc(var(--nav-offset) + 1.5rem);
+  }
+
+  .bento-tile__hit:focus-visible {
+    outline: none;
+  }
+
+  .bento-tile:has(.bento-tile__hit:focus-visible) {
+    outline: 3px solid var(--color-teal-deep);
+    outline-offset: 4px;
+  }
+
+  .bento-tile__media {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ── Case-study phones ─────────────────────────────────────────────── */
+
+  .bento-tile__phones {
+    position: absolute;
+    inset: 0;
+    container-type: size;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6cqw;
+    /* Faint halftone screen over the flat brand colour. */
+    background-color: var(--backdrop);
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--color-ink) 14%, transparent) 0 1.2px,
+      transparent 1.6px
+    );
+    background-size: 9px 9px;
+  }
+
+  .bento-phone {
+    /* Sized by height, but never so wide that two no longer fit side by side
+       (the tile goes square on phones). */
+    --phone-w: min(calc(94cqh * 1294 / 2656), 36cqw);
+    display: block;
+    transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+  }
+
+  .bento-phone--left { transform: rotate(-4deg) translateY(9%); }
+  .bento-phone--right { transform: rotate(4deg) translateY(4%); }
+
+  .bento-tile:hover .bento-phone--left { transform: rotate(-6deg) translateY(5%); }
+  .bento-tile:hover .bento-phone--right { transform: rotate(6deg) translateY(0%); }
+
+  /* A recording that already has its own bezel: clip it to that bezel's
+     rounded outline so the black canvas around it never shows. */
+  .bento-phone__bare {
+    display: block;
+    width: calc(var(--phone-w) * 1.04);
+    aspect-ratio: 640 / 1270;
+    clip-path: inset(0.9% 3.2% 0.9% 3.2% round 15% / 7.4%);
+  }
+
+  .bento-phone__bare video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* ── Social feed cross-fade ────────────────────────────────────────── */
+
+  .bento-tile__stack {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Posts are portrait, so the square crop keeps their tops (where the
+     titles sit) instead of slicing through the middle. */
+  .bento-tile__post {
+    object-position: 50% 0%;
+    opacity: 0;
+    animation: bento-post calc(var(--count) * 3s) linear infinite;
+    animation-delay: calc(var(--i) * 3s - var(--offset));
+  }
+
+  .bento-tile__post:first-child {
+    opacity: 1;
+  }
+
+  /* Each post holds for ~3s of a 4-post loop. The incoming post fades in on
+     top (z-index 2) while the outgoing one stays fully opaque beneath it
+     (z-index 1), so the tile background never shows through mid-fade. */
+  @keyframes bento-post {
+    0% { opacity: 0; z-index: 2; }
+    6% { opacity: 1; z-index: 2; }
+    25% { opacity: 1; z-index: 2; }
+    25.01% { opacity: 1; z-index: 1; }
+    31% { opacity: 1; z-index: 1; }
+    31.01% { opacity: 0; z-index: 1; }
+    100% { opacity: 0; z-index: 1; }
+  }
+
+  /* ── Caption bar ───────────────────────────────────────────────────── */
+
+  .bento-tile__caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.75rem;
+    padding: 0.65rem 1rem 0.7rem;
+    border-top: 3px solid var(--color-ink);
+    background-color: var(--tone);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+    pointer-events: none;
+  }
+
+  .bento-tile__title,
+  .bento-tile__meta {
+    color: var(--color-cream);
+    opacity: 0;
+    transform: translateX(-0.5rem);
+    transition:
+      opacity 0.3s ease 0.2s,
+      transform 0.3s ease 0.2s;
+  }
+
+  .bento-tile__title {
+    font-size: clamp(1.15rem, 2cqi, 1.6rem);
+    line-height: 1.1;
+    text-shadow: 1.5px 1.5px 0 var(--color-ink);
+  }
+
+  .bento-tile__meta {
+    font-size: clamp(0.75rem, 1.1cqi, 0.9rem);
+    font-weight: 600;
+    text-shadow: 1px 1px 0 var(--color-ink);
+  }
+
+  .bento-tile--lg .bento-tile__caption {
+    padding: 0.8rem 1.25rem 0.85rem;
+  }
+
+  .bento-tile--lg .bento-tile__title {
+    font-size: clamp(1.4rem, 2.7cqi, 2.1rem);
+  }
+
+  .bento-tile--lg .bento-tile__meta {
+    font-size: clamp(0.8rem, 1.3cqi, 1rem);
+  }
+
+  .bento-tile--sm .bento-tile__caption {
+    padding: 0.45rem 0.7rem 0.5rem;
+  }
+
+  .bento-tile--sm .bento-tile__title {
+    font-size: clamp(0.95rem, 1.4cqi, 1.15rem);
+  }
+
+  .bento-tile--sm .bento-tile__meta {
+    display: none;
+  }
+
+  .bento-tile:hover .bento-tile__caption,
+  .bento-tile:focus-within .bento-tile__caption {
+    clip-path: inset(0 0 0 0);
+  }
+
+  .bento-tile:hover :is(.bento-tile__title, .bento-tile__meta),
+  .bento-tile:focus-within :is(.bento-tile__title, .bento-tile__meta) {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* No hover on touch screens — keep every label showing. */
+  @media (hover: none) {
+    .bento-tile__caption {
+      clip-path: inset(0 0 0 0);
+    }
+
+    .bento-tile__title,
+    .bento-tile__meta {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bento-tile,
+    .bento-phone,
+    .bento-tile__caption,
+    .bento-tile__title,
+    .bento-tile__meta {
+      transition: none;
+    }
+
+    .bento-tile:hover,
+    .bento-tile:focus-within {
+      transform: none;
+    }
+
+    .bento-tile__post {
+      animation: none;
+    }
+  }
+</style>
+
+<script>
+  import { prefersReducedMotion } from "../../scripts/gsap-setup.js";
+
+  const grid = document.querySelector("[data-bento]");
+
+  if (grid) {
+    // Videos only run while their tile is on screen; reduced motion leaves
+    // them paused on the first frame.
+    const videos = Array.from(grid.querySelectorAll("video"));
+    if (prefersReducedMotion()) {
+      videos.forEach((video) => {
+        video.removeAttribute("autoplay");
+        video.pause();
+      });
+    } else {
+      const io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            const video = /** @type {HTMLVideoElement} */ (target);
+            if (isIntersecting) video.play().catch(() => {});
+            else video.pause();
+          });
+        },
+        { threshold: 0.2 },
+      );
+      videos.forEach((video) => io.observe(video));
+    }
+
+    // Tee + social tiles open the playground's own cards (PlaygroundModal).
+    grid.addEventListener("click", (event) => {
+      const button = /** @type {HTMLElement} */ (event.target).closest("[data-playground-open]");
+      if (!button) return;
+      const id = button.getAttribute("data-playground-open");
+      window.dispatchEvent(new CustomEvent("playground:open", { detail: { id } }));
+    });
+  }
+</script>

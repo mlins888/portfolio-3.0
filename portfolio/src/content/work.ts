@@ -2,7 +2,17 @@ import type { ImageMetadata } from "astro";
 
 import pulsePreview from "../assets/work/pulse-preview.png";
 import heirloomPreview from "../assets/work/heirloom-preview.png";
-import healthHoundPreview from "../assets/work/health-hound-preview.png";
+import healthHoundPoster from "../assets/work/previews/health-hound-poster.jpg";
+import healthHoundVideo from "../assets/work/previews/health-hound.mp4?url";
+import duQuantumPoster from "../assets/work/previews/duquantum-poster.jpg";
+import duQuantumVideo from "../assets/work/previews/duquantum.mp4?url";
+import hackDukePoster from "../assets/work/previews/hackduke-poster.jpg";
+import hackDukeVideo from "../assets/work/previews/hackduke.mp4?url";
+
+import pulseGoalSetVideo from "../assets/work/pulse/goal-set-demo.mp4?url";
+import pulseTrophyVideo from "../assets/work/pulse/trophy-demo.mp4?url";
+import heirloomPhotoBoardVideo from "../assets/work/heirloom/photo-board-demo.mp4?url";
+import heirloomSparkFlowVideo from "../assets/work/heirloom/spark-flow-demo.mp4?url";
 
 export type PillTone = "coral" | "teal";
 
@@ -22,6 +32,20 @@ export interface CaseStudy {
   imageAspect: number;
   /** Horizontal focal point for the cover crop (CSS object-position x). */
   imageFocusX?: string;
+  /** Screen recordings shown as phones on the homepage bento tile. */
+  phones: BentoPhone[];
+  /** Flat backdrop behind the phones on the bento tile. */
+  backdrop: string;
+}
+
+/**
+ * One phone on a large bento tile. `framed` recordings are bare screen
+ * captures dropped into PhoneFrame's bezel; unframed ones were recorded
+ * with their own bezel, so they're only clipped to its rounded outline.
+ */
+export interface BentoPhone {
+  video: string;
+  framed: boolean;
 }
 
 export interface OtherProject {
@@ -29,18 +53,29 @@ export interface OtherProject {
   title: string;
   href?: string;
   tone: "teal" | "orange" | "teal-deep";
-  image?: ImageMetadata;
-  imageAlt?: string;
+  /** Short line under the title in the bento caption. */
+  meta: string;
+  image: ImageMetadata;
+  imageAlt: string;
+  /** Optional looping screen recording; `image` doubles as its poster. */
+  video?: string;
+  /** CSS object-position for the cover crop. */
+  imageFocus?: string;
   interactive: boolean;
 }
 
 /**
- * The "see other projects..." heading + project panels are hidden for now
- * (still built — flip this back to `true` to show them). While hidden, the
- * third hero building points at the playground link instead of the missing
- * panels.
+ * Homepage bento grid, in reading order. Each entry points at content that
+ * already lives elsewhere (case studies and other projects here, tees and
+ * the social feeds in content/playground.ts), so nothing is duplicated.
+ * `size` sets the tile's grid span (see BentoGrid.astro).
  */
-const SHOW_OTHER_PROJECTS = true;
+export type BentoEntry =
+  | { kind: "case"; id: string; size: "lg" }
+  | { kind: "project"; id: string; size: "md" }
+  /** `caption` overrides the tee's title in its caption bar. */
+  | { kind: "shirt"; id: string; size: "sm"; caption?: string }
+  | { kind: "social"; feed: string; size: "sm" };
 
 export const work = {
   caseStudies: [
@@ -56,6 +91,11 @@ export const work = {
       image: pulsePreview,
       imageAlt: "Pulse for Research app screens on phone and watch",
       imageAspect: 488 / 366,
+      phones: [
+        { video: pulseGoalSetVideo, framed: true },
+        { video: pulseTrophyVideo, framed: false },
+      ],
+      backdrop: "var(--color-teal-deep)",
     },
     {
       id: "heirloom",
@@ -68,19 +108,24 @@ export const work = {
       image: heirloomPreview,
       imageAlt: "heirloom logo on a tan grid with pink pushpins and plum thread",
       imageAspect: 561 / 364,
+      phones: [
+        { video: heirloomPhotoBoardVideo, framed: true },
+        { video: heirloomSparkFlowVideo, framed: true },
+      ],
+      backdrop: "var(--color-orange)",
     },
   ] satisfies CaseStudy[],
 
-  showOtherProjects: SHOW_OTHER_PROJECTS,
-  otherProjectsHeading: "see other projects...",
   otherProjects: [
     {
       id: "health-hound",
       title: "HealthHound",
       href: "/work/health-hound",
       tone: "teal",
-      image: healthHoundPreview,
+      meta: "Mobile app",
+      image: healthHoundPoster,
       imageAlt: "HealthHound mobile app preview",
+      video: healthHoundVideo,
       interactive: true,
     },
     {
@@ -88,6 +133,10 @@ export const work = {
       title: "DuQuantum",
       href: "/work/duquantum",
       tone: "orange",
+      meta: "Website",
+      image: duQuantumPoster,
+      imageAlt: "DuQuantum hackathon website",
+      video: duQuantumVideo,
       interactive: true,
     },
     {
@@ -95,16 +144,33 @@ export const work = {
       title: "HackDuke",
       href: "/work/hackduke",
       tone: "teal-deep",
+      meta: "Website",
+      image: hackDukePoster,
+      imageAlt: "HackDuke hackathon website",
+      video: hackDukeVideo,
       interactive: true,
     },
   ] satisfies OtherProject[],
 
-  playgroundCta: {
-    before: "...or visit the",
-    pill: "playground",
-    after: "to see some of my other design pursuits",
-    href: "/playground",
-  },
+  bento: [
+    { kind: "case", id: "pulse", size: "lg" },
+    { kind: "case", id: "heirloom", size: "lg" },
+    { kind: "project", id: "duquantum", size: "md" },
+    { kind: "project", id: "health-hound", size: "md" },
+    { kind: "project", id: "hackduke", size: "md" },
+    // Tees first: on desktop the 9 small tiles wrap 5 + 4, and the shorter
+    // second row grows to fill the width, so the 4 social feeds (the tiles
+    // that cycle through posts) land in the bigger slots.
+    { kind: "shirt", id: "shirt-1", size: "sm" },
+    { kind: "shirt", id: "shirt-2", size: "sm" },
+    { kind: "shirt", id: "shirt-3", size: "sm" },
+    { kind: "shirt", id: "shirt-4", size: "sm", caption: "CHBC College Ministry" },
+    { kind: "shirt", id: "shirt-5", size: "sm" },
+    { kind: "social", feed: "DPAD", size: "sm" },
+    { kind: "social", feed: "DuQuantum", size: "sm" },
+    { kind: "social", feed: "My Creative Journal", size: "sm" },
+    { kind: "social", feed: "EG Ministries", size: "sm" },
+  ] satisfies BentoEntry[] as BentoEntry[],
 
   buildingHotspots: [
     {
@@ -131,8 +197,8 @@ export const work = {
     },
     {
       id: "other-projects",
-      target: SHOW_OTHER_PROJECTS ? "#other-projects" : "#playground-cta",
-      prompt: SHOW_OTHER_PROJECTS ? "see other projects?" : "visit the playground?",
+      target: "#duquantum",
+      prompt: "see other projects?",
       // Raised 20 to sit further behind the heirloom house.
       x: 1185,
       y: 424.57,

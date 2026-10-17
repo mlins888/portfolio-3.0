@@ -2,9 +2,15 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/hero/Hero.astro";
 import WorkSection from "../components/work/WorkSection.astro";
+import PlaygroundModal from "../components/playground/PlaygroundModal.astro";
+import { playground } from "../content/playground";
+
+// The bento's tee + social tiles open these playground cards in place.
+const modalIds = playground.pathways.filter((p) => p.type === "shirt" || p.type === "social").map((p) => p.id);
 ---
 
 <BaseLayout>
   <Hero />
   <WorkSection />
+  <PlaygroundModal ids={modalIds} />
 </BaseLayout>

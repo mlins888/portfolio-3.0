@@ -15,7 +15,14 @@
 import { playground } from "../../content/playground";
 import PlaygroundCard from "./PlaygroundCard.astro";
 
-const { pathways } = playground;
+interface Props {
+  /** Only pre-render these pathways' cards (the homepage bento only opens
+   *  tees + social). Omit to render every card. */
+  ids?: string[];
+}
+
+const { ids } = Astro.props;
+const pathways = ids ? playground.pathways.filter((p) => ids.includes(p.id)) : playground.pathways;
 ---
 
 <div class="playground-modal" data-playground-modal aria-hidden="true">
