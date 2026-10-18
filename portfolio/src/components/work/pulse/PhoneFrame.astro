@@ -32,6 +32,11 @@ interface Props {
   variant: "image" | "video" | "flip";
   image?: FlipImage;
   video?: string;
+  /** First frame for the video, shown until it plays. */
+  poster?: string;
+  /** Animated stand-in a page can swap in when video won't autoplay
+   *  (exposed as data-fallback; see BentoGrid.astro). */
+  fallback?: string;
   before?: FlipImage;
   after?: FlipImage;
   beforeLabel?: string;
@@ -43,6 +48,8 @@ const {
   variant,
   image,
   video,
+  poster,
+  fallback,
   before,
   after,
   beforeLabel = "Old app",
@@ -67,6 +74,8 @@ const {
           <video
             class="phone-frame__media"
             src={video}
+            poster={poster}
+            data-fallback={fallback}
             autoplay
             muted
             loop

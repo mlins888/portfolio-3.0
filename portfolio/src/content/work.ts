@@ -8,6 +8,20 @@ import duQuantumPoster from "../assets/work/previews/duquantum-poster.jpg";
 import duQuantumVideo from "../assets/work/previews/duquantum.mp4?url";
 import hackDukePoster from "../assets/work/previews/hackduke-poster.jpg";
 import hackDukeVideo from "../assets/work/previews/hackduke.mp4?url";
+// Animated-image stand-ins for the videos, used only when a browser won't
+// autoplay video (Safari in Low Power Mode). ?url so they're never fetched
+// unless the swap actually happens.
+import healthHoundFallback from "../assets/work/previews/health-hound.webp?url";
+import duQuantumFallback from "../assets/work/previews/duquantum.webp?url";
+import hackDukeFallback from "../assets/work/previews/hackduke.webp?url";
+import pulseGoalSetFallback from "../assets/work/previews/pulse-goal-set.webp?url";
+import pulseTrophyFallback from "../assets/work/previews/pulse-trophy.webp?url";
+import heirloomPhotoBoardFallback from "../assets/work/previews/heirloom-photo-board.webp?url";
+import heirloomSparkFlowFallback from "../assets/work/previews/heirloom-spark-flow.webp?url";
+import pulseGoalSetPoster from "../assets/work/previews/pulse-goal-set-poster.jpg?url";
+import pulseTrophyPoster from "../assets/work/previews/pulse-trophy-poster.jpg?url";
+import heirloomPhotoBoardPoster from "../assets/work/previews/heirloom-photo-board-poster.jpg?url";
+import heirloomSparkFlowPoster from "../assets/work/previews/heirloom-spark-flow-poster.jpg?url";
 
 import pulseGoalSetVideo from "../assets/work/pulse/goal-set-demo.mp4?url";
 import pulseTrophyVideo from "../assets/work/pulse/trophy-demo.mp4?url";
@@ -32,6 +46,8 @@ export interface CaseStudy {
   imageAspect: number;
   /** Horizontal focal point for the cover crop (CSS object-position x). */
   imageFocusX?: string;
+  /** Short discipline tag shown under the title in the bento caption. */
+  tag: string;
   /** Screen recordings shown as phones on the homepage bento tile. */
   phones: BentoPhone[];
   /** Flat backdrop behind the phones on the bento tile. */
@@ -45,6 +61,10 @@ export interface CaseStudy {
  */
 export interface BentoPhone {
   video: string;
+  /** First frame, shown until (or instead of) playback. */
+  poster: string;
+  /** Animated stand-in for when the browser won't autoplay video. */
+  fallback: string;
   framed: boolean;
 }
 
@@ -59,6 +79,8 @@ export interface OtherProject {
   imageAlt: string;
   /** Optional looping screen recording; `image` doubles as its poster. */
   video?: string;
+  /** Animated stand-in for `video` when the browser won't autoplay it. */
+  fallback?: string;
   /** CSS object-position for the cover crop. */
   imageFocus?: string;
   interactive: boolean;
@@ -84,6 +106,7 @@ export const work = {
       slug: "pulse",
       href: "/work/pulse",
       title: "Pulse: For Research",
+      tag: "Engagement Design · Health Tech",
       role: "Design Lead, Developer",
       year: "2026",
       description:
@@ -92,8 +115,8 @@ export const work = {
       imageAlt: "Pulse for Research app screens on phone and watch",
       imageAspect: 488 / 366,
       phones: [
-        { video: pulseGoalSetVideo, framed: true },
-        { video: pulseTrophyVideo, framed: false },
+        { video: pulseGoalSetVideo, poster: pulseGoalSetPoster, fallback: pulseGoalSetFallback, framed: true },
+        { video: pulseTrophyVideo, poster: pulseTrophyPoster, fallback: pulseTrophyFallback, framed: false },
       ],
       backdrop: "var(--color-teal-deep)",
     },
@@ -102,6 +125,7 @@ export const work = {
       slug: "heirloom",
       href: "/work/heirloom",
       title: "Heirloom",
+      tag: "AI Product Design",
       role: "Design Lead, Developer",
       year: "2026",
       description: "Designing a digital hearth that keeps scattered families’ stories alive",
@@ -109,8 +133,8 @@ export const work = {
       imageAlt: "heirloom logo on a tan grid with pink pushpins and plum thread",
       imageAspect: 561 / 364,
       phones: [
-        { video: heirloomPhotoBoardVideo, framed: true },
-        { video: heirloomSparkFlowVideo, framed: true },
+        { video: heirloomPhotoBoardVideo, poster: heirloomPhotoBoardPoster, fallback: heirloomPhotoBoardFallback, framed: true },
+        { video: heirloomSparkFlowVideo, poster: heirloomSparkFlowPoster, fallback: heirloomSparkFlowFallback, framed: true },
       ],
       backdrop: "var(--color-orange)",
     },
@@ -122,10 +146,11 @@ export const work = {
       title: "HealthHound",
       href: "/work/health-hound",
       tone: "teal",
-      meta: "Mobile app",
+      meta: "Wearable Health UX",
       image: healthHoundPoster,
       imageAlt: "HealthHound mobile app preview",
       video: healthHoundVideo,
+      fallback: healthHoundFallback,
       interactive: true,
     },
     {
@@ -133,10 +158,11 @@ export const work = {
       title: "DuQuantum",
       href: "/work/duquantum",
       tone: "orange",
-      meta: "Website",
+      meta: "Brand Identity · Front-End",
       image: duQuantumPoster,
       imageAlt: "DuQuantum hackathon website",
       video: duQuantumVideo,
+      fallback: duQuantumFallback,
       interactive: true,
     },
     {
@@ -144,10 +170,11 @@ export const work = {
       title: "HackDuke",
       href: "/work/hackduke",
       tone: "teal-deep",
-      meta: "Website",
+      meta: "Illustrated Web UI",
       image: hackDukePoster,
       imageAlt: "HackDuke hackathon website",
       video: hackDukeVideo,
+      fallback: hackDukeFallback,
       interactive: true,
     },
   ] satisfies OtherProject[],

@@ -23,11 +23,11 @@ import PhoneFrame from "./pulse/PhoneFrame.astro";
 const shirts = playground.pathways.filter((p): p is ShirtPathway => p.type === "shirt");
 const social = playground.pathways.find((p): p is SocialBoardPathway => p.type === "social");
 
+/** Caption bar colours: just coral and deep teal, both of which keep the
+ *  cream caption text readable. */
 const TONE = {
   coral: "var(--color-coral)",
-  teal: "var(--color-teal)",
-  "teal-deep": "var(--color-teal-deep)",
-  orange: "var(--color-orange)",
+  teal: "var(--color-teal-deep)",
 } as const;
 
 /** Each bento entry resolved against its real content. */
@@ -36,12 +36,12 @@ function resolve(entry: BentoEntry) {
     case "case": {
       const study = work.caseStudies.find((s) => s.id === entry.id);
       if (!study) throw new Error(`bento: no case study "${entry.id}"`);
-      return { entry, study, title: study.title, meta: `${study.role} · ${study.year}`, tone: TONE.coral };
+      return { entry, study, title: study.title, meta: study.tag, tone: TONE.coral };
     }
     case "project": {
       const project = work.otherProjects.find((p) => p.id === entry.id);
       if (!project) throw new Error(`bento: no project "${entry.id}"`);
-      return { entry, project, title: project.title, meta: project.meta, tone: TONE[project.tone] };
+      return { entry, project, title: project.title, meta: project.meta, tone: TONE.teal };
     }
     case "shirt": {
       const shirt = shirts.find((s) => s.id === entry.id);
@@ -83,10 +83,20 @@ let socialIndex = 0;
                   {study.phones.map((phone, i) => (
                     <span class:list={["bento-phone", i % 2 ? "bento-phone--right" : "bento-phone--left"]}>
                       {phone.framed ? (
-                        <PhoneFrame variant="video" video={phone.video} />
+                        <PhoneFrame variant="video" video={phone.video} poster={phone.poster} fallback={phone.fallback} />
                       ) : (
                         <span class="bento-phone__bare">
-                          <video src={phone.video} autoplay muted loop playsinline preload="metadata" aria-hidden="true" />
+                          <video
+                            src={phone.video}
+                            poster={phone.poster}
+                            data-fallback={phone.fallback}
+                            autoplay
+                            muted
+                            loop
+                            playsinline
+                            preload="metadata"
+                            aria-hidden="true"
+                          />
                         </span>
                       )}
                     </span>
@@ -109,6 +119,7 @@ let socialIndex = 0;
                     class="bento-tile__media"
                     style={focus}
                     src={project.video}
+                    data-fallback={project.fallback}
                     poster={project.image.src}
                     autoplay
                     muted
@@ -329,7 +340,7 @@ let socialIndex = 0;
     clip-path: inset(0.9% 3.2% 0.9% 3.2% round 15% / 7.4%);
   }
 
-  .bento-phone__bare video {
+  .bento-phone__bare :is(video, img) {
     display: block;
     width: 100%;
     height: 100%;
@@ -494,12 +505,45 @@ let socialIndex = 0;
         video.pause();
       });
     } else {
+      // Safari can refuse to autoplay even muted video (Low Power Mode,
+      // sometimes on battery). That's the browser's call, not ours, so when
+      // a play is refused, every tile swaps its video for the animated-image
+      // version of the same clip (data-fallback), which still plays. The
+      // image keeps the video's classes, including Astro's scoping
+      // attributes, so it's styled exactly the same.
+      let swapped = false;
+      function swapToFallbacks() {
+        if (swapped) return;
+        swapped = true;
+        videos.forEach((video) => {
+          const src = video.dataset.fallback;
+          if (!src) return;
+          io.unobserve(video);
+          const img = document.createElement("img");
+          for (const { name, value } of [...video.attributes]) {
+            if (name === "class" || name === "style" || name.startsWith("data-astro-cid")) img.setAttribute(name, value);
+          }
+          img.src = src;
+          img.alt = "";
+          img.setAttribute("aria-hidden", "true");
+          img.decoding = "async";
+          video.replaceWith(img);
+        });
+      }
+
       const io = new IntersectionObserver(
         (entries) => {
           entries.forEach(({ target, isIntersecting }) => {
             const video = /** @type {HTMLVideoElement} */ (target);
-            if (isIntersecting) video.play().catch(() => {});
-            else video.pause();
+            if (isIntersecting) {
+              video.play().catch((error) => {
+                // NotAllowedError = autoplay blocked; anything else (an
+                // interrupted load) isn't a reason to swap.
+                if (error?.name === "NotAllowedError") swapToFallbacks();
+              });
+            } else {
+              video.pause();
+            }
           });
         },
         { threshold: 0.2 },
