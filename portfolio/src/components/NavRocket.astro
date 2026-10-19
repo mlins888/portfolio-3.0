@@ -152,19 +152,19 @@ const TRAIL = {
 </script>
 
 <style>
-  /* Fills the bar above its 3px ink border, behind the name and links
+  /* Fills the bar above its ink rule, behind the name and links
      (Nav.astro lifts those to z-index 1). */
   .nav-trail {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
-    height: calc(var(--nav-h) - 3px);
+    height: calc(var(--nav-h) - var(--nav-rule, 3px));
     z-index: 0;
     pointer-events: none;
   }
 
-  /* The flight lane: centred on the bar's bottom border, so the rocket
+  /* The flight lane: centred on the bar's bottom rule, so the rocket
      hangs at most half its thickness below the bar. JS moves it with a
      translateX; --ship-l / --ship-t are its flying length and thickness. */
   .nav-rocket {
@@ -172,7 +172,7 @@ const TRAIL = {
     --ship-t: calc(var(--ship-l) * 62.804 / 166.582);
     position: absolute;
     left: 0;
-    top: calc(var(--nav-h) - 1.5px - var(--ship-t) / 2);
+    top: calc(var(--nav-h) - var(--nav-rule, 3px) / 2 - var(--ship-t) / 2);
     width: var(--ship-l);
     height: var(--ship-t);
     z-index: 2;

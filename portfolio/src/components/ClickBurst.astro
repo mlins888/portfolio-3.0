@@ -1,0 +1,107 @@
+---
+/**
+ * A little comic line starburst wherever you click, on every page.
+ *
+ * Eight rays (alternating long and short) shoot out from the click point,
+ * start a little off-centre and clear the middle right away. They're cream
+ * on dark backgrounds (the hero's night sky) and ink on light ones, picked
+ * from the background colour under the click. A fixed, click-through layer
+ * holds them, so links and buttons still get the click. Skipped for
+ * reduced motion.
+ */
+---
+
+<div class="click-burst" data-click-burst aria-hidden="true"></div>
+
+<style>
+  .click-burst {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    /* Same layer as the cursor trail (CursorTrail.astro). */
+    z-index: 999;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  import { gsap, prefersReducedMotion } from "../scripts/gsap-setup.js";
+
+  const layer = document.querySelector<HTMLElement>("[data-click-burst]");
+
+  if (layer && !prefersReducedMotion()) {
+    /** Burst diameter, in CSS px. */
+    const SIZE = 40;
+    const RAYS = 8;
+    const NS = "http://www.w3.org/2000/svg";
+    const css = getComputedStyle(document.documentElement);
+    const CREAM = css.getPropertyValue("--color-cream").trim() || "#eff0e0";
+    const INK = css.getPropertyValue("--color-ink").trim() || "#010101";
+
+    /** Is the topmost painted background at this point dark? Checks every
+     *  element stacked there, since text often floats over a sibling panel
+     *  rather than sitting inside it. */
+    function onDark(x: number, y: number) {
+      for (const node of document.elementsFromPoint(x, y)) {
+        // Drawn shapes (the hero's planet, say) count by their fill.
+        const style = getComputedStyle(node);
+        const paint = node instanceof SVGGeometryElement ? style.fill : style.backgroundColor;
+        const match = paint.startsWith("rgb") ? paint.match(/[\d.]+/g) : null;
+        if (!match) continue;
+        const [r, g, b, a = 1] = match.map(Number);
+        if (a === 0) continue;
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.4;
+      }
+      return false;
+    }
+
+    window.addEventListener(
+      "pointerdown",
+      (e) => {
+        const color = onDark(e.clientX, e.clientY) ? CREAM : INK;
+        const svg = document.createElementNS(NS, "svg");
+        svg.setAttribute("viewBox", "-50 -50 100 100");
+        Object.assign(svg.style, {
+          position: "absolute",
+          left: `${e.clientX - SIZE / 2}px`,
+          top: `${e.clientY - SIZE / 2}px`,
+          width: `${SIZE}px`,
+          height: `${SIZE}px`,
+          overflow: "visible",
+        });
+        const lines: { line: SVGLineElement; cos: number; sin: number }[] = [];
+        for (let i = 0; i < RAYS; i++) {
+          const a = (i / RAYS) * Math.PI * 2 + (Math.random() - 0.5) * 0.25;
+          // Alternate long and short rays, comic-style.
+          const len = i % 2 ? 0.7 : 1;
+          const line = document.createElementNS(NS, "line");
+          line.setAttribute("stroke", color);
+          line.setAttribute("stroke-width", "6");
+          line.setAttribute("stroke-linecap", "round");
+          svg.append(line);
+          lines.push({ line, cos: Math.cos(a) * len, sin: Math.sin(a) * len });
+        }
+        layer.append(svg);
+
+        // Each ray shoots outward: its head leads, its tail catches up. They
+        // start off-centre and the tail leaves right away, so the middle
+        // clears almost instantly instead of clumping into a blob.
+        const ray = { head: 20, tail: 16 };
+        const draw = () => {
+          for (const { line, cos, sin } of lines) {
+            line.setAttribute("x1", String(cos * ray.tail));
+            line.setAttribute("y1", String(sin * ray.tail));
+            line.setAttribute("x2", String(cos * ray.head));
+            line.setAttribute("y2", String(sin * ray.head));
+          }
+        };
+        draw();
+        gsap
+          .timeline({ onUpdate: draw, onComplete: () => svg.remove() })
+          .to(ray, { head: 50, duration: 0.24, ease: "power3.out" }, 0)
+          .to(ray, { tail: 48, duration: 0.3, ease: "power1.inOut" }, 0);
+      },
+      { passive: true },
+    );
+  }
+</script>

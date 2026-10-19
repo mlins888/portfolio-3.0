@@ -171,10 +171,13 @@ const [linkedIn, gitHub, email, resume] = footer.contacts;
   }
 
   @media (min-width: 900px) {
+    /* Hairlines that stop short of the film strips, like the nav bar's
+       bottom rule. */
     .site-footer__divider {
       display: block;
-      width: 4px;
+      width: 1px;
       align-self: stretch;
+      margin-block: 1.75rem;
       background: var(--color-ink);
     }
   }
@@ -330,8 +333,9 @@ const [linkedIn, gitHub, email, resume] = footer.contacts;
     .site-footer__divider--b {
       display: block;
       grid-area: divider;
-      width: 3px;
+      width: 1px;
       align-self: stretch;
+      margin-block: 0.75rem;
       background: var(--color-ink);
     }
 

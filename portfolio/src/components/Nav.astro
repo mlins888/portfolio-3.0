@@ -124,6 +124,10 @@ function isCurrent(href: string) {
 
 <style>
   .site-header {
+    /* The bar's bottom rule: a hairline that stops short of the page
+       edges (NavRocket.astro reads it to sit the rocket on it). */
+    --nav-rule: 1.5px;
+    --nav-inset: clamp(1rem, 4vw, 2.5rem);
     position: fixed;
     top: 0;
     left: 0;
@@ -132,14 +136,25 @@ function isCurrent(href: string) {
   }
 
   .site-header__bar {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
     height: var(--nav-h);
-    padding-inline: clamp(1rem, 4vw, 2.5rem);
+    padding-inline: var(--nav-inset);
     background: var(--color-paper);
-    border-bottom: 3px solid var(--color-ink);
+  }
+
+  .site-header__bar::after {
+    content: "";
+    position: absolute;
+    left: var(--nav-inset);
+    right: var(--nav-inset);
+    bottom: 0;
+    height: var(--nav-rule);
+    background: var(--color-ink);
+    pointer-events: none;
   }
 
   /* Above NavRocket's trail canvas, which fills the bar behind them. */
@@ -231,7 +246,7 @@ function isCurrent(href: string) {
   .site-header__icons {
     gap: 0.35rem;
     padding-left: clamp(1rem, 2.5vw, 2rem);
-    border-left: 2px solid var(--color-ink);
+    border-left: 1px solid var(--color-ink);
   }
 
   .site-header__icon {

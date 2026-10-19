@@ -9,7 +9,7 @@
  *
  * The state machine reads three View Model booleans (`running`, `waiting`,
  * `holding`) plus a `blink` trigger fired at random. Clicking in the band
- * sets off a little line starburst and makes the cat let go. Touch screens get a
+ * makes the cat let go. Touch screens get a
  * sitting cat; reduced motion gets a still one.
  *
  * Positions are in canvas units (see ./canvas.ts) so the cat scales with
@@ -366,70 +366,17 @@ const cursor = `url("${mouseCursor.src}") 5 21, auto`;
         });
       }
 
-      // A click anywhere in the band: a starburst where it landed, and the
-      // cat loses its grip. Links and hotspots underneath still get the click.
+      // A click anywhere in the band makes the cat lose its grip (the
+      // starburst itself is site-wide, from ClickBurst.astro). Links and
+      // hotspots underneath still get the click.
       window.addEventListener("pointerdown", (e) => {
         const at = { x: e.clientX - band.left, y: e.clientY - band.top };
         if (!inBand(at)) return;
-        burst(at);
         if (holding) {
           letGo();
           sulkUntil = gsap.ticker.time + DROPPED_PAUSE;
         }
       });
-
-      function burst(at: { x: number; y: number }) {
-        const NS = "http://www.w3.org/2000/svg";
-        const size = Math.max(36, band.height * 0.22);
-        const svg = document.createElementNS(NS, "svg");
-        svg.setAttribute("viewBox", "-50 -50 100 100");
-        svg.setAttribute("aria-hidden", "true");
-        Object.assign(svg.style, {
-          position: "absolute",
-          left: `${at.x - size / 2}px`,
-          top: `${at.y - size / 2}px`,
-          width: `${size}px`,
-          height: `${size}px`,
-          overflow: "visible",
-          pointerEvents: "none",
-        });
-        const RAYS = 8;
-        const lines: SVGLineElement[] = [];
-        for (let i = 0; i < RAYS; i++) {
-          const a = (i / RAYS) * Math.PI * 2 + (Math.random() - 0.5) * 0.25;
-          const line = document.createElementNS(NS, "line");
-          // Alternate long and short rays, comic-style.
-          const len = i % 2 ? 0.7 : 1;
-          line.dataset.cos = String(Math.cos(a) * len);
-          line.dataset.sin = String(Math.sin(a) * len);
-          line.setAttribute("stroke", "var(--color-cream)");
-          line.setAttribute("stroke-width", "6");
-          line.setAttribute("stroke-linecap", "round");
-          svg.append(line);
-          lines.push(line);
-        }
-        host!.append(svg);
-
-        // Each ray shoots outward: its head leads, its tail catches up. They
-        // start off-centre and the tail leaves right away, so the middle
-        // clears almost instantly instead of clumping into a blob.
-        const ray = { head: 20, tail: 16 };
-        const draw = () => {
-          for (const line of lines) {
-            const c = Number(line.dataset.cos);
-            const sn = Number(line.dataset.sin);
-            line.setAttribute("x1", String(c * ray.tail));
-            line.setAttribute("y1", String(sn * ray.tail));
-            line.setAttribute("x2", String(c * ray.head));
-            line.setAttribute("y2", String(sn * ray.head));
-          }
-        };
-        draw();
-        gsap
-          .timeline({ onUpdate: draw, onComplete: () => svg.remove() })
-          .to(ray, { head: 50, duration: 0.24, ease: "power3.out" }, 0)
-          .to(ray, { tail: 48, duration: 0.3, ease: "power1.inOut" }, 0);
-      }
 
       /** Ease `v` toward `want` (px/s) without exceeding ACCEL. */
       function steer(want: number, dt: number) {
