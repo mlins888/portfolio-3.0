@@ -8,7 +8,7 @@
  * Outside the hero canvas `--u` is undefined and falls back to 1px, which is
  * what makes the decorative components usable anywhere on the site.
  */
-export const CANVAS = { width: 1440, height: 1025 } as const;
+export const CANVAS = { width: 1440, height: 962 } as const;
 
 /** Turn a Figma pixel value into a canvas-relative CSS length. */
 export function u(n: number): string {

@@ -20,6 +20,8 @@ export interface HeroContent {
   /** One entry per rendered line of the display headline. */
   nameLines: string[];
   tagline: string;
+  /** Words in the pill under the name, joined with ✦. */
+  traits: string[];
   stamp: {
     /** Fallback only — StampBadge computes the live date client-side. */
     date: string;
@@ -55,6 +57,7 @@ export const hero: HeroContent = {
   greeting: "Hello! I'm...",
   nameLines: ["Makenna", "Linsky"],
   tagline: "bringing you BOLD designs from Duke University",
+  traits: ["playful", "bold", "innovative"],
   stamp: {
     date: "AUG 02",
   },

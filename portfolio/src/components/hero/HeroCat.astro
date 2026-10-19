@@ -13,16 +13,19 @@
  * sitting cat; reduced motion gets a still one.
  *
  * Positions are in canvas units (see ./canvas.ts) so the cat scales with
- * the cover. BAND matches the coral band drawn in Hero.astro.
+ * the cover. BAND matches the top panel drawn in HeroTop.astro.
  */
 import { canvasStyle } from "./canvas";
+import mouseCursor from "../../assets/illustrations/cursor-mouse.svg";
 
-const BAND = { x: 42, y: 43, width: 1355, height: 329 };
+const BAND = { x: 42, y: 43, width: 1355, height: 249 };
 /** Height of the cat's canvas, in canvas units. */
-const CAT_H = 280;
+const CAT_H = 230;
+/** The mouse cursor shown inside the band; the hotspot is its nose. */
+const cursor = `url("${mouseCursor.src}") 5 21, auto`;
 ---
 
-<div class="hero-cat" data-hero-cat style={canvasStyle(BAND)}>
+<div class="hero-cat" data-hero-cat data-cursor={cursor} style={canvasStyle(BAND)}>
   <canvas class="hero-cat__canvas" data-hero-cat-canvas style={`--cat-h: ${CAT_H}`} aria-hidden="true"></canvas>
 </div>
 
@@ -53,6 +56,15 @@ const CAT_H = 280;
   }
 </style>
 
+<style is:global>
+  /* While the cursor is over the band it turns into a mouse for the cat
+     to chase, links and all. */
+  html.is-cat-cursor,
+  html.is-cat-cursor * {
+    cursor: var(--catCursor) !important;
+  }
+</style>
+
 <script>
   import { Rive, Layout, Fit, Alignment, RuntimeLoader } from "@rive-app/canvas";
   import riveWasm from "@rive-app/canvas/rive.wasm?url";
@@ -72,10 +84,27 @@ const CAT_H = 280;
   const PAW = { x: 0.82, y: 0.16 };
   /** Gap between the feet and the band's bottom edge, as a share of band height. */
   const FLOOR_INSET = 0.04;
-  /** Run speed, in band widths per second. */
-  const RUN_SPEED = 0.42;
-  /** How close (share of cat width) its front paws must get to the
-   *  cursor, horizontally, before it pounces. */
+  /** Top running speed, in band widths per second. */
+  const MAX_SPEED = 0.3;
+  /** How quickly it gets up to speed (band widths / s²). */
+  const ACCEL = 0.9;
+  /** How hard it brakes coming into a stop (band widths / s²). Lower =
+   *  it starts slowing down further out. */
+  const BRAKE = 0.8;
+  /** From a standstill, the target has to be this far away (share of cat
+   *  width) before it bothers to get up and run. Ignores cursor wiggles. */
+  const START_DIST = 0.12;
+  /** `running` turns on above this speed and off below the lower one
+   *  (band widths / s), so the run cycle doesn't flicker on and off. */
+  const RUN_ON = 0.04;
+  const RUN_OFF = 0.015;
+  /** It only turns around once the cursor is this far behind its feet
+   *  (share of cat width). */
+  const TURN_MARGIN = 0.06;
+  /** How long a turnaround takes (s). */
+  const TURN_TIME = 0.16;
+  /** How far past its front paws (share of cat width) the cursor can be
+   *  and still get pounced on. */
   const GRAB_RANGE = 0.08;
   /** How close (px) counts as "arrived" when heading for a target. */
   const ARRIVE = 3;
@@ -95,6 +124,15 @@ const CAT_H = 280;
   const CATCH = 0.18;
   /** Pause after slipping off or missing, before it chases again (s). */
   const SLIPPED_PAUSE = 0.5;
+  /** While hanging, the cat swings as it's dragged: degrees of tilt per
+   *  band width per second of sideways drag, capped at SWAY_MAX. */
+  const SWAY_GAIN = 20;
+  const SWAY_MAX = 14;
+  /** The swing's spring: stiffness and damping (a little bouncy). */
+  const SWAY_STIFF = 120;
+  const SWAY_DAMP = 13;
+  /** How far it squashes when it lands from a drop (scale Y). */
+  const LAND_SQUASH = 0.92;
 
   const host = document.querySelector<HTMLElement>("[data-hero-cat]");
   const canvas = host?.querySelector<HTMLCanvasElement>("[data-hero-cat-canvas]");
@@ -112,6 +150,8 @@ const CAT_H = 280;
       autoBind: true,
       layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
       onLoad: () => start(),
+      // No cat, so nothing will draw the traits pill in: show it outright.
+      onLoadError: () => window.dispatchEvent(new CustomEvent("herocat:reveal")),
     });
 
     function start() {
@@ -152,10 +192,25 @@ const CAT_H = 280;
       const floorY = () => band.height * (1 - FLOOR_INSET);
       const minX = () => catW * FOOT.x;
       const maxX = () => band.width - catW * (1 - FOOT.x);
-      let x = band.width * 0.5;
+      // Starts off to the left, so its first run carries it past the
+      // traits pill (HeroTop.astro draws the pill in behind it).
+      let x = band.width * 0.12;
+      /** Running velocity, px/s. */
+      let v = 0;
+      /** Heading for a target (vs. settled), for the START_DIST deadband. */
+      let moving = false;
+      let runningOn = false;
+      /** Which way it faces, and the animated flip that follows it. */
       let facing = 1;
-      /** 0 = standing on the floor, 1 = hanging from the cursor. */
-      const lift = { v: 0 };
+      const turn = { s: 1 };
+      /** 0 = standing on the floor, 1 = hanging from the cursor. Split in
+       *  two so the leap can rise and travel on different curves (an arc). */
+      const lift = { x: 0, y: 0 };
+      const lifted = () => lift.x > 0 || lift.y > 0;
+      /** Tilt (deg) while hanging, and its spring velocity. */
+      const sway = { a: 0, va: 0 };
+      /** Landing squash (scale Y, pinned at the feet). */
+      const squash = { s: 1 };
       let holding = false;
       /** Mid-pounce: committed to where the cursor was when it jumped. */
       let leaping = false;
@@ -164,25 +219,40 @@ const CAT_H = 280;
       let pointer: { x: number; y: number } | null = null;
       /** Where its paws are hanging on: trails the cursor while held. */
       const grip = { x: 0, y: 0 };
+      let gripPrevX = 0;
 
+      let lastCentre = NaN;
       function place() {
         // Standing: FOOT on the floor at x. Hanging: PAW on the cursor.
+        const pawX = facing === 1 ? PAW.x : 1 - PAW.x;
         const groundLeft = x - catW * FOOT.x;
         const groundTop = floorY() - catH * foot.y;
-        let left = groundLeft;
-        let top = groundTop;
-        if (lift.v > 0) {
-          const pawX = facing === 1 ? PAW.x : 1 - PAW.x;
-          const hangLeft = grip.x - catW * pawX;
-          const hangTop = grip.y - catH * PAW.y;
-          left = groundLeft + (hangLeft - groundLeft) * lift.v;
-          top = groundTop + (hangTop - groundTop) * lift.v;
+        const hangLeft = grip.x - catW * pawX;
+        const hangTop = grip.y - catH * PAW.y;
+        const left = groundLeft + (hangLeft - groundLeft) * lift.x;
+        const top = groundTop + (hangTop - groundTop) * lift.y;
+        // Read right to left: flip, squash about the feet, swing about the
+        // paws, then move into place. Pivots are offsets from the centre.
+        const px = (pawX - 0.5) * catW;
+        const py = (PAW.y - 0.5) * catH;
+        const fy = (foot.y - 0.5) * catH;
+        canvas!.style.transform =
+          `translate(${left}px, ${top}px) ` +
+          `translate(${px}px, ${py}px) rotate(${(sway.a * lift.y).toFixed(3)}deg) translate(${-px}px, ${-py}px) ` +
+          `translate(0, ${fy}px) scaleY(${squash.s}) translate(0, ${-fy}px) ` +
+          `scaleX(${turn.s})`;
+        const centre = band.left + left + catW / 2;
+        if (centre !== lastCentre) {
+          lastCentre = centre;
+          window.dispatchEvent(new CustomEvent("herocat:move", { detail: { clientX: centre } }));
         }
-        canvas!.style.transform = `translate(${left}px, ${top}px) scaleX(${facing})`;
       }
 
       place();
       canvas!.classList.add("is-ready");
+
+      // A cat that won't run past the traits pill can't draw it in.
+      if (still || !canHover) window.dispatchEvent(new CustomEvent("herocat:reveal"));
 
       if (still) return;
 
@@ -200,8 +270,10 @@ const CAT_H = 280;
       // Cursor in client px; `pointer` is re-derived from it whenever the
       // band moves under a still cursor (scrolling).
       let client: { x: number; y: number } | null = null;
+      document.documentElement.style.setProperty("--catCursor", host!.dataset.cursor ?? "auto");
       const track = () => {
         pointer = client && { x: client.x - band.left, y: client.y - band.top };
+        document.documentElement.classList.toggle("is-cat-cursor", inBand(pointer));
       };
       window.addEventListener(
         "pointermove",
@@ -231,29 +303,43 @@ const CAT_H = 280;
       const inBand = (p: { x: number; y: number } | null) =>
         !!p && p.x >= 0 && p.x <= band.width && p.y >= 0 && p.y <= band.height;
 
+      function turnTo(dir: number) {
+        if (dir === facing) return;
+        facing = dir;
+        gsap.to(turn, { s: dir, duration: TURN_TIME, ease: "power2.inOut", overwrite: true });
+      }
+
+      function stopRunning() {
+        v = 0;
+        moving = false;
+        runningOn = false;
+        set("running", false);
+      }
+
       function grab() {
         holding = true;
-        grip.x = pointer!.x;
+        grip.x = gripPrevX = pointer!.x;
         grip.y = pointer!.y;
-        set("running", false);
+        stopRunning();
         set("waiting", false);
         set("holding", true);
         leaping = true;
-        gsap.to(lift, {
-          v: 1,
-          duration: LEAP,
-          ease: "power2.out",
-          overwrite: true,
-          onComplete: () => {
-            leaping = false;
-            // Pulled away mid-jump: it grabs at thin air and drops.
-            const gone = !inBand(pointer) || Math.hypot(pointer!.x - grip.x, pointer!.y - grip.y) > catW * CATCH;
-            if (holding && gone) {
-              letGo();
-              sulkUntil = gsap.ticker.time + SLIPPED_PAUSE;
-            }
-          },
-        });
+        // Rises fast, drifts across: an arc, not a straight slide.
+        gsap.killTweensOf(lift);
+        gsap
+          .timeline({
+            onComplete: () => {
+              leaping = false;
+              // Pulled away mid-jump: it grabs at thin air and drops.
+              const gone = !inBand(pointer) || Math.hypot(pointer!.x - grip.x, pointer!.y - grip.y) > catW * CATCH;
+              if (holding && gone) {
+                letGo();
+                sulkUntil = gsap.ticker.time + SLIPPED_PAUSE;
+              }
+            },
+          })
+          .to(lift, { y: 1, duration: LEAP, ease: "power3.out" }, 0)
+          .to(lift, { x: 1, duration: LEAP, ease: "sine.inOut" }, 0);
       }
 
       function letGo() {
@@ -264,7 +350,20 @@ const CAT_H = 280;
         const pawX = facing === 1 ? PAW.x : 1 - PAW.x;
         const hangLeft = grip.x - catW * pawX;
         x = Math.min(Math.max(hangLeft + catW * FOOT.x, minX()), maxX());
-        gsap.to(lift, { v: 0, duration: 0.35, ease: "power2.in", overwrite: true });
+        gsap.killTweensOf(lift);
+        gsap.to(lift, {
+          x: 0,
+          y: 0,
+          duration: 0.35,
+          ease: "power2.in",
+          // Lands with a little weight.
+          onComplete: () => {
+            gsap
+              .timeline()
+              .to(squash, { s: LAND_SQUASH, duration: 0.07, ease: "power2.out" })
+              .to(squash, { s: 1, duration: 0.2, ease: "back.out(3)" });
+          },
+        });
       }
 
       // A click anywhere in the band: a starburst where it landed, and the
@@ -332,20 +431,26 @@ const CAT_H = 280;
           .to(ray, { tail: 48, duration: 0.3, ease: "power1.inOut" }, 0);
       }
 
+      /** Ease `v` toward `want` (px/s) without exceeding ACCEL. */
+      function steer(want: number, dt: number) {
+        const step = ACCEL * band.width * dt;
+        v += Math.max(-step, Math.min(step, want - v));
+      }
+
+      /** The swing spring, pulled toward `target` degrees. */
+      function swing(target: number, dt: number) {
+        sway.va += ((target - sway.a) * SWAY_STIFF - sway.va * SWAY_DAMP) * dt;
+        sway.a = Math.max(-SWAY_MAX, Math.min(SWAY_MAX, sway.a + sway.va * dt));
+        // Settle fully instead of creeping toward 0 forever.
+        if (target === 0 && Math.abs(sway.a) < 0.01 && Math.abs(sway.va) < 0.05) sway.a = sway.va = 0;
+      }
+
       gsap.ticker.add((time, deltaMs) => {
         const dt = Math.min(deltaMs, 50) / 1000;
 
-        // Just got shaken off: sit tight for a moment.
-        if (time < sulkUntil) {
-          set("running", false);
-          set("waiting", false);
-          place();
-          return;
-        }
-
         // Hanging on: its grip trails the cursor. It lets go the moment the
         // cursor leaves the band, and slips off if the cursor yanks away
-        // faster than it can follow.
+        // faster than it can follow. Being dragged sideways swings it.
         if (holding) {
           if (leaping) {
             // Airborne: it can't change course, so the grip stays put.
@@ -360,36 +465,82 @@ const CAT_H = 280;
               sulkUntil = time + SLIPPED_PAUSE;
             }
           }
+          const dragSpeed = dt > 0 ? (grip.x - gripPrevX) / dt / band.width : 0;
+          gripPrevX = grip.x;
+          swing(holding && !leaping ? dragSpeed * SWAY_GAIN : 0, dt);
+          place();
+          return;
+        }
+        swing(0, dt);
+
+        // Just got shaken off (or still falling): sit tight for a moment.
+        if (time < sulkUntil || lifted()) {
+          stopRunning();
+          set("waiting", false);
           place();
           return;
         }
 
-        // Inside: run until its front paws are under the cursor. Outside:
-        // the nearest edge of the band.
+        // Where it wants to be. Inside the band: front paws under the
+        // cursor, turning around only once the cursor is clearly behind it.
+        // Outside: the nearest spot along the floor.
         const inside = inBand(pointer);
         const reach = (PAW.x - FOOT.x) * catW;
-        const side = pointer && pointer.x < x ? -1 : 1;
-        const aim = pointer ? (inside ? pointer.x - side * reach : pointer.x) : x;
+        let want = facing;
+        let aim = x;
+        if (pointer && inside) {
+          if ((pointer.x - x) * facing < -catW * TURN_MARGIN) want = -facing;
+          aim = pointer.x - want * reach;
+        } else if (pointer) {
+          aim = pointer.x;
+          if (Math.abs(aim - x) > catW * START_DIST) want = aim > x ? 1 : -1;
+        }
         const target = Math.min(Math.max(aim, minX()), maxX());
         const dx = target - x;
-        const paws = x + side * reach;
 
-        if (inside && Math.abs(pointer!.x - paws) < catW * GRAB_RANGE && lift.v === 0) {
-          facing = side;
+        // Close enough, and facing it: pounce.
+        const ahead = pointer ? (pointer.x - x) * facing : -Infinity;
+        if (inside && want === facing && ahead > -catW * 0.05 && ahead < reach + catW * GRAB_RANGE) {
           grab();
           place();
           return;
         }
 
-        if (Math.abs(dx) > ARRIVE && lift.v === 0) {
-          facing = dx > 0 ? 1 : -1;
-          x += Math.sign(dx) * Math.min(Math.abs(dx), RUN_SPEED * band.width * dt);
-          set("running", true);
-          set("waiting", false);
-        } else {
-          set("running", false);
-          set("waiting", !inside && !!pointer);
+        // (Inside the band anything closer is already pounce range, so a
+        // smaller deadband there can't leave it stuck just out of reach.)
+        const startDist = inside ? GRAB_RANGE / 2 : START_DIST;
+        if (!moving && Math.abs(dx) > catW * startDist) moving = true;
+
+        // Needs to turn: brake first, then turn on the spot.
+        let wantV = 0;
+        if (want !== facing) {
+          if (Math.abs(v) < RUN_OFF * band.width) turnTo(want);
+        } else if (moving) {
+          // Cruise, then brake on a curve that stops right at the target.
+          wantV = Math.sign(dx) * Math.min(MAX_SPEED * band.width, Math.sqrt(2 * BRAKE * band.width * Math.abs(dx)));
         }
+        steer(wantV, dt);
+
+        // Never run past the target.
+        const next = x + v * dt;
+        if (moving && Math.sign(target - next) !== Math.sign(dx)) {
+          x = target;
+          v = 0;
+        } else {
+          x = Math.min(Math.max(next, minX()), maxX());
+        }
+        if (moving && Math.abs(target - x) <= ARRIVE && Math.abs(v) < RUN_OFF * band.width) {
+          moving = false;
+          v = 0;
+        }
+
+        // Run cycle on/off with a gap between the thresholds, so it
+        // doesn't flicker; `waiting` only once it has properly stopped.
+        const speed = Math.abs(v) / band.width;
+        if (!runningOn && speed > RUN_ON) runningOn = true;
+        else if (runningOn && speed < RUN_OFF) runningOn = false;
+        set("running", runningOn);
+        set("waiting", !runningOn && !moving && !inside && !!pointer);
         place();
       });
     }
