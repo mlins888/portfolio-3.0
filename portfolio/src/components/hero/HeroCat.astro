@@ -192,9 +192,9 @@ const cursor = `url("${mouseCursor.src}") 5 21, auto`;
       const floorY = () => band.height * (1 - FLOOR_INSET);
       const minX = () => catW * FOOT.x;
       const maxX = () => band.width - catW * (1 - FOOT.x);
-      // Starts off to the left, so its first run carries it past the
-      // traits pill (HeroTop.astro draws the pill in behind it).
-      let x = band.width * 0.12;
+      // Starts in the bottom-left corner, so its first run carries it past
+      // the traits pill (HeroTop.astro draws the pill in behind it).
+      let x = minX();
       /** Running velocity, px/s. */
       let v = 0;
       /** Heading for a target (vs. settled), for the START_DIST deadband. */
@@ -445,8 +445,51 @@ const cursor = `url("${mouseCursor.src}") 5 21, auto`;
         if (target === 0 && Math.abs(sway.a) < 0.01 && Math.abs(sway.va) < 0.05) sway.a = sway.va = 0;
       }
 
+      // Rive's free-plan export opens with a few seconds of its watermark
+      // splash, drawn as an opaque square over the whole canvas. Keep the
+      // cat parked in its corner until that's gone, so the splash doesn't
+      // go chasing the cursor around the band. Detected from the canvas
+      // corners: opaque while the splash shows, transparent once it's gone
+      // (the cat's artboard has no fill). If no splash shows up in the first
+      // moment (a paid-plan export), it wakes straight away; either way it's
+      // capped so it can't wait forever.
+      let awake = false;
+      const NO_SPLASH_AFTER = 1;
+      const WAKE_MAX = 14;
+      const pixels = canvas!.getContext("2d");
+      const startedAt = gsap.ticker.time;
+      let splashSeen = false;
+      (function checkSplash() {
+        const elapsed = gsap.ticker.time - startedAt;
+        let covered: boolean | null = null;
+        try {
+          const w = canvas!.width;
+          const h = canvas!.height;
+          covered = !!pixels && [
+            [2, 2],
+            [w - 3, 2],
+            [2, h - 3],
+            [w - 3, h - 3],
+          ].some(([px, py]) => pixels.getImageData(px, py, 1, 1).data[3] > 0);
+        } catch {
+          // Can't read the canvas: fall back to the time cap.
+        }
+        if (covered) splashSeen = true;
+        const done =
+          (splashSeen && covered === false) ||
+          (!splashSeen && covered === false && elapsed > NO_SPLASH_AFTER) ||
+          elapsed > WAKE_MAX;
+        if (done) awake = true;
+        else gsap.delayedCall(0.2, checkSplash);
+      })();
+
       gsap.ticker.add((time, deltaMs) => {
         const dt = Math.min(deltaMs, 50) / 1000;
+
+        if (!awake) {
+          place();
+          return;
+        }
 
         // Hanging on: its grip trails the cursor. It lets go the moment the
         // cursor leaves the band, and slips off if the cursor yanks away
