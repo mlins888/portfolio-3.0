@@ -54,5 +54,9 @@ export interface CaseStudyContent {
   links?: { label: string; href: string }[];
   /** Omit for short write-ups; the TL;DR box is then left out. */
   tldr?: ListItem[];
+  /** A looping screen recording shown under the header, above the first
+   *  section. `fallback` is an animated image for browsers that won't
+   *  autoplay video (Safari in Low Power Mode). */
+  preview?: { video: string; poster: string; fallback: string; alt: string };
   sections: Section[];
 }

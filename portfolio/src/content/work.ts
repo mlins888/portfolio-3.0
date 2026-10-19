@@ -185,18 +185,17 @@ export const work = {
     { kind: "project", id: "duquantum", size: "md" },
     { kind: "project", id: "health-hound", size: "md" },
     { kind: "project", id: "hackduke", size: "md" },
-    // Tees first: on desktop the 9 small tiles wrap 5 + 4, and the shorter
-    // second row grows to fill the width, so the 4 social feeds (the tiles
-    // that cycle through posts) land in the bigger slots.
+    // Social feeds first, four across (so they're the bigger small tiles,
+    // as they cycle through posts), then the five tees on their own row.
+    { kind: "social", feed: "DPAD", size: "sm" },
+    { kind: "social", feed: "DuQuantum", size: "sm" },
+    { kind: "social", feed: "My Creative Journal", size: "sm" },
+    { kind: "social", feed: "EG Ministries", size: "sm" },
     { kind: "shirt", id: "shirt-1", size: "sm" },
     { kind: "shirt", id: "shirt-2", size: "sm" },
     { kind: "shirt", id: "shirt-3", size: "sm" },
     { kind: "shirt", id: "shirt-4", size: "sm", caption: "CHBC College Ministry" },
     { kind: "shirt", id: "shirt-5", size: "sm" },
-    { kind: "social", feed: "DPAD", size: "sm" },
-    { kind: "social", feed: "DuQuantum", size: "sm" },
-    { kind: "social", feed: "My Creative Journal", size: "sm" },
-    { kind: "social", feed: "EG Ministries", size: "sm" },
   ] satisfies BentoEntry[] as BentoEntry[],
 
   buildingHotspots: [

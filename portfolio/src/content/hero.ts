@@ -5,7 +5,7 @@ import heroSceneCharacter from "../assets/illustrations/hero-scene-character.png
 import heroCharacterSprite from "../assets/illustrations/hero-character-sprite.webp";
 import heroCornerCat from "../assets/illustrations/hero-corner-cat.png";
 import buildingPulse from "../assets/illustrations/building-pulse.png";
-import buildingHeirloom from "../assets/illustrations/building-heirloom.png";
+import buildingHeirloom from "../assets/illustrations/building-heirloom-orange.png";
 import buildingOther from "../assets/illustrations/building-other.png";
 
 /**

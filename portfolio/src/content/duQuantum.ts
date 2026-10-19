@@ -1,4 +1,7 @@
 import type { CaseStudyContent } from "./caseStudy";
+import previewVideo from "../assets/work/previews/duquantum.mp4?url";
+import previewPoster from "../assets/work/previews/duquantum-poster.jpg?url";
+import previewFallback from "../assets/work/previews/duquantum.webp?url";
 
 /**
  * DuQuantum (solo designer, inaugural hackathon, Oct 2026). Short write-up
@@ -14,6 +17,13 @@ export const duQuantum = {
   ],
 
   links: [{ label: "View Website", href: "https://duquantum.org" }],
+
+  preview: {
+    video: previewVideo,
+    poster: previewPoster,
+    fallback: previewFallback,
+    alt: "Scrolling through the DuQuantum hackathon website",
+  },
 
   sections: [
     {

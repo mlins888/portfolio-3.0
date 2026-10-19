@@ -1,6 +1,6 @@
 ---
 /**
- * The illustrated lower-band scene: two flat "night sky" panels, the three
+ * The illustrated lower-band scene: a flat "night sky" panel, the three
  * building illustrations, the character-on-swing artwork (a colourful shape
  * burst that slowly rotates + pulses, with the line-drawn character resting
  * still on top — see the <style> block) — all placed at their exact Figma coordinates on the hero
@@ -23,13 +23,11 @@ import { canvasStyle } from "./canvas";
 import { hero } from "../../content/hero";
 
 import panelA from "../../assets/decor/hero-scene-panel-a.svg";
-import panelB from "../../assets/decor/hero-scene-panel-b.svg";
 
 const sprite = hero.images.sceneCharacterSprite;
 ---
 
 <ArtAsset svg={panelA} natural={{ w: 676.5, h: 586.5 }} x={721} y={394} />
-<ArtAsset svg={panelB} natural={{ w: 295, h: 587 }} x={1105} y={394} />
 
 <div
   class="absolute pointer-events-none hotspot-glow"

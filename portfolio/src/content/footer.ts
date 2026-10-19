@@ -1,6 +1,6 @@
 import type { ImageMetadata } from "astro";
 
-import footerCat from "../assets/illustrations/footer-cat.png";
+import footerCat from "../assets/illustrations/footer-cat-redrawn.png";
 
 export const footer = {
   tagline: "dreaming up my next destination...",

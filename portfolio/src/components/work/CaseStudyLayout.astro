@@ -57,6 +57,26 @@ const afterSlots = Object.fromEntries(
       </div>
     </header>
 
+    {
+      study.preview && (
+        <figure class="cs__preview">
+          <video
+            class="cs__preview-media"
+            src={study.preview.video}
+            poster={study.preview.poster}
+            data-fallback={study.preview.fallback}
+            aria-label={study.preview.alt}
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+            data-cs-preview
+          />
+        </figure>
+      )
+    }
+
     <!-- Collapsed by default so readers start with the full story; the
          summary line is the click target. Short write-ups skip it. -->
     {
@@ -167,6 +187,37 @@ const afterSlots = Object.fromEntries(
 </BaseLayout>
 
 <script>
+  // The header's screen recording: play while on screen, pause when not.
+  // If the browser blocks autoplay (Safari in Low Power Mode), swap in the
+  // animated-image version so it still moves.
+  const preview = document.querySelector<HTMLVideoElement>("[data-cs-preview]");
+  if (preview) {
+    const swap = () => {
+      const img = document.createElement("img");
+      img.src = preview.dataset.fallback ?? preview.poster;
+      img.alt = preview.getAttribute("aria-label") ?? "";
+      img.className = preview.className;
+      for (const attr of preview.getAttributeNames()) {
+        if (attr.startsWith("data-astro-cid")) img.setAttribute(attr, "");
+      }
+      preview.replaceWith(img);
+      io.disconnect();
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          preview.play().catch((error) => {
+            if (error?.name === "NotAllowedError") swap();
+          });
+        } else {
+          preview.pause();
+        }
+      },
+      { threshold: 0.2 },
+    );
+    io.observe(preview);
+  }
+
   // Smooth open/close for the TL;DR. <details> snaps by default, so the
   // click is intercepted and the box's height is animated between its
   // closed and open sizes, with the list fading in on the way open.
@@ -369,6 +420,23 @@ const afterSlots = Object.fromEntries(
   .cs__aside :global(.phone-frame-figure),
   .cs__aside :global(.phone-frame) {
     width: 100%;
+  }
+
+  /* The screen recording under the header, lined up with the film strip
+     and the reading column. */
+  .cs__preview {
+    width: 100%;
+    max-width: var(--measure);
+    margin: 3rem auto 0;
+  }
+
+  .cs__preview-media {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--color-cream);
+    border: 5px solid var(--color-ink);
+    border-radius: 24px;
   }
 
   /* Wide media, breaking across the page between sections. */

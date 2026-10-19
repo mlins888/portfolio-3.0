@@ -120,10 +120,11 @@ import bodyBox from "../assets/decor/about-body-box.svg?raw";
   .about-page__body {
     display: flex;
     flex-direction: column;
-    /* Figma separates paragraphs with two blank lines. */
-    gap: 1.78em;
+    /* Comfortable reading leading, with a paragraph break about one line
+       tall (Figma's tight 0.89 leading was hard to read at length). */
+    gap: 1.1em;
     font-size: clamp(1.15rem, 2.1vw, 2rem);
-    line-height: 0.89;
+    line-height: 1.5;
   }
 
   .about-page__body p {
@@ -151,14 +152,15 @@ import bodyBox from "../assets/decor/about-body-box.svg?raw";
     /* Body type and insets scale with the column (not the viewport), so
        the text box shrinks in step with the panel cluster beside it and
        never outgrows it at narrower desktop widths. Values are the 1440px
-       sizes expressed as a share of the ~566px column. */
+       sizes expressed as a share of the ~566px column; the type size is
+       the largest that keeps the box level with the panels at 1.5 leading. */
     .about-page__body-box {
       flex: 1;
       padding: 17.5cqi 7cqi 7.5cqi;
     }
 
     .about-page__body {
-      font-size: min(2rem, 5.3cqi);
+      font-size: min(2rem, 4.15cqi);
     }
   }
 </style>

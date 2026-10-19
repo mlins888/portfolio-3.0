@@ -166,7 +166,7 @@ let socialIndex = 0;
           const { feed } = tile;
           const offset = socialIndex++ * 1.1;
           return (
-            <li class="bento-tile bento-tile--sm" style={style}>
+            <li class="bento-tile bento-tile--sm bento-tile--social" style={style}>
               <button
                 type="button"
                 class="bento-tile__hit"
@@ -207,10 +207,10 @@ let socialIndex = 0;
 
   /* A wrapping row of tiles, each with a fixed shape: lg 3:2, md 4:3,
      sm 4:5 (the tee designs and social posts). `--per-row` sets how many
-     of a size share a row; when a row ends up short (9 small tiles = 5 + 4
-     on desktop), its tiles grow to fill the width, so every row lines up
-     edge to edge and tiles just get a little bigger instead of leaving a
-     gap. */
+     of a size share a row; the 4 social feeds get a row of their own above
+     the 5 tees. When a row ends up short, its tiles grow to fill the width,
+     so every row lines up edge to edge and tiles just get a little bigger
+     instead of leaving a gap. */
   .bento {
     --gap: clamp(0.75rem, 1.4cqi, 1.1rem);
     display: flex;
@@ -230,11 +230,13 @@ let socialIndex = 0;
   .bento-tile--lg { --per-row: 2; aspect-ratio: 3 / 2; }
   .bento-tile--md { --per-row: 3; aspect-ratio: 4 / 3; }
   .bento-tile--sm { --per-row: 5; aspect-ratio: 4 / 5; }
+  .bento-tile--social { --per-row: 4; }
 
   /* Tablet: case studies full width, then three across. */
   @container (max-width: 56rem) {
     .bento-tile--lg { --per-row: 1; }
     .bento-tile--sm { --per-row: 3; }
+    .bento-tile--social { --per-row: 2; }
   }
 
   /* Phones: one project per row, small tiles three across. */

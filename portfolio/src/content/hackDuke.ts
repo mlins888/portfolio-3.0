@@ -1,4 +1,7 @@
 import type { CaseStudyContent } from "./caseStudy";
+import previewVideo from "../assets/work/previews/hackduke.mp4?url";
+import previewPoster from "../assets/work/previews/hackduke-poster.jpg?url";
+import previewFallback from "../assets/work/previews/hackduke.webp?url";
 
 /**
  * HackDuke (design executive, Fall 2025–present). Short write-up like
@@ -14,6 +17,13 @@ export const hackDuke = {
   ],
 
   links: [{ label: "View Website", href: "https://2026.hackduke.org" }],
+
+  preview: {
+    video: previewVideo,
+    poster: previewPoster,
+    fallback: previewFallback,
+    alt: "Scrolling through the HackDuke hackathon website",
+  },
 
   sections: [
     {

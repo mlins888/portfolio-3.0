@@ -1,4 +1,7 @@
 import type { CaseStudyContent } from "./caseStudy";
+import previewVideo from "../assets/work/previews/health-hound.mp4?url";
+import previewPoster from "../assets/work/previews/health-hound-poster.jpg?url";
+import previewFallback from "../assets/work/previews/health-hound.webp?url";
 
 /**
  * HealthHound (FigBuild 2026). Deliberately short: no TL;DR, one section,
@@ -15,6 +18,13 @@ export const healthHound = {
   ],
 
   links: [{ label: "View on Devpost", href: "https://devpost.com/software/healthhound" }],
+
+  preview: {
+    video: previewVideo,
+    poster: previewPoster,
+    fallback: previewFallback,
+    alt: "Tapping through the HealthHound app",
+  },
 
   sections: [
     {
