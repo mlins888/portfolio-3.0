@@ -15,6 +15,7 @@ import { work } from "../../content/work";
 import { CANVAS, canvasStyle, css, u } from "./canvas";
 
 import Hotspot from "../Hotspot.astro";
+import HeroCat from "./HeroCat.astro";
 import HeroCityscape from "./HeroCityscape.astro";
 import HeroNavBadge from "./HeroNavBadge.astro";
 import LogoBadge from "./LogoBadge.astro";
@@ -114,6 +115,9 @@ const stampY = logoY + logoSize.height + columnGap;
       logo={hero.images.cornerCat}
       alt={hero.images.cornerCatAlt}
     />
+
+    <!-- The Rive cat that chases the cursor around the top band. -->
+    <HeroCat />
 
     <!-- Building hotspots — invisible hit targets over the comic buildings. -->
     <div class="building-hotspots" data-building-hotspots>
