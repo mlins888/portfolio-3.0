@@ -29,6 +29,13 @@
   --font-body: "Signika Negative", "Avenir Next", "Segoe UI", sans-serif;
 }
 
+/* Case-study pages keep the tan paper page with ink on it (BaseLayout sets
+   data-page="paper" for /work/*). */
+html[data-page="paper"] {
+  --color-page: var(--color-paper);
+  --color-on-page: var(--color-ink);
+}
+
 /* Licensed display face from the Figma file, used for the headline name. */
 @font-face {
   font-family: "Louvre";

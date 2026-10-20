@@ -19,6 +19,10 @@ interface Props {
 
 const { title = site.title, description = site.description, image = "/og.png" } = Astro.props;
 
+// The case-study pages keep the original tan paper page; everything else
+// sits on the black night page (see the page tokens in global.css).
+const paperPage = Astro.url.pathname.startsWith("/work/");
+
 // Absolute URLs for canonical + Open Graph / Twitter tags. Astro.site comes
 // from `site` in astro.config.mjs.
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -26,7 +30,7 @@ const ogImage = new URL(image, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-page={paperPage ? "paper" : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
