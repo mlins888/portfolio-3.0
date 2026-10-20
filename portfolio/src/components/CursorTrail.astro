@@ -51,7 +51,7 @@
 
   if (canvas && fine && !prefersReducedMotion()) {
     const ctx = canvas.getContext("2d")!;
-    const ink = getComputedStyle(document.documentElement).getPropertyValue("--color-ink").trim() || "#010101";
+    const ink = getComputedStyle(document.documentElement).getPropertyValue("--color-on-page").trim() || "#eff0e0";
 
     let cols = 0;
     let rows = 0;

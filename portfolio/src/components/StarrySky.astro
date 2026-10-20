@@ -1,0 +1,299 @@
+---
+/**
+ * The night sky behind the landing and the Work section: three layers of
+ * stars that scroll a little slower than the page (parallax), the farther
+ * the slower, plus a shooting star now and then across the landing.
+ *
+ *  - far:  tiny dots, painted with tiled CSS gradients (no elements)
+ *  - mid:  small twinkling sparkles, scattered by script
+ *  - near: the landing's Figma-placed sparkles and starburst, then sparse
+ *          larger sparkles down through Work, scattered by script
+ *
+ * It fills its parent (the page's `.sky-scope`, see pages/index.astro),
+ * which also holds the hero and Work above it. Reduced motion keeps the
+ * stars still and skips the shooting star.
+ */
+import Sparkle from "./hero/Sparkle.astro";
+import Starburst from "./hero/Starburst.astro";
+
+/** How fast each layer scrolls compared to the page (1 = with the page). */
+const SPEED = { far: 0.6, mid: 0.75, near: 0.85 };
+---
+
+<div class="sky" data-sky aria-hidden="true">
+  <!-- One copy of each sparkle shape; every scattered star points at it. -->
+  <svg class="sky__defs" width="0" height="0">
+    <defs>
+      <symbol id="sky-sparkle-a" viewBox="0 0 78 82">
+        <path
+          d="M0 42.3016C26 42.3016 36.8333 68.7672 39 82C39 51.2825 65 42.7355 78 42.3016C48.88 42.3016 39.8667 14.1005 39 0C39 29.1556 13 40.3492 0 42.3016Z"
+          fill="currentColor"></path>
+      </symbol>
+      <symbol id="sky-sparkle-d" viewBox="0 0 57 52">
+        <path
+          d="M0 26.8254C19 26.8254 26.9167 43.6085 28.5 52C28.5 32.5206 47.5 27.1005 57 26.8254C35.72 26.8254 29.1333 8.9418 28.5 0C28.5 18.4889 9.5 25.5873 0 26.8254Z"
+          fill="currentColor"></path>
+      </symbol>
+    </defs>
+  </svg>
+
+  <div class="sky__layer sky__layer--far" data-sky-layer={SPEED.far}></div>
+  <div class="sky__layer" data-sky-layer={SPEED.mid} data-sky-stars="mid"></div>
+  <div class="sky__layer" data-sky-layer={SPEED.near} data-sky-stars="near">
+    <!-- Lined up with the hero's canvas, so these use the same Figma
+         coordinates as the landing frame. -->
+    <div class="sky__hero" data-sky-hero>
+      <Sparkle variant="a" x={237} y={237} size={78} idleDelay={0.2} />
+      <Starburst variant="large" x={40} y={333.7} size={268.107} />
+      <Sparkle variant="d" x={1162} y={49} size={21} idleDelay={1.1} />
+      <Sparkle variant="d" x={53} y={665} size={62} idleDelay={0.6} />
+      <Sparkle variant="d" x={1340} y={367} size={57} idleDelay={1.6} />
+      <Sparkle variant="d" x={1379} y={161} size={38} idleDelay={0.9} />
+      <Sparkle variant="d" x={101} y={117} size={25} idleDelay={1.9} />
+
+      <div class="sky__shooting" data-shooting-star>
+        <span class="sky__shooting-tail"></span>
+        <span class="sky__shooting-head"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .sky {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    color: var(--color-cream);
+  }
+
+  .sky__defs {
+    position: absolute;
+  }
+
+  .sky__layer {
+    position: absolute;
+    inset: 0;
+    will-change: transform;
+  }
+
+  /* Pin-prick stars: a few dot grids at awkward, unrelated sizes, so their
+     overlap never reads as a pattern. */
+  .sky__layer--far {
+    opacity: 0.55;
+    background-image:
+      radial-gradient(1.2px 1.2px at 23px 41px, var(--color-cream) 98%, transparent),
+      radial-gradient(1px 1px at 151px 97px, var(--color-cream) 98%, transparent),
+      radial-gradient(1.4px 1.4px at 89px 173px, var(--color-cream) 98%, transparent),
+      radial-gradient(1px 1px at 211px 13px, var(--color-cream) 98%, transparent),
+      radial-gradient(1.2px 1.2px at 57px 229px, var(--color-cream) 98%, transparent);
+    background-size:
+      241px 263px,
+      293px 211px,
+      317px 347px,
+      379px 271px,
+      431px 389px;
+  }
+
+  /* The hero canvas's footprint: same width cap and units, below the nav. */
+  .sky__hero {
+    position: absolute;
+    top: var(--nav-offset);
+    left: 0;
+    right: 0;
+    max-width: 1440px;
+    margin-inline: auto;
+    aspect-ratio: 1440 / 963;
+    container-type: inline-size;
+  }
+
+  .sky__hero > :global(*) {
+    --u: calc(100cqw / 1440);
+  }
+
+  .sky__layer :global(.sky-star) {
+    position: absolute;
+    display: block;
+  }
+
+  .sky__layer :global(.sky-star svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    --twinkle-opacity: 0.35;
+  }
+
+  /* A zero-size point the script flies along the path; the tail trails
+     behind it, pointing back the way it came. */
+  .sky__shooting {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+
+  .sky__shooting-tail {
+    position: absolute;
+    right: 0;
+    top: -1px;
+    width: calc(160 * 100cqw / 1440);
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(to right, transparent, var(--color-cream));
+    transform-origin: 100% 50%;
+    transform: rotate(var(--angle, 145deg));
+  }
+
+  .sky__shooting-head {
+    position: absolute;
+    left: -2.5px;
+    top: -2.5px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-cream);
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--color-cream) 60%, transparent);
+  }
+</style>
+
+<script>
+  import { gsap, EASE, prefersReducedMotion, showAll } from "../scripts/gsap-setup.js";
+
+  const sky = document.querySelector<HTMLElement>("[data-sky]");
+  const scope = sky?.parentElement;
+
+  if (sky && scope) {
+    const still = prefersReducedMotion();
+
+    // The hand-placed sparkles and starburst pop in just after the landing's
+    // intro, as they always have (site-wide, [data-anim] starts hidden).
+    if (still) {
+      showAll(sky);
+    } else {
+      gsap.fromTo(
+        sky.querySelectorAll("[data-anim]"),
+        { opacity: 0, scale: 0.4 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: EASE.pop, stagger: 0.07, delay: 0.75 },
+      );
+    }
+    const layers = [...sky.querySelectorAll<HTMLElement>("[data-sky-layer]")].map((el) => ({
+      el,
+      speed: Number(el.dataset.skyLayer),
+      setY: gsap.quickSetter(el, "y", "px"),
+    }));
+
+    // ---- Scattered stars -------------------------------------------------
+
+    /** Same seed every time, so the sky doesn't reshuffle on resize. */
+    function random(seed: number) {
+      return () => {
+        seed |= 0;
+        seed = (seed + 0x6d2b79f5) | 0;
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    const KINDS = {
+      // One per this many px² of sky; size range in px.
+      mid: { area: 26000, min: 5, max: 12, seed: 7, below: 0 },
+      // Only below the landing, which has its own hand-placed ones.
+      near: { area: 150000, min: 14, max: 34, seed: 13, below: 1 },
+    } as const;
+
+    function scatter() {
+      const width = scope!.offsetWidth;
+      const height = scope!.offsetHeight;
+      const heroBottom = (sky!.querySelector<HTMLElement>("[data-sky-hero]")?.getBoundingClientRect().bottom ?? 0) -
+        sky!.getBoundingClientRect().top;
+
+      for (const el of sky!.querySelectorAll<HTMLElement>("[data-sky-stars]")) {
+        el.querySelectorAll(".sky-star").forEach((star) => star.remove());
+        const kind = KINDS[el.dataset.skyStars as keyof typeof KINDS];
+        const rand = random(kind.seed);
+        const top = kind.below ? heroBottom : 0;
+        const count = Math.round((width * (height - top)) / kind.area);
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < count; i++) {
+          const size = kind.min + rand() * (kind.max - kind.min);
+          const shape = rand() < 0.5 ? "a" : "d";
+          const star = document.createElement("span");
+          star.className = "sky-star";
+          star.style.cssText = `left:${rand() * width - size / 2}px;top:${top + rand() * (height - top)}px;width:${size}px;height:${size}px`;
+          star.innerHTML = `<svg class="idle-twinkle" style="--idle-delay:${(-rand() * 4).toFixed(2)}s;--idle-duration:${(2.4 + rand() * 2.6).toFixed(2)}s"><use href="#sky-sparkle-${shape}"/></svg>`;
+          frag.append(star);
+        }
+        el.prepend(frag);
+      }
+    }
+
+    // ---- Parallax --------------------------------------------------------
+
+    let scopeTop = 0;
+    let scopeHeight = 0;
+    function measure() {
+      scopeTop = scope!.getBoundingClientRect().top + window.scrollY;
+      scopeHeight = scope!.offsetHeight;
+    }
+
+    let lastSize = "";
+    const refit = () => {
+      const size = `${scope!.offsetWidth}x${Math.round(scope!.offsetHeight / 50)}`;
+      measure();
+      if (size === lastSize) return;
+      lastSize = size;
+      scatter();
+    };
+    refit();
+    let refitTimer = 0;
+    new ResizeObserver(() => {
+      clearTimeout(refitTimer);
+      refitTimer = window.setTimeout(refit, 200);
+    }).observe(scope);
+
+    if (!still) {
+      // Lenis drives the real scroll position, so window.scrollY is current.
+      gsap.ticker.add(() => {
+        const scrolled = Math.min(Math.max(window.scrollY - scopeTop, 0), scopeHeight);
+        for (const layer of layers) layer.setY(scrolled * (1 - layer.speed));
+      });
+    }
+
+    // ---- Shooting star ---------------------------------------------------
+
+    const star = sky.querySelector<HTMLElement>("[data-shooting-star]");
+    const heroBox = sky.querySelector<HTMLElement>("[data-sky-hero]");
+
+    if (star && heroBox && !still) {
+      /** Seconds between shooting stars. */
+      const GAP = { min: 7, max: 14 };
+
+      const shoot = () => {
+        const u = heroBox.offsetWidth / 1440;
+        const heroOnScreen = window.scrollY < heroBox.offsetTop + heroBox.offsetHeight;
+        if (heroOnScreen && !document.hidden) {
+          // From around the top middle toward the middle of the left edge,
+          // a little different every time.
+          const from = { x: (690 + Math.random() * 80) * u, y: -20 * u };
+          const to = { x: (-20 + Math.random() * 60) * u, y: (440 + Math.random() * 90) * u };
+          const angle = (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI;
+          const duration = 1 + Math.random() * 0.3;
+          star.style.setProperty("--angle", `${angle}deg`);
+          gsap
+            .timeline()
+            .set(star, { x: from.x, y: from.y, opacity: 0 })
+            .to(star, { x: to.x, y: to.y, duration, ease: "power1.in" }, 0)
+            .to(star, { opacity: 1, duration: 0.15, ease: "none" }, 0)
+            .to(star, { opacity: 0, duration: 0.35, ease: "power1.in" }, duration - 0.35);
+        }
+        gsap.delayedCall(GAP.min + Math.random() * (GAP.max - GAP.min), shoot);
+      };
+      gsap.delayedCall(4, shoot);
+    }
+  }
+</script>

@@ -1,330 +1,89 @@
 ---
 /**
- * The illustrated lower-band scene: a flat "night sky" panel, the three
- * building illustrations, the character-on-swing artwork (a colourful shape
- * burst that slowly rotates + pulses, with the line-drawn character resting
- * still on top — see the <style> block) — all placed at their exact Figma coordinates on the hero
- * canvas. Paint order matches the Figma layer order exactly (the character
- * scene is painted after the first two buildings because it's a
- * transparent-background cutout that partially overlaps them). The character
- * plays its swing loop once after the intro, then again on hover (desktop) or
- * tap (touch).
+ * The three building illustrations (Pulse, the heirloom house, and the
+ * "other projects" tower). Hero.astro scales and moves this whole layer
+ * onto the landing's planet, so the numbers here stay the original Figma
+ * coordinates the building hotspots (content/work.ts) also use.
+ *
+ * `part` splits it in two so the Rive cat can run between them: "back"
+ * (Pulse) sits behind the cat, "front" (the tall tower, then the house
+ * over its foot) in front of it.
  *
  * `buildingOther` is a crop of a shared oversized master canvas (see
  * FillImage); `buildingPulse` is its own tightly framed drawing (spire
  * included), positioned with FillImage so its body lands exactly where the
- * old crop's did; `buildingHeirloom` and the scene artwork are already
- * framed to their own bounds, so they use a plain cover crop.
+ * old crop's did; `buildingHeirloom` is framed to its own bounds, so it
+ * uses a plain cover crop.
  */
 import { Image } from "astro:assets";
 import FillImage from "../FillImage.astro";
-import ArtAsset from "./ArtAsset.astro";
 import { canvasStyle } from "./canvas";
 import { hero } from "../../content/hero";
 
-import panelA from "../../assets/decor/hero-scene-panel-a.svg";
+interface Props {
+  part: "back" | "front";
+}
 
-const sprite = hero.images.sceneCharacterSprite;
+const { part } = Astro.props;
 ---
 
-<ArtAsset svg={panelA} natural={{ w: 676.5, h: 586.5 }} x={721} y={394} />
+{
+  part === "front" ? (
+    <>
+      <div
+        class="absolute pointer-events-none hotspot-glow"
+        data-glow-id="other-projects"
+        style={canvasStyle({ x: 1185, y: 424.57, width: 258, height: 581 })}
+      >
+        <FillImage
+          src={hero.images.buildingOther}
+          alt=""
+          cropTop={-21.09}
+          cropLeft={-227.72}
+          cropWidth={467.33}
+          cropHeight={144.11}
+        />
+      </div>
+      <div
+        class="absolute pointer-events-none hotspot-glow"
+        data-glow-id="heirloom"
+        style={canvasStyle({ x: 887.9, y: 711.24, width: 487.2, height: 333.76 })}
+      >
+        <Image
+          src={hero.images.buildingHeirloom}
+          alt=""
+          class="h-full w-full object-cover"
+        />
+      </div>
+    </>
+  ) : (
+    <>
+      <!-- Rotation lives on this outer, untransformed-by-hover wrapper — the lift
+           effect below applies its own transform on the inner element, and inline
+           and CSS transforms on the SAME element don't compose (inline always
+           wins), so they have to live on separate nodes. -->
+      <div
+        class="absolute"
+        style={canvasStyle({
+          x: 731.72,
+          y: 418.47,
+          width: 418.927,
+          height: 617.494,
+          rotation: -1.26,
+        })}
+      >
+        <div class="h-full w-full pointer-events-none hotspot-glow" data-glow-id="pulse">
+          <FillImage
+            src={hero.images.buildingPulse}
+            alt=""
+            cropTop={-4.02}
+            cropLeft={1.46}
+            cropWidth={93.85}
+            cropHeight={102.59}
+          />
+        </div>
+      </div>
 
-<div
-  class="absolute pointer-events-none hotspot-glow"
-  data-glow-id="other-projects"
-  style={canvasStyle({ x: 1185, y: 424.57, width: 258, height: 581 })}
->
-  <FillImage
-    src={hero.images.buildingOther}
-    alt=""
-    cropTop={-21.09}
-    cropLeft={-227.72}
-    cropWidth={467.33}
-    cropHeight={144.11}
-  />
-</div>
-
-<!-- Rotation lives on this outer, untransformed-by-hover wrapper — the lift
-     effect below applies its own transform on the inner element, and inline
-     and CSS transforms on the SAME element don't compose (inline always
-     wins), so they have to live on separate nodes. -->
-<div
-  class="absolute"
-  style={canvasStyle({
-    x: 731.72,
-    y: 418.47,
-    width: 418.927,
-    height: 617.494,
-    rotation: -1.26,
-  })}
->
-  <div class="h-full w-full pointer-events-none hotspot-glow" data-glow-id="pulse">
-    <FillImage
-      src={hero.images.buildingPulse}
-      alt=""
-      cropTop={-4.02}
-      cropLeft={1.46}
-      cropWidth={93.85}
-      cropHeight={102.59}
-    />
-  </div>
-</div>
-
-<!-- Scene artwork, split into two layers: a colourful shape burst that
-     rotates + pulses on a slow perpetual loop, and the line-drawn
-     character on top of it. Same footprint the single combined image used
-     before. The box deliberately doesn't clip: as the splash rotates and
-     swells it's meant to spill over the coral panel's edge onto the cream
-     border, not get sliced off at it. -->
-<div
-  class="scene-art absolute pointer-events-none"
-  style={canvasStyle({ x: 31, y: 389, width: 962, height: 668 })}
-  data-anim="portrait"
->
-  <Image
-    src={hero.images.sceneSplash}
-    alt=""
-    aria-hidden="true"
-    class="scene-art__splash absolute inset-0 h-full w-full object-cover"
-  />
-  <!-- The character is a 12fps hand-drawn swing loop. The still image is
-       its rest frame and is what no-JS / reduced-motion visitors see; the script
-       below swaps in the sprite sheet once it has loaded and decoded. -->
-  <div
-    class="scene-art__character absolute"
-    data-swing
-    data-sprite={sprite.image.src}
-    data-columns={sprite.columns}
-    data-rows={sprite.rows}
-    data-frames={sprite.frames}
-    data-fps={sprite.fps}
-    data-rest-frame={sprite.restFrame}
-  >
-    <Image
-      src={hero.images.sceneCharacter}
-      alt={hero.images.sceneAlt}
-      class="scene-art__poster block h-full w-full"
-    />
-    <div
-      class="scene-art__sprite absolute inset-0"
-      aria-hidden="true"
-      style={`background-size: ${sprite.columns * 100}% ${sprite.rows * 100}%`}
-    >
-    </div>
-  </div>
-</div>
-
-<div
-  class="absolute pointer-events-none hotspot-glow"
-  data-glow-id="heirloom"
-  style={canvasStyle({ x: 887.9, y: 711.24, width: 487.2, height: 333.76 })}
->
-  <Image
-    src={hero.images.buildingHeirloom}
-    alt=""
-    class="h-full w-full object-cover"
-  />
-</div>
-
-<style>
-  /* Kept deliberately small: a slow drift behind the character, not
-     something that pulls the eye away from it. */
-  .scene-art__splash {
-    transform-origin: center;
-    transform: rotate(-0.6deg) scale(1.04);
-    animation: scene-splash-idle 11s ease-in-out infinite;
-  }
-
-  @keyframes scene-splash-idle {
-    0%,
-    100% {
-      transform: rotate(-0.6deg) scale(1.04);
-    }
-    50% {
-      transform: rotate(0.6deg) scale(1.055);
-    }
-  }
-
-  /* Placement matched to where the character sat in the original combined
-     artwork. The frames are cropped (1309 × 1499) so frame 1 lands exactly
-     where the old single still did: same left edge, same scale, a little
-     extra width on the right for the frames where the swing kicks out.
-     Raised from there so the tops of the chains sit just above the top of
-     the coral panel (canvas y 394). */
-  .scene-art__character {
-    left: 14%;
-    top: 45.47%;
-    width: 58.61%;
-    aspect-ratio: 1309 / 1499;
-    transform: translateY(-50%);
-    /* The wrapper ignores pointers so the buildings behind stay hoverable;
-       the character opts back in to drive the animation. */
-    pointer-events: auto;
-  }
-
-  .scene-art__sprite {
-    background-repeat: no-repeat;
-    visibility: hidden;
-  }
-
-  .scene-art__character.is-ready .scene-art__sprite {
-    visibility: visible;
-  }
-
-  .scene-art__character.is-ready .scene-art__poster {
-    visibility: hidden;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .scene-art__splash {
-      animation: none;
-    }
-  }
-</style>
-
-<script>
-  import { prefersReducedMotion } from "../../scripts/gsap-setup.js";
-
-  /** Lands just after the hero intro timeline settles (~1.3s). */
-  const AUTOPLAY_DELAY_MS = 1400;
-
-  document.querySelectorAll<HTMLElement>("[data-swing]").forEach((el) => {
-    if (prefersReducedMotion()) return;
-
-    const sheet = el.querySelector<HTMLElement>(".scene-art__sprite");
-    const src = el.dataset.sprite;
-    if (!sheet || !src) return;
-
-    const columns = Number(el.dataset.columns);
-    const rows = Number(el.dataset.rows);
-    const frames = Number(el.dataset.frames);
-    const frameMs = 1000 / Number(el.dataset.fps);
-    const rest = Number(el.dataset.restFrame) || 0;
-
-    let frame = rest;
-    let running = false;
-    let hovering = false;
-    /** Extra full loops still owed to a tap / the autoplay. */
-    let loopsOwed = 0;
-    let last = 0;
-
-    function show(n: number) {
-      const col = n % columns;
-      const row = Math.floor(n / columns);
-      sheet!.style.backgroundPosition = `${(col / (columns - 1)) * 100}% ${(row / (rows - 1)) * 100}%`;
-    }
-
-    function tick(now: number) {
-      if (now - last >= frameMs) {
-        // Advance by whole frames against the clock so a slow tab doesn't
-        // stretch the loop, without skipping more than a frame at a time.
-        last = now - ((now - last) % frameMs);
-        frame = (frame + 1) % frames;
-        if (frame === rest) {
-          // Only ever stop on the rest pose, never mid-swing.
-          if (loopsOwed > 0) loopsOwed--;
-          if (!hovering && loopsOwed === 0) {
-            show(rest);
-            running = false;
-            return;
-          }
-        }
-        show(frame);
-      }
-      requestAnimationFrame(tick);
-    }
-
-    function play(loops = 0) {
-      loopsOwed = Math.max(loopsOwed, loops);
-      if (running || !el.classList.contains("is-ready")) return;
-      running = true;
-      last = performance.now();
-      requestAnimationFrame(tick);
-    }
-
-    const img = new Image();
-    img.src = src;
-    img
-      .decode()
-      .then(() => {
-        sheet.style.backgroundImage = `url("${src}")`;
-        show(rest);
-        el.classList.add("is-ready");
-        setTimeout(() => play(1), Math.max(0, AUTOPLAY_DELAY_MS - performance.now()));
-      })
-      .catch(() => {
-        // Sprite failed to load: the still poster just stays put.
-      });
-
-    // Hit-testing against the drawing, not the box. The frames share a crop
-    // with generous empty margins (room for the swing's kick-out), so the
-    // element's rectangle is much bigger than the character. A small alpha
-    // mask of the still frame — grown by a couple of cells so the edge isn't
-    // fiddly — decides whether the pointer is actually over her. Until the
-    // mask is ready, the whole box counts.
-    const MASK_W = 128;
-    const MASK_PAD = 2;
-    let mask: Uint8Array | null = null;
-    let maskH = 0;
-
-    const poster = el.querySelector<HTMLImageElement>(".scene-art__poster");
-    if (poster) {
-      const still = new Image();
-      still.src = poster.currentSrc || poster.src;
-      still
-        .decode()
-        .then(() => {
-          maskH = Math.round((MASK_W * still.naturalHeight) / still.naturalWidth);
-          const canvas = document.createElement("canvas");
-          canvas.width = MASK_W;
-          canvas.height = maskH;
-          const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          if (!ctx) return;
-          ctx.drawImage(still, 0, 0, MASK_W, maskH);
-          const alpha = ctx.getImageData(0, 0, MASK_W, maskH).data;
-          const grown = new Uint8Array(MASK_W * maskH);
-          for (let y = 0; y < maskH; y++) {
-            for (let x = 0; x < MASK_W; x++) {
-              if (alpha[(y * MASK_W + x) * 4 + 3] < 40) continue;
-              for (let dy = -MASK_PAD; dy <= MASK_PAD; dy++) {
-                for (let dx = -MASK_PAD; dx <= MASK_PAD; dx++) {
-                  const gx = x + dx;
-                  const gy = y + dy;
-                  if (gx >= 0 && gx < MASK_W && gy >= 0 && gy < maskH) grown[gy * MASK_W + gx] = 1;
-                }
-              }
-            }
-          }
-          mask = grown;
-        })
-        .catch(() => {
-          // No mask: fall back to the whole box.
-        });
-    }
-
-    function overArt(e: PointerEvent) {
-      if (!mask) return true;
-      const r = el.getBoundingClientRect();
-      const x = Math.floor(((e.clientX - r.left) / r.width) * MASK_W);
-      const y = Math.floor(((e.clientY - r.top) / r.height) * maskH);
-      return x >= 0 && x < MASK_W && y >= 0 && y < maskH && mask[y * MASK_W + x] === 1;
-    }
-
-    el.addEventListener("pointermove", (e) => {
-      if (e.pointerType !== "mouse") return;
-      const over = overArt(e);
-      if (over === hovering) return;
-      hovering = over;
-      if (over) play();
-    });
-    el.addEventListener("pointerleave", (e) => {
-      if (e.pointerType !== "mouse") return;
-      hovering = false;
-    });
-    el.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse") return;
-      if (overArt(e)) play(1);
-    });
-  });
-</script>
-
+    </>
+  )
+}

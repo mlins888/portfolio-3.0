@@ -1,8 +1,9 @@
 ---
 /**
- * The hero's top panel: a night sky over a cream planet, with the greeting,
- * the name, a rocket parked on the ground, and the traits pill. It's the
- * stage for the Rive cat (HeroCat.astro), which runs along the ground.
+ * The landing's title block: the greeting, the name and the traits pill,
+ * plus the rocket drifting off to the upper right. They float over the
+ * starry sky (StarrySky.astro) above the planet the Rive cat runs along
+ * (HeroCat.astro).
  *
  * The traits pill starts hidden. The first time the cat runs past it, the
  * pill is drawn in behind the cat as a halftone patch (the same dot screen
@@ -10,46 +11,32 @@
  * position with a `herocat:move` event, or `herocat:reveal` when it won't be
  * running (touch screens, reduced motion).
  *
- * Coordinates are Figma canvas units (see ./canvas.ts), from the "top
- * section" of the landing frame.
+ * Coordinates are Figma canvas units (see ./canvas.ts), from the
+ * "Wireframe - landing" frame.
  */
 import { hero } from "../../content/hero";
 import { canvasStyle, css, u } from "./canvas";
-import Sparkle from "./Sparkle.astro";
 import rocket from "../../assets/illustrations/hero-rocket.svg";
 
-const BAND = { x: 42, y: 43, width: 1355, height: 249 };
-/** Figma's pill is 335 × 34 at (547, 195); drawn a little wider (×1.07)
+/** Figma's pill is 335 × 34 at (547, 175); drawn a little wider (×1.07)
  *  and taller (×1.3) about its centre. */
-const PILL = { x: 535.5, y: 190, width: 358, height: 44 };
+const PILL = { x: 535.5, y: 170, width: 358, height: 44 };
 const traits = hero.traits.join(" ✦ ");
 ---
 
-<div class="hero-top absolute bg-ink" style={canvasStyle(BAND)}>
-  <!-- The planet: one big ellipse, cropped by the panel. -->
-  <svg class="hero-top__ground" viewBox={`0 0 ${BAND.width} ${BAND.height}`} preserveAspectRatio="none" aria-hidden="true">
-    <ellipse cx="679" cy="288" rx="763" ry="113" fill="white"></ellipse>
-  </svg>
-
-  <!-- Positions are relative to the panel. -->
-  <Sparkle variant="d" x={59} y={74} size={25} idleDelay={0.3} />
-  <Sparkle variant="d" x={1100} y={26} size={21} idleDelay={1.1} />
-  <Sparkle variant="d" x={1337} y={118} size={38} idleDelay={1.9} />
-
-  <!-- Figma's rotated rocket: a 65 × 162 drawing tipped 8.62° inside an
-       89 × 170 box at (1202, 93). -->
-  <div class="absolute flex items-center justify-center" style={canvasStyle({ x: 1160, y: 50, width: 88.971, height: 169.515 })}>
-    <img
-      src={rocket.src}
-      alt=""
-      style={css({ width: u(65.494), height: u(161.521), transform: "rotate(8.62deg)" })}
-    />
-  </div>
+<!-- Figma's rotated rocket: a 65 × 162 drawing tipped −26.45° inside a
+     131 × 174 box at (1209, 122). -->
+<div class="hero-top__rocket absolute flex items-center justify-center" style={canvasStyle({ x: 1209, y: 122, width: 130.592, height: 173.785 })}>
+  <img
+    src={rocket.src}
+    alt=""
+    style={css({ width: u(65.495), height: u(161.521), transform: "rotate(-26.45deg)" })}
+  />
 </div>
 
 <p
   class="hero-top__text absolute text-center font-script text-white"
-  style={css({ left: u(421), top: u(74), width: u(600), fontSize: u(32), lineHeight: "0.91" })}
+  style={css({ left: u(421), top: u(54), width: u(600), fontSize: u(32), lineHeight: "0.91" })}
   data-anim="greeting"
 >
   {hero.greeting}
@@ -57,7 +44,7 @@ const traits = hero.traits.join(" ✦ ");
 
 <h1
   class="hero-top__text hero-top__name absolute text-center font-display uppercase text-white"
-  style={css({ left: u(266), top: u(103), width: u(907), fontSize: u(96), lineHeight: "0.91" })}
+  style={css({ left: u(266), top: u(83), width: u(907), fontSize: u(96), lineHeight: "0.91" })}
 >
   <span class="block" data-anim="headline-line">{hero.nameLines.join(" ")}</span>
 </h1>
@@ -70,19 +57,9 @@ const traits = hero.traits.join(" ✦ ");
 </div>
 
 <style>
-  .hero-top {
-    overflow: hidden;
-  }
-
-  .hero-top__ground {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Under the cat (z 6), over the panel. */
-  .hero-top__text {
+  /* Under the cat (z 6), over the planet and buildings. */
+  .hero-top__text,
+  .hero-top__rocket {
     z-index: 5;
     margin: 0;
   }

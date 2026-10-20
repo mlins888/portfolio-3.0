@@ -1,10 +1,9 @@
 import type { ImageMetadata } from "astro";
 
-import heroSceneSplash from "../assets/illustrations/hero-scene-splash.png";
 import heroSceneCharacter from "../assets/illustrations/hero-scene-character.png";
 import heroCharacterSprite from "../assets/illustrations/hero-character-sprite.webp";
 import heroCornerCat from "../assets/illustrations/hero-corner-cat.png";
-import buildingPulse from "../assets/illustrations/building-pulse.png";
+import buildingPulse from "../assets/illustrations/building-pulse-black-antenna.png";
 import buildingHeirloom from "../assets/illustrations/building-heirloom-orange.png";
 import buildingOther from "../assets/illustrations/building-other.png";
 
@@ -27,9 +26,7 @@ export interface HeroContent {
     date: string;
   };
   images: {
-    /** Colourful shape burst behind the character; rotates + pulses. */
-    sceneSplash: ImageMetadata;
-    /** Line-drawn character that sits on top of the splash. Doubles as the
+    /** Line-drawn character on her swing. Doubles as the
      *  still/poster frame — it's the swing animation's rest frame (frame 10). */
     sceneCharacter: ImageMetadata;
     /** The 17-frame swing loop as one sprite sheet (6 × 3 grid, left→right,
@@ -62,7 +59,6 @@ export const hero: HeroContent = {
     date: "AUG 02",
   },
   images: {
-    sceneSplash: heroSceneSplash,
     sceneCharacter: heroSceneCharacter,
     sceneCharacterSprite: {
       image: heroCharacterSprite,

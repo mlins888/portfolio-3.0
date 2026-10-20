@@ -8,7 +8,15 @@
  * Outside the hero canvas `--u` is undefined and falls back to 1px, which is
  * what makes the decorative components usable anywhere on the site.
  */
-export const CANVAS = { width: 1440, height: 962 } as const;
+export const CANVAS = { width: 1440, height: 963 } as const;
+
+/**
+ * The landing's planet scene (moon, tree, buildings, swing) is drawn at its
+ * Figma coordinates, then scaled down by SCENE.scale about the middle of
+ * the moon's flat bottom edge (SCENE.origin), so it shrinks toward the
+ * ground. HeroCat applies the same scale to the planet it runs on.
+ */
+export const SCENE = { scale: 0.9, origin: { x: 735.5, y: 870 } } as const;
 
 /** Turn a Figma pixel value into a canvas-relative CSS length. */
 export function u(n: number): string {

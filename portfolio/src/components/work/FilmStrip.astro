@@ -87,10 +87,10 @@ const DENSE_THRESHOLD = 2;
      only ~55% tall so ink still shows above and below each hole. */
   .film-strip__rail {
     height: var(--rail-h);
-    background-color: var(--color-ink);
+    background-color: var(--color-on-page);
     background-image: repeating-linear-gradient(
       90deg,
-      var(--color-paper) 0 var(--hole-w),
+      var(--color-page) 0 var(--hole-w),
       transparent var(--hole-w) var(--hole-pitch)
     );
     background-position: center;
@@ -111,8 +111,8 @@ const DENSE_THRESHOLD = 2;
   }
 
   .film-strip__frame {
-    border-left: var(--divider) solid var(--color-ink);
-    border-top: var(--divider) solid var(--color-ink);
+    border-left: var(--divider) solid var(--color-on-page);
+    border-top: var(--divider) solid var(--color-on-page);
     padding: clamp(0.55rem, 1.2vw, 0.85rem) clamp(0.9rem, 2vw, 1.25rem);
   }
 
@@ -126,7 +126,7 @@ const DENSE_THRESHOLD = 2;
     font-weight: 300;
     font-size: var(--film-text);
     line-height: 1;
-    color: var(--color-ink);
+    color: var(--color-on-page);
     margin-bottom: 0.35rem;
   }
 
@@ -141,7 +141,7 @@ const DENSE_THRESHOLD = 2;
     font-weight: 600;
     font-size: var(--film-text);
     line-height: 1.32;
-    color: var(--color-ink);
+    color: var(--color-on-page);
     /* Each value is one line; a slightly long one ("Meta @ Hack GT") may
        dip into the frame's side padding rather than wrap. */
     white-space: nowrap;
